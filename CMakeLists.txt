@@ -9,6 +9,7 @@ if(MSVC)
     set(ENV{VSLANG} "1033")
 endif()
 
+add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/3rd_party/SDL)
 
 set(SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party")
@@ -47,9 +48,15 @@ include_directories(
 
 link_directories(
     ${LIB_PATH}/EasyX/lib/VC2015/x64
-    
 )
 
 add_executable(main ${SOURCE_FILES} ${HEADER_FILES})
 
-target_link_libraries(main EasyXa.lib)
+target_link_libraries(main PRIVATE EasyXa.lib)
+target_include_directories(main PRIVATE ${LIB_PATH}/SDL/include)
+
+if(WIN32)
+    target_link_libraries(main PRIVATE SDL2::SDL2-static SDL2::SDL2main)
+else()
+    target_link_libraries(main PRIVATE SDL2::SDL2-static)
+endif()
