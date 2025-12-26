@@ -13,6 +13,9 @@ endif()
 set(SRC_PATH "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party")
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
 
 file(GLOB_RECURSE SOURCE_FILES 
     "${SRC_PATH}/*.cpp"
@@ -44,6 +47,7 @@ include_directories(
 
 link_directories(
     ${LIB_PATH}/EasyX/lib/VC2015/x64
+    
 )
 
 add_executable(main ${SOURCE_FILES} ${HEADER_FILES})

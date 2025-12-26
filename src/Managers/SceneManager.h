@@ -18,6 +18,8 @@ public:
 	void on_update(float deltatime);
 	void on_input();
 	void on_render();
+	SceneManager(SceneManager& scene_manager) = delete;
+	SceneManager& operator=(SceneManager& scene_manager) = delete;
 
 private:
 
