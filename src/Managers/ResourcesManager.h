@@ -3,6 +3,8 @@
 #include"Texture.h"
 #include<unordered_map>
 #include"IRender.h"
+#include"SceneType.h"
+#include"SDLRender.h"
 
 class ResourcesManager
 {
@@ -22,6 +24,8 @@ public:
 	//�����ļ�����"json����xml���س���"
 	bool loadScene(std::string path, std::string file_type);
 
+	bool loadScene(SceneType type);
+
 	//�����Դ �ǵ�delete�����ϵ���Դ
 	void clearSceneResources();
 	void clearAllResources();
@@ -30,9 +34,10 @@ public:
 	ResourcesManager(const ResourcesManager& res) = delete;
 	ResourcesManager& operator=(const ResourcesManager& res) = delete;
 	
-	void load_texture(std::string path,ImageData type);
+	void load_texture(const std::string& path, ImageData type, SDLRender* renderer = nullptr);
 	Texture* get_texture(std::string name);
 
+	void set_renderer(SDLRender* renderer);
 
 private:
 	ResourcesManager() = default;
@@ -46,5 +51,8 @@ private:
 	std::unordered_map<std::string, Atlas*> Scene_Atlas;
 
 	static ResourcesManager* resources_manager;
+
+	SDLRender* renderer = nullptr;
+	
 };
 

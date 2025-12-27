@@ -16,7 +16,7 @@ public:
 	virtual void on_enter();
 	virtual void on_exit();
 	virtual void on_update(float deltatime);
-	virtual void on_render();
+	virtual void on_render(SDLRender* renderer);
 	virtual void on_input();
 };
 

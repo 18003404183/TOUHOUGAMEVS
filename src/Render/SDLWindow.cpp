@@ -12,7 +12,7 @@ bool SDLWindows::init(int w,int h){
 		SDL_WINDOWPOS_CENTERED,
 		w,
 		h,
-		SDL_WINDOW_SHOWN|SDL_WINDOW_BORDERLESS|SDL_WINDOW_RESIZABLE
+		SDL_WINDOW_SHOWN
 	);
 
 	if(window == nullptr){
@@ -22,7 +22,6 @@ bool SDLWindows::init(int w,int h){
     return true;
 
 }
-
 
 SDL_Window* SDLWindows::get_sdl_window(){
     return this->window;

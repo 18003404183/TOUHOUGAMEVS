@@ -1,13 +1,9 @@
 #pragma once
 
-#include <easyx.h>
-#include <variant>
 #include <string>
 #include <iostream>
 #include <SDL.h>
-
-struct SDL_Texture;
-struct SDL_Renderer; 
+#include <SDL_image.h>
 
 enum class ImageData
 {
@@ -15,104 +11,58 @@ enum class ImageData
     ImageS
 };
 
-class Texture 
+class SDLRender;
+
+class Texture
 {
 public:
+    Texture() : data(nullptr), w(0), h(0) {}
+    ~Texture() { free_data(); }
 
-    Texture() : Data((IMAGE*)nullptr) {}
-    ~Texture() {
-        free_data();
+    // non-copyable
+    Texture(const Texture&) = delete;
+    Texture& operator=(const Texture&) = delete;
+
+    // movable
+    Texture(Texture&& other) noexcept : data(other.data), w(other.w), h(other.h) { other.data = nullptr; other.w = other.h = 0; }
+
+    Texture& operator=(Texture&& other) noexcept 
+    { 
+    if (this != &other) 
+    { 
+        free_data(); 
+        data = other.data; 
+        w = other.w; 
+        h = other.h; 
+        other.data = nullptr; 
+        other.w = other.h = 0;
+    } 
+    return *this; 
     }
 
-    Texture(IMAGE* ImageData) : Data(ImageData) {}
-    
-    Texture(SDL_Texture* SdlData) : Data(SdlData) {}
+    // Load using SDL renderer. If renderer==nullptr the load fails for SDL textures.
+    bool load(const std::string& path, ImageData type, SDL_Renderer* renderer = nullptr);
 
-    bool load(const std::string& path, ImageData type, SDL_Renderer* renderer = nullptr)
-    {
-        free_data();
+    SDL_Texture* native() const { return data; }
+    bool is_valid() const { return data != nullptr; }
+    int width() const { return w; }
+    int height() const { return h; }
 
-        if (type == ImageData::ImageE) {
-            // --- EasyX ʵ�� ---
-            IMAGE* img = new IMAGE();
-            
-            loadimage(img, path.c_str());
-
-            if (img->getwidth() == 0) {
-                delete img;
-                return false;
-            }
-            Data = img;
-            return true;
-        }
-        else if (type == ImageData::ImageS) {
-            // --- SDL Ԥ��λ ---
-            // �����Ժ����� SDL ����������δ���ȡ��ע�ͼ���
-            /*
-            if (!renderer) return false;
-            SDL_Surface* surf = IMG_Load(path.c_str());
-            if (!surf) return false;
-            SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer, surf);
-            SDL_FreeSurface(surf);
-            if (tex) {
-                Data = tex;
-                return true;
-            }
-            */
-            std::cerr << "[Texture] SDL implementation not yet available." << std::endl;
-            return false;
-        }
-        return false;
-    }
-
-    // ==========================================
-    // ��ȡ���� (ʹ�� std::get_if ��ȫ��ȡ)
-    // ==========================================
+    // Backwards-compatible helper: template to mimic previous get_data_as usage
     template<typename T>
-    T get_data_as(ImageData ID)
+    T get_data_as(ImageData id)
     {
-        if (ID == ImageData::ImageE) {
-            if (auto val = std::get_if<IMAGE*>(&Data)) {
-                if constexpr (std::is_same_v<T, IMAGE*>) {
-                    return *val;
-                }
-            }
-        }
-        else if (ID == ImageData::ImageS) {
-            if (auto val = std::get_if<SDL_Texture*>(&Data)) {
-                if constexpr (std::is_same_v<T, SDL_Texture*>) {
-                    return *val;
-                }
-            }
+        if constexpr (std::is_same_v<T, SDL_Texture*>) {
+            if (id == ImageData::ImageS) return data;
+            return nullptr;
         }
         return nullptr;
     }
 
-    // ==========================================
-    // ��Ч�Լ��
-    // ==========================================
-    bool is_valid() const
-    {
-        return std::visit([](auto&& arg) -> bool {
-            // ������ IMAGE* ���� SDL_Texture*��ֻҪ���ǿ�ָ�����Ч
-            return arg != nullptr;
-        }, Data);
-    }
-
 protected:
-    
-    void free_data() {
-        std::visit([](auto&& arg) {
-            using T = std::decay_t<decltype(arg)>;
-            
-            if constexpr (std::is_same_v<T, IMAGE*>) {
-                if (arg) delete arg;
-            }
-            else if constexpr (std::is_same_v<T, SDL_Texture*>) {
-            }
-        }, Data);
+    void free_data();
 
-        Data = (IMAGE*)nullptr;
-    }
-    std::variant<IMAGE*, SDL_Texture*> Data;
+private:
+    SDL_Texture* data;
+    int w, h;
 };

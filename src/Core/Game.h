@@ -20,5 +20,9 @@ public:
 	void load_resources();
 	void start();
 	void end();
+
+private:
+
+	SDLRender* renderer = nullptr;
 };
 

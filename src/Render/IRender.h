@@ -4,6 +4,8 @@
 #include"Camera.h"
 #include<string>
 
+class Texture;
+
 class IRender
 {
 public:

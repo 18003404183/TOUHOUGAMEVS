@@ -5,8 +5,7 @@
 #include"IScene.h"
 #include"MainScene.h"
 #include"EndScene.h"
-
-
+#include"SDLRender.h"
 
 class SceneManager
 {
@@ -17,7 +16,8 @@ public:
 	void switchScene(SceneType scenetype);
 	void on_update(float deltatime);
 	void on_input();
-	void on_render();
+	void on_render(SDLRender* renderer);
+	bool current_scene_null();
 	SceneManager(SceneManager& scene_manager) = delete;
 	SceneManager& operator=(SceneManager& scene_manager) = delete;
 

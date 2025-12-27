@@ -33,8 +33,7 @@ void MainScene::on_enter()
 	this->renderables.push_back(enemybuilder.create());
 	this->updateables.push_back(enemybuilder.create());
 	
-	//ResourcesManager::getInstance()->load_texture("resources\\2.png",ImageData::ImageE);
-	
+	ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
 
 }
 
@@ -52,11 +51,11 @@ void MainScene::on_update(float deltatime)
 	std::cout << "Updating MainScene: " << deltatime << " seconds elapsed." << std::endl;
 }
 
-void MainScene::on_render()
+void MainScene::on_render(SDLRender* renderer)
 {
 	
-	//Texture* a = ResourcesManager::getInstance()->get_texture("resources\\2.png");
-	//this->render->draw_texture(a, 0,0);
+	Texture* a = ResourcesManager::getInstance()->get_texture("resources\\2.png");
+	renderer->draw_texture(a, 0,0);
 
 	for (IRenderable* a : this->renderables) {
 		a->render();

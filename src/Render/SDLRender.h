@@ -3,6 +3,7 @@
 #include"IRender.h"
 #include<SDL.h>
 
+
 class SDLRender
 {
 public:
@@ -12,9 +13,15 @@ public:
 
 	virtual void clear();
 
-	virtual Texture* load_texture(const std::string path);
+	//virtual Texture* load_texture(const std::string path);
 	virtual void  draw_texture(Texture* image, int x, int y);
 	virtual void draw_text(std::string text, int x, int y);
+
+	SDL_Renderer* get_renderer(){
+		return this->renderer;
+	}
+
+	void present();
 
 private:
 	SDL_Renderer* renderer = nullptr;

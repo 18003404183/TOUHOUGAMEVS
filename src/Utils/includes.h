@@ -7,5 +7,6 @@
 #include<Vector>
 #include<chrono>
 #include<Windows.h>
+#include<SDL.h>
 
 #undef small

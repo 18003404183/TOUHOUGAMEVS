@@ -4,27 +4,40 @@ ResourcesManager* ResourcesManager::resources_manager = nullptr;
 
 bool ResourcesManager::loadSceneTotal(std::string path, std::string file_type)
 {
-	std::cout << "½âÎöÈ«¾ÖÎÄ¼ş" << file_type << "ÖĞ" << ",ÔÚÂ·¾¶" << path << std::endl;
+	std::cout << "ï¿½ï¿½ï¿½ï¿½È«ï¿½ï¿½ï¿½Ä¼ï¿½" << file_type << "ï¿½ï¿½" << ",ï¿½ï¿½Â·ï¿½ï¿½" << path << std::endl;
 
 	return true;
 }
 
 bool ResourcesManager::loadScene(std::string path, std::string file_type)
 {
-	//½âÎöÎÄ¼ş
-	std::cout << "½âÎöÎÄ¼ş" << file_type << "ÖĞ" << ",ÔÚÂ·¾¶" << path << std::endl;
-
-	//½«¼ÓÔØ×ÊÔ´ÖÁ¹şÏ£±í
+	//ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½
+	std::cout << "ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½" << file_type << "ï¿½ï¿½" << ",ï¿½ï¿½Â·ï¿½ï¿½" << path << std::endl;
+	
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½Ï£ï¿½ï¿½
 
 	return true;
 }
 
-void ResourcesManager::load_texture(std::string path,ImageData type){
+bool ResourcesManager::loadScene(SceneType type){
+
+	if(type == SceneType::MainMenu){
+		ResourcesManager::getInstance()->load_texture("resources\\2.png",ImageData::ImageS,this->renderer);
+	}
+
+	return true;
+}
+
+void ResourcesManager::load_texture(const std::string& path, ImageData type, SDLRender* renderer){
 	Texture* t = new Texture;
-	t->load(path,type);
+	t->load(path, type, renderer->get_renderer());
 	this->Scene_Texture[path] = t;
 }
 
 Texture* ResourcesManager::get_texture(std::string name) {
 	return this->Scene_Texture[name];
+}
+
+void ResourcesManager::set_renderer(SDLRender* renderer){
+	this->renderer = renderer;
 }

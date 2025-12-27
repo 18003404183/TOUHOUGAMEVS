@@ -3,7 +3,7 @@
 #include"IEntity.h"
 #include"IRenderable.h"
 #include"IUpdateable.h"
-
+#include"SDLRender.h"
 
 class IScene{
 	
@@ -12,7 +12,7 @@ public:
 	virtual void on_enter() = 0;
 	virtual void on_exit() = 0;
 	virtual void on_update(float deltatime) = 0;
-	virtual void on_render() = 0;
+	virtual void on_render(SDLRender* renderer) = 0;
 	virtual void on_input() = 0;
 
 protected:
@@ -20,11 +20,11 @@ protected:
 	std::vector<IRenderable*> renderables;
 	std::vector<IUpdateable*> updateables;
 
-	//Ã¿¸ö³¡¾°±ØĞëÓµÓĞÖÁÉÙÒ»¸öÉãÏñ»ú
+	//Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-	//Ã¿¸ö³¡¾°±ØĞëÎ¬»¤Ò»¸ö×Ô¼ºµÄäÖÈ¾Æ÷
+	//Ã¿ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î¬ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½ï¿½È¾ï¿½ï¿½
 
-	//¼ÓÈëÔà±ê¼Ç ÓÃÓÚ±ê¼Ç¶ÓÁĞÊÇ·ñĞèÒªÖØĞÂÅÅĞò
+	//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ú±ï¿½Ç¶ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	bool isRenderQueueDirty;
 	bool isUpdateQueueDirty;
 
