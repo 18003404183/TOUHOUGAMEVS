@@ -4,11 +4,8 @@
 #include <variant>
 #include <string>
 #include <iostream>
+#include <SDL.h>
 
-// ==========================================
-// Ç°ÖÃÉùÃ÷ (ºËÐÄ¼¼ÇÉ)
-// ¸æËß±àÒëÆ÷ÕâÁ©Ãû×ÖÊÇ½á¹¹Ìå£¬ÏÈ±ð±¨´í£¬¾ßÌåµÄ¶¨ÒåÒÔºóÓÐÁËÍ·ÎÄ¼þÔÙËµ
-// ==========================================
 struct SDL_Texture;
 struct SDL_Renderer; 
 
@@ -21,37 +18,27 @@ enum class ImageData
 class Texture 
 {
 public:
-    // Ä¬ÈÏ¹¹Ôì£º³õÊ¼»¯Îª¿Õ
-    Texture() : Data((IMAGE*)nullptr) {}
 
-    // Îö¹¹£ºÊÍ·Å×ÊÔ´
+    Texture() : Data((IMAGE*)nullptr) {}
     ~Texture() {
         free_data();
     }
 
-    // ¼æÈÝ¾É½Ó¿Ú
     Texture(IMAGE* ImageData) : Data(ImageData) {}
     
-    // Ô¤Áô½Ó¿Ú£ºËäÈ»ÏÖÔÚÃ»ÓÐSDL¿â£¬µ«¿ÉÒÔÊ¹ÓÃÖ¸ÕëÀàÐÍ
     Texture(SDL_Texture* SdlData) : Data(SdlData) {}
 
-    // ==========================================
-    // ÐÂÔö£º¼ÓÔØ¹¦ÄÜ (´øÔ¤Áô)
-    // ==========================================
     bool load(const std::string& path, ImageData type, SDL_Renderer* renderer = nullptr)
     {
-        // 1. ÏÈÇåÀí¾ÉÊý¾Ý
         free_data();
 
         if (type == ImageData::ImageE) {
-            // --- EasyX ÊµÏÖ ---
+            // --- EasyX Êµï¿½ï¿½ ---
             IMAGE* img = new IMAGE();
             
-            // ×¢Òâ£ºÈç¹ûÏîÄ¿ÊÇ Unicode ×Ö·û¼¯£¬ÕâÀï¿ÉÄÜÐèÒª×ª»»Â·¾¶±àÂë
-            // ÕâÀï¼ÙÉèÊÇ ¶à×Ö½Ú×Ö·û¼¯ »òÕßÄã¿ÉÒÔ×ÔÐÐ´¦Àí string µ½ LPCTSTR µÄ×ª»»
             loadimage(img, path.c_str());
 
-            if (img->getwidth() == 0) { // ¼òµ¥µÄ¼ÓÔØÊ§°Ü¼ì²é
+            if (img->getwidth() == 0) {
                 delete img;
                 return false;
             }
@@ -59,8 +46,8 @@ public:
             return true;
         }
         else if (type == ImageData::ImageS) {
-            // --- SDL Ô¤ÁôÎ» ---
-            // µÈÄãÒÔºóÓÐÁË SDL »·¾³£¬°ÑÕâ¶Î´úÂëÈ¡Ïû×¢ÊÍ¼´¿É
+            // --- SDL Ô¤ï¿½ï¿½Î» ---
+            // ï¿½ï¿½ï¿½ï¿½ï¿½Ôºï¿½ï¿½ï¿½ï¿½ï¿½ SDL ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½È¡ï¿½ï¿½×¢ï¿½Í¼ï¿½ï¿½ï¿½
             /*
             if (!renderer) return false;
             SDL_Surface* surf = IMG_Load(path.c_str());
@@ -79,13 +66,12 @@ public:
     }
 
     // ==========================================
-    // »ñÈ¡Êý¾Ý (Ê¹ÓÃ std::get_if °²È«»ñÈ¡)
+    // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ (Ê¹ï¿½ï¿½ std::get_if ï¿½ï¿½È«ï¿½ï¿½È¡)
     // ==========================================
     template<typename T>
     T get_data_as(ImageData ID)
     {
         if (ID == ImageData::ImageE) {
-            // ³¢ÊÔ»ñÈ¡ IMAGE*
             if (auto val = std::get_if<IMAGE*>(&Data)) {
                 if constexpr (std::is_same_v<T, IMAGE*>) {
                     return *val;
@@ -93,8 +79,6 @@ public:
             }
         }
         else if (ID == ImageData::ImageS) {
-            // ³¢ÊÔ»ñÈ¡ SDL_Texture*
-            // ÕâÀïËäÈ»Ã»ÓÐ SDL ¿â£¬µ« T == SDL_Texture* µÄÅÐ¶ÏÊÇºÏ·¨µÄ
             if (auto val = std::get_if<SDL_Texture*>(&Data)) {
                 if constexpr (std::is_same_v<T, SDL_Texture*>) {
                     return *val;
@@ -105,12 +89,12 @@ public:
     }
 
     // ==========================================
-    // ÓÐÐ§ÐÔ¼ì²é
+    // ï¿½ï¿½Ð§ï¿½Ô¼ï¿½ï¿½
     // ==========================================
     bool is_valid() const
     {
         return std::visit([](auto&& arg) -> bool {
-            // ÎÞÂÛÊÇ IMAGE* »¹ÊÇ SDL_Texture*£¬Ö»Òª²»ÊÇ¿ÕÖ¸Õë¾ÍÓÐÐ§
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ IMAGE* ï¿½ï¿½ï¿½ï¿½ SDL_Texture*ï¿½ï¿½Ö»Òªï¿½ï¿½ï¿½Ç¿ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ï¿½Ð§
             return arg != nullptr;
         }, Data);
     }
@@ -122,19 +106,13 @@ protected:
             using T = std::decay_t<decltype(arg)>;
             
             if constexpr (std::is_same_v<T, IMAGE*>) {
-                // EasyX Ïú»Ù
                 if (arg) delete arg;
             }
             else if constexpr (std::is_same_v<T, SDL_Texture*>) {
-                // SDL Ïú»Ù (Ô¤Áô)
-                // ÒÔºóÓÐÁË SDL ¿â£¬ÕâÀïÐ´£º if (arg) SDL_DestroyTexture(arg);
             }
         }, Data);
 
-        // ÖØÖÃ×´Ì¬
         Data = (IMAGE*)nullptr;
     }
-
-    // ºËÐÄ´æ´¢
     std::variant<IMAGE*, SDL_Texture*> Data;
 };

@@ -2,7 +2,9 @@
 int main(int argc,char* argv[]) {
 
 	Game game;
-	game.init_game();
+	if(!game.init_game()){
+		return 0;
+	}
 	game.load_resources();
 	game.start();
     

@@ -10,14 +10,19 @@ Game::~Game()
 {
 	std::cout << "Game destroyed" << std::endl;
 }
+
 bool Game::init_game()
 {
 	std::cout << "Game initialized" << std::endl;
 	ResourcesManager::getInstance();
 	SceneManager::getInstance()->loadScene(SceneType::MainMenu);
-	EasyxWindow easyx_window;
-	easyx_window.init();
+	//EasyxWindow easyx_window;
+	//easyx_window.init();
+	SDLWindows* windows = new SDLWindows;
+	windows->init(MAIN_WINDOW_WIDTH,MAIN_WINDOW_HEIGHT);
 	
+	SDLRender* renderer = new SDLRender();
+	renderer->init(windows->get_sdl_window());
 
 	return true;
 }
@@ -49,5 +54,11 @@ void Game::start()
 
 		}
 	}
+
+}
+
+void Game::end(){
+
+	return;
 
 }

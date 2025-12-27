@@ -1,5 +1,4 @@
 #include "EasyxWindow.h"
-#include"Config.h"
 
 EasyxWindow::EasyxWindow()
 {
@@ -11,9 +10,10 @@ EasyxWindow::~EasyxWindow()
 
 }
 
-void EasyxWindow::init()
+bool EasyxWindow::init(int w,int h)
 {
-	initgraph(MAIN_WINDOW_WIDTH,MAIN_WINDOW_HEIGHT);
+	initgraph(w,h);
+	return true;
 }
 
 

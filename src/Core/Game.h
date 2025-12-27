@@ -5,6 +5,9 @@
 #include"IWindows.h"
 #include"EasyxWindow.h"
 #include"EasyxRender.h"
+#include"SDLRender.h"
+#include"SDLWindow.h"
+#include<SDL.h>
 
 
 class Game
@@ -13,13 +16,9 @@ public:
 	Game();
 	~Game();
 	
-	//������Ϸ�ĳ�ʼ�����п�ʼ����
-	
-	//��ʼ����Ϸ
 	bool init_game();
-	//����ȫ����Ϸ��Դ
 	void load_resources();
-	//��ʼ��Ϸ��ѭ��
 	void start();
+	void end();
 };
 

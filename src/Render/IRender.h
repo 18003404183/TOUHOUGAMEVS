@@ -11,7 +11,7 @@ public:
 	IRender() = default;
 	virtual ~IRender() = default;
 
-	virtual void init() = 0;
+	virtual void init(void* window = nullptr) = 0;
 
 	virtual void clear() = 0;
 

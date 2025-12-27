@@ -33,7 +33,7 @@ void MainScene::on_enter()
 	this->renderables.push_back(enemybuilder.create());
 	this->updateables.push_back(enemybuilder.create());
 	
-	ResourcesManager::getInstance()->load_texture("resources\\2.png",ImageData::ImageE);
+	//ResourcesManager::getInstance()->load_texture("resources\\2.png",ImageData::ImageE);
 	
 
 }
@@ -55,13 +55,13 @@ void MainScene::on_update(float deltatime)
 void MainScene::on_render()
 {
 	
-	Texture* a = ResourcesManager::getInstance()->get_texture("resources\\2.png");
-	this->render->draw_texture(a, 0,0);
+	//Texture* a = ResourcesManager::getInstance()->get_texture("resources\\2.png");
+	//this->render->draw_texture(a, 0,0);
 
 	for (IRenderable* a : this->renderables) {
 		a->render();
 	}
-	render->draw_text("MainScene",10,10);
+	//render->draw_text("MainScene",10,10);
 	std::cout << "Rendering MainScene" << std::endl;
 }
 

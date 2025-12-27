@@ -1,0 +1,21 @@
+#pragma once
+
+#include"IRender.h"
+#include<SDL.h>
+
+class SDLRender
+{
+public:
+	SDLRender() = default;
+
+	virtual void init(SDL_Window* window = nullptr);
+
+	virtual void clear();
+
+	virtual Texture* load_texture(const std::string path);
+	virtual void  draw_texture(Texture* image, int x, int y);
+	virtual void draw_text(std::string text, int x, int y);
+
+private:
+	SDL_Renderer* renderer = nullptr;
+};

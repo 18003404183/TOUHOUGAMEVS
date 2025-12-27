@@ -21,6 +21,6 @@ public:
 	virtual void on_input();
 
 private:
-	IRender* render = new EasyxRender();
+
 };
 

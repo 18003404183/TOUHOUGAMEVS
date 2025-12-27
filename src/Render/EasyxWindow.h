@@ -8,6 +8,6 @@ class EasyxWindow :
 public:
     EasyxWindow();
     ~EasyxWindow();
-	void init() override;
+	bool init(int w,int h) override;
 };
 

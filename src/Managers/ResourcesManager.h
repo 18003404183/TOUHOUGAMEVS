@@ -2,6 +2,7 @@
 #include"includes.h"
 #include"Texture.h"
 #include<unordered_map>
+#include"IRender.h"
 
 class ResourcesManager
 {
@@ -15,13 +16,13 @@ public:
 		return resources_manager;
 	};
 
-	~ResourcesManager();//Îö¹¹ºóÇå³ıËùÓĞ×ÊÔ´
+	~ResourcesManager();//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô´
 
 	bool loadSceneTotal(std::string path, std::string file_type);
-	//¸ü¾ßÎÄ¼şÀàĞÍ"json»òÕßxml¼ÓÔØ³¡¾°"
+	//ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½"jsonï¿½ï¿½ï¿½ï¿½xmlï¿½ï¿½ï¿½Ø³ï¿½ï¿½ï¿½"
 	bool loadScene(std::string path, std::string file_type);
 
-	//Çå³ı×ÊÔ´ ¼ÇµÃdeleteµô¶ÑÉÏµÄ×ÊÔ´
+	//ï¿½ï¿½ï¿½ï¿½ï¿½Ô´ ï¿½Çµï¿½deleteï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½ï¿½Ô´
 	void clearSceneResources();
 	void clearAllResources();
 
@@ -39,7 +40,7 @@ private:
 	std::unordered_map<std::string, Font> global_Font;
 	std::unordered_map<std::string, Atlas> global_Atlas;
 
-	//Ê¹ÓÃÖÇÄÜÖ¸Õë½øĞĞ¹ÜÀí ±ÜÃâÄÚ´æĞ¹Â¶ÓëĞü¿ÕÖ¸Õë
+	//Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½Ğ¹ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ú´ï¿½Ğ¹Â¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¸ï¿½ï¿½
 	std::unordered_map<std::string, Texture*> Scene_Texture;
 	std::unordered_map<std::string, Font*> Scene_Font;
 	std::unordered_map<std::string, Atlas*> Scene_Atlas;

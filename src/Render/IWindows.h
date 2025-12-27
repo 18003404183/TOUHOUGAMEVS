@@ -5,11 +5,9 @@ public:
 	IWindows() = default;
 	virtual ~IWindows() = default;
 
-	virtual void init() = 0;
-
+	virtual bool init(int w,int h) = 0;
 
 protected:
-
 
 };
 
