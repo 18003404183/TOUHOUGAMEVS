@@ -6,6 +6,7 @@
 #include"EnemyType.h"
 #include"IInput.h"
 #include"EasyxRender.h"
+#include"Clock.h"
 
 class MainScene :
     public IScene
@@ -21,6 +22,6 @@ public:
 	virtual void on_input();
 
 private:
-
+	Clock a;
 };
 

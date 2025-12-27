@@ -2,6 +2,7 @@
 #include "SceneManager.h"
 #include "EasyxRender.h"
 #include "ResourcesManager.h"
+#include "clock.h"
 
 MainScene::MainScene()
 {
@@ -34,7 +35,11 @@ void MainScene::on_enter()
 	this->updateables.push_back(enemybuilder.create());
 	
 	ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
+	this->a = Clock();
 
+	this->a.setCallback([this](){
+		std::cout<<"调用了时钟的回调函数"<<"当前执行次数是"<<this->a.getRepeatTime()<<std::endl;
+	});
 }
 
 void MainScene::on_exit()
@@ -47,7 +52,9 @@ void MainScene::on_update(float deltatime)
 	for (IUpdateable* a : this->updateables) {
 		a->update(deltatime);
 	}
+	a.update(deltatime);
 	IInput::update();
+
 	std::cout << "Updating MainScene: " << deltatime << " seconds elapsed." << std::endl;
 }
 
