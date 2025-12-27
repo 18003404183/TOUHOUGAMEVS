@@ -78,3 +78,10 @@ if(WIN32)
 else()
     target_link_libraries(main PRIVATE SDL2::SDL2-static)
 endif()
+
+add_custom_command(TARGET main POST_BUILD
+    # 2. 使用 CMake 内置命令复制整个文件夹
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/resources"
+        "$<TARGET_FILE_DIR:main>/resources"
+)
