@@ -11,7 +11,7 @@ public:
 
 
 	void update(float deltaTime) override;
-	void render() const override;
+	void render(SDLRender* renderer) const override;
 
 	virtual bool isActive() const;
 

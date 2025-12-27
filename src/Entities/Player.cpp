@@ -5,7 +5,7 @@ void Player::update(float deltaTime)
 	std::cout << "Player::update called with deltaTime: " << deltaTime << std::endl;
 }
 
-void Player::render() const
+void Player::render(SDLRender* renderer) const
 {
 	std::cout << "Player::render called" << std::endl;
 }

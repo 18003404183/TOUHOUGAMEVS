@@ -65,7 +65,7 @@ void MainScene::on_render(SDLRender* renderer)
 	renderer->draw_texture(a, 0,0);
 
 	for (IRenderable* a : this->renderables) {
-		a->render();
+		a->render(renderer);
 	}
 	//render->draw_text("MainScene",10,10);
 	std::cout << "Rendering MainScene" << std::endl;

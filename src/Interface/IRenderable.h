@@ -1,12 +1,13 @@
 #pragma once
+#include"SDLRender.h"
 
 class IRenderable {
 public:
 
 	virtual ~IRenderable() = default;
-	virtual void render() const = 0;
+	virtual void render(SDLRender* renderer) const = 0;
 
 protected:
-	//сеох╪╤ сеох╪╤╦ъ╣д╨С╩Фжф(отй╬тзвНио╡Ц)
+	//О©╫О©╫О©╫х╪О©╫ О©╫О©╫О©╫х╪О©╫О©╫ъ╣д╨О©╫О©╫О©╫О©╫(О©╫О©╫й╬О©╫О©╫О©╫О©╫О©╫о╡О©╫)
 	float render_priority;
 };

@@ -6,7 +6,7 @@ void Enemy::update(float deltaTime)
 	std::cout << "Enemy::update called with deltaTime: " << deltaTime << std::endl;
 }
 
-void Enemy::render() const
+void Enemy::render(SDLRender* renderer) const
 {
 	std::cout << "Enemy::render called" << std::endl;
 }
