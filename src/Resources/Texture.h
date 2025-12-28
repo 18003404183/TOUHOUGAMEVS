@@ -41,22 +41,20 @@ public:
     }
 
     // Load using SDL renderer. If renderer==nullptr the load fails for SDL textures.
-    bool load(const std::string& path, ImageData type, SDL_Renderer* renderer = nullptr);
+    bool load(const std::string& path, SDL_Renderer* renderer = nullptr);
 
     SDL_Texture* native() const { return data; }
     bool is_valid() const { return data != nullptr; }
     int width() const { return w; }
     int height() const { return h; }
 
-    // Backwards-compatible helper: template to mimic previous get_data_as usage
-    template<typename T>
-    T get_data_as(ImageData id)
+    SDL_Texture* get_data()
     {
-        if constexpr (std::is_same_v<T, SDL_Texture*>) {
-            if (id == ImageData::ImageS) return data;
+        if(!this->data){
+            std::cout<<"nt data"<<std::endl;
             return nullptr;
         }
-        return nullptr;
+        return this->data;
     }
 
 protected:

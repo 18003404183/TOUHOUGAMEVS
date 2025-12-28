@@ -40,6 +40,17 @@ void MainScene::on_enter()
 	this->a.setCallback([this](){
 		std::cout<<"调用了时钟的回调函数"<<"当前执行次数是"<<this->a.getRepeatTime()<<std::endl;
 	});
+
+	Texture* a = ResourcesManager::getInstance()->get_texture("resources\\2.png");
+	glm::vec2 pos;
+	glm::vec2 scale;
+	pos.x = 205;
+	pos.y = 205;
+	scale.x = 1;
+	scale.y = 1;
+
+	IRenderable* image = new Image(a,pos,scale,0,255);
+	this->renderables.push_back(image);
 }
 
 void MainScene::on_exit()
@@ -61,8 +72,8 @@ void MainScene::on_update(float deltatime)
 void MainScene::on_render(SDLRender* renderer)
 {
 	
-	Texture* a = ResourcesManager::getInstance()->get_texture("resources\\2.png");
-	renderer->draw_texture(a, 0,0);
+	// Texture* a = ResourcesManager::getInstance()->get_texture("resources\\2.png");
+	// renderer->draw_texture(a, 0,0);
 
 	for (IRenderable* a : this->renderables) {
 		a->render(renderer);

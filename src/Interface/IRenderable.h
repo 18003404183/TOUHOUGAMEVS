@@ -1,6 +1,8 @@
 #pragma once
 #include"SDLRender.h"
 
+class SDLRender;
+
 class IRenderable {
 public:
 

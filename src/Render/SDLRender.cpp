@@ -37,6 +37,44 @@ void SDLRender::draw_texture(Texture* image, int x, int y){
     SDL_RenderCopy(this->renderer, tex, nullptr, &dst);
 }
 
+void SDLRender::draw_texture(
+        Texture* texture, 
+        const glm::vec2& pos, 
+        const glm::vec2& scale,
+        const glm::vec2& wh,
+        double rotation, 
+        unsigned char alpha){
+    //pos代表图像的中心点
+
+    float finalW = wh.x * scale.x;
+    float finalH = wh.y * scale.y;
+
+    float dstRectx = pos.x - (finalW / 2.0f); 
+    float dstRecty = pos.y - (finalH / 2.0f);
+
+    SDL_FRect dst;
+    dst.x = dstRectx;
+    dst.y = dstRecty;
+    dst.w = finalW;
+    dst.h = finalH;
+    //{image.getPos().x,image.getPos().y,(image.get_wh().x*image.getScale().x),(image.get_wh().y*image.getScale().y)};
+    SDL_FPoint center;
+    center.x = pos.x;
+    center.y = pos.y;
+
+
+    SDL_RenderCopyExF(
+        this->renderer,
+        texture->get_data(),
+        NULL,
+        &dst,
+        rotation,
+        &center,
+        SDL_RendererFlip::SDL_FLIP_NONE
+    );
+
+}
+
 void SDLRender::draw_text(std::string text, int x, int y){
     // Minimal placeholder: text rendering not implemented (requires SDL_ttf)
     (void)text; (void)x; (void)y;

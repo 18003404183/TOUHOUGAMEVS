@@ -30,7 +30,7 @@ bool ResourcesManager::loadScene(SceneType type){
 
 void ResourcesManager::load_texture(const std::string& path, ImageData type, SDLRender* renderer){
 	Texture* t = new Texture;
-	t->load(path, type, renderer->get_renderer());
+	t->load(path,renderer->get_renderer());
 	this->Scene_Texture[path] = t;
 }
 
