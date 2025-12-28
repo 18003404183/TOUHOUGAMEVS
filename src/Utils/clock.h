@@ -46,7 +46,10 @@ public:
 
         // 处理可能跨越多个周期的情况
         while (current_time >= max_time && available()) {
-            if (call_back) call_back();
+            if (call_back){
+                call_back();
+                std::cout<<"回调函数调用11111"<<std::endl;
+            }
 
             if (one_shoot) {
                 is_available = 0;

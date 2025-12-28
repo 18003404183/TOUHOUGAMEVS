@@ -24,9 +24,8 @@ bool Game::init_game()
 	renderer->init(windows->get_sdl_window());
 	
 	ResourcesManager::getInstance()->set_renderer(this->renderer);
+	this->load_resources();
 	SceneManager::getInstance()->loadScene(SceneType::MainMenu);
-
-
 	return true;
 }
 
@@ -34,7 +33,7 @@ void Game::load_resources()
 {
 	std::cout << "Resources loaded(Game)" << std::endl;
 	ResourcesManager::getInstance()->loadSceneTotal("1","json");
-	ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
+	//ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
 }
 
 void Game::start()

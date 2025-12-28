@@ -22,6 +22,6 @@ public:
 	virtual void on_input();
 
 private:
-	Clock a;
+	Clock clock;
 };
 

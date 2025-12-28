@@ -19,29 +19,34 @@ MainScene::~MainScene()
 
 void MainScene::on_enter()
 {
+	ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
+	
 	std::cout << "Entering MainScene" << std::endl;
 	EnemyBuilder enemybuilder;
 	enemybuilder.create_enemy(EnemyType::small);
-
-	this->renderables.push_back(enemybuilder.create());
-	this->updateables.push_back(enemybuilder.create());
+	Enemy* a = enemybuilder.create();
+	this->renderables.push_back(a);
+	this->updateables.push_back(a);
 
 	enemybuilder.create_enemy(EnemyType::common);
-	this->renderables.push_back(enemybuilder.create());
-	this->updateables.push_back(enemybuilder.create());
+	Enemy* b = enemybuilder.create();
+	this->renderables.push_back(b);
+	this->updateables.push_back(b);
 
 	enemybuilder.create_enemy(EnemyType::large);
-	this->renderables.push_back(enemybuilder.create());
-	this->updateables.push_back(enemybuilder.create());
-	
-	ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
-	this->a = Clock();
+	Enemy* c = enemybuilder.create();
+	this->renderables.push_back(c);
+	this->updateables.push_back(c);
+	//this->clock();
+	//调用this后relese模式下程序暂停 debug没有问题
 
-	this->a.setCallback([this](){
-		std::cout<<"调用了时钟的回调函数"<<"当前执行次数是"<<this->a.getRepeatTime()<<std::endl;
+	this->clock.setCallback([this](){
+		std::cout<<this<<std::endl;//没问题
+		std::cout<<"daugsjdha"<<"this:"<<this<<std::endl;//没问题
+		std::cout<<"踹刷u读书u和古代u上高低"<<"this:"<<this<<std::endl;//没问题
+		std::cout<<"踹刷u读书u和古代u上高低"<<this<<std::endl;//程序强制暂停
 	});
-
-	Texture* a = ResourcesManager::getInstance()->get_texture("resources\\2.png");
+	Texture* v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
 	glm::vec2 pos;
 	glm::vec2 scale;
 	pos.x = 205;
@@ -49,7 +54,7 @@ void MainScene::on_enter()
 	scale.x = 1;
 	scale.y = 1;
 
-	IRenderable* image = new Image(a,pos,scale,0,255);
+	IRenderable* image = new Image(v,pos,scale,0,255);
 	this->renderables.push_back(image);
 }
 
@@ -63,7 +68,7 @@ void MainScene::on_update(float deltatime)
 	for (IUpdateable* a : this->updateables) {
 		a->update(deltatime);
 	}
-	a.update(deltatime);
+	this->clock.update(deltatime);
 	IInput::update();
 
 	std::cout << "Updating MainScene: " << deltatime << " seconds elapsed." << std::endl;
