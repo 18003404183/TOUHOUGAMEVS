@@ -3,7 +3,7 @@
 void Player::update(float deltaTime)
 {
 	std::cout << "Player::update called with deltaTime: " << deltaTime << std::endl;
-	this->position+=this->velocity*(deltaTime/1000);
+	this->position+=this->velocity*deltaTime;
 	this->player_image.setPos(position);
 }
 

@@ -1,6 +1,5 @@
 #pragma once
 #include"includes.h"
-#include"Image.h"
 
 //如果一个字段是全局的 那么字段包含的所有数据也应该是全局的
 
@@ -11,7 +10,7 @@ struct PlayerContext
 	bool active = true;
     bool is_alive;
 	int hp;
-	Image player_image;
+	//Image player_image;
 };
 
 class Context{
@@ -27,14 +26,13 @@ public:
 	glm::vec2 velocity,
 	bool active,
     bool is_alive,
-	int hp,
-	Image player_image){
+	int hp){
         this->pc.position = position;
         this->pc.active = active;
         this->pc.hp = hp;
         this->pc.is_alive = is_alive;
         this->pc.velocity = velocity;
-        this->pc.player_image = player_image;
+        //this->pc.player_image = player_image;
     }
 
     void set_player_context(PlayerContext pc){

@@ -48,6 +48,7 @@ void MainScene::on_enter()
 		std::cout<<"踹刷u读书u和古代u上高低"<<"this:"<<this<<std::endl;//没问题
 		//std::cout<<"踹刷u读书u和古代u上高低"<<this<<std::endl;//程序强制暂停
 	});
+
 	Texture* v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
 	glm::vec2 pos;
 	glm::vec2 scale;
@@ -56,14 +57,14 @@ void MainScene::on_enter()
 	scale.x = 1;
 	scale.y = 1;
 
-	Image image = Image(v,pos,scale,0,255);
+	Image player_image = Image(v,pos,scale,0,255);
 
-	Context::Instances()->set_player_context(pos,{10,10},true,true,100,image);
+	Context::Instances()->set_player_context(pos,{0,50},true,true,100);
 	PlayerContext pc = Context::Instances()->get_player_context();
-	Player* p = new Player(pc);
-
-	this->renderables.push_back(p);
-	this->updateables.push_back(p);
+	this->player = new Player(pc);
+	player->setImage(player_image);
+	this->renderables.push_back(player);
+	this->updateables.push_back(player);
 
 	//this->renderables.push_back(image);
 }
@@ -71,6 +72,7 @@ void MainScene::on_enter()
 void MainScene::on_exit()
 {
 	std::cout << "Exiting MainScene" << std::endl;
+	
 }
 
 void MainScene::on_update(float deltatime)

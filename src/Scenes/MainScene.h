@@ -23,5 +23,7 @@ public:
 
 private:
 	Clock clock;
+
+	Player* player = nullptr;
 };
 

@@ -23,7 +23,7 @@ public:
 		this->active = pc.active;
 		this->hp = pc.hp;
 		this->position = pc.position;
-		this->player_image = pc.player_image;
+		//this->player_image = pc.player_image;
 		this->velocity = pc.velocity;
 		this->is_alive = pc.is_alive;
 	}

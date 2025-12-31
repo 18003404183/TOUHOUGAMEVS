@@ -63,7 +63,7 @@ void Game::start()
 				scene_manager->on_input();
 			}
 		}		
-		scene_manager->on_update(dt);
+		scene_manager->on_update(dt/1000);
 		this->renderer.clear();
 		scene_manager->on_render(renderer);
 		this->renderer.present();
