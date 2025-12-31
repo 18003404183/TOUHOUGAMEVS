@@ -16,8 +16,5 @@ public:
 	virtual glm::vec2 getVelocity() const = 0;
 	virtual void setVelocity(const glm::vec2& newVelocity) = 0;
 
-
-
-
 };
 

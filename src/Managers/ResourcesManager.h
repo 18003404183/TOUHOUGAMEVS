@@ -34,7 +34,7 @@ public:
 	ResourcesManager(const ResourcesManager& res) = delete;
 	ResourcesManager& operator=(const ResourcesManager& res) = delete;
 	
-	void load_texture(const std::string& path, ImageData type, SDLRender* renderer = nullptr);
+	void load_texture(const std::string& path, ImageData type);
 	Texture* get_texture(std::string name);
 
 	void set_renderer(SDLRender* renderer);

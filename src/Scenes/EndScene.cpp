@@ -37,7 +37,7 @@ void EndScene::on_update(float delta_time) {
 	std::cout << "EndScene::on_update() called with delta_time: " << delta_time << std::endl;
 }
 
-void EndScene::on_render(SDLRender* renderer) {
+void EndScene::on_render(SDLRender& renderer) {
 	std::cout << "EndScene::on_render() called" << std::endl;
 }
 

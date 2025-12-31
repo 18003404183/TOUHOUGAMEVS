@@ -41,10 +41,11 @@ void MainScene::on_enter()
 	//调用this后relese模式下程序暂停 debug没有问题
 
 	this->clock.setCallback([this](){
+
 		std::cout<<this<<std::endl;//没问题
 		std::cout<<"daugsjdha"<<"this:"<<this<<std::endl;//没问题
 		std::cout<<"踹刷u读书u和古代u上高低"<<"this:"<<this<<std::endl;//没问题
-		std::cout<<"踹刷u读书u和古代u上高低"<<this<<std::endl;//程序强制暂停
+		//std::cout<<"踹刷u读书u和古代u上高低"<<this<<std::endl;//程序强制暂停
 	});
 	Texture* v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
 	glm::vec2 pos;
@@ -74,7 +75,7 @@ void MainScene::on_update(float deltatime)
 	std::cout << "Updating MainScene: " << deltatime << " seconds elapsed." << std::endl;
 }
 
-void MainScene::on_render(SDLRender* renderer)
+void MainScene::on_render(SDLRender& renderer)
 {
 	
 	// Texture* a = ResourcesManager::getInstance()->get_texture("resources\\2.png");
@@ -91,5 +92,5 @@ void MainScene::on_input()
 {
 	if(IInput::get_key(KeyType::ENTER)->get_keydown())
 		SceneManager::getInstance()->switchScene(SceneType::EndMenu);
-
+	
 }

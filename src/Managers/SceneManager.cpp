@@ -46,7 +46,7 @@ void SceneManager::on_input() {
 	this->current_scene->on_input();
 }
 
-void SceneManager::on_render(SDLRender* renderer) {
+void SceneManager::on_render(SDLRender& renderer) {
 	this->current_scene->on_render(renderer);
 }
 

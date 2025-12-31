@@ -20,10 +20,10 @@ bool Game::init_game()
 	SDLWindows* windows = new SDLWindows;
 	windows->init(MAIN_WINDOW_WIDTH,MAIN_WINDOW_HEIGHT);
 	
-	this->renderer = new SDLRender();
-	renderer->init(windows->get_sdl_window());
+	this->renderer=SDLRender();
+	renderer.init(windows->get_sdl_window());
 	
-	ResourcesManager::getInstance()->set_renderer(this->renderer);
+	ResourcesManager::getInstance()->set_renderer(&renderer);
 	this->load_resources();
 	SceneManager::getInstance()->loadScene(SceneType::MainMenu);
 	return true;
@@ -58,9 +58,9 @@ void Game::start()
 			}
 		}		
 		scene_manager->on_update(1000 / GAME_TPS);
-		this->renderer->clear();
+		this->renderer.clear();
 		scene_manager->on_render(renderer);
-		this->renderer->present();
+		this->renderer.present();
 
 		frameTime = SDL_GetTicks() - frameStart;
 		if (1000/GAME_TPS > frameTime) {
@@ -71,7 +71,7 @@ void Game::start()
 }
 
 void Game::end(){
-	delete this->renderer;
+	//delete this->renderer;
 	return;
 
 }
