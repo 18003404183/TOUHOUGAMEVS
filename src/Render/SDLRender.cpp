@@ -4,7 +4,7 @@
 
 void SDLRender::init(SDL_Window* window){
     if(window == nullptr) return;
-    this->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    this->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);//开启垂直同步来保持平滑
 }
 
 void SDLRender::clear(){

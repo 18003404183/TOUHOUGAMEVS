@@ -3,6 +3,7 @@
 #include "EasyxRender.h"
 #include "ResourcesManager.h"
 #include "clock.h"
+#include "GameContext.h"
 
 MainScene::MainScene()
 {
@@ -55,8 +56,16 @@ void MainScene::on_enter()
 	scale.x = 1;
 	scale.y = 1;
 
-	IRenderable* image = new Image(v,pos,scale,0,255);
-	this->renderables.push_back(image);
+	Image image = Image(v,pos,scale,0,255);
+
+	Context::Instances()->set_player_context(pos,{10,10},true,true,100,image);
+	PlayerContext pc = Context::Instances()->get_player_context();
+	Player* p = new Player(pc);
+
+	this->renderables.push_back(p);
+	this->updateables.push_back(p);
+
+	//this->renderables.push_back(image);
 }
 
 void MainScene::on_exit()

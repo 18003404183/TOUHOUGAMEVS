@@ -13,6 +13,7 @@ Game::~Game()
 
 bool Game::init_game()
 {
+	
 	std::cout << "Game initialized" << std::endl;
 	ResourcesManager::getInstance();
 	//EasyxWindow easyx_window;
@@ -42,12 +43,17 @@ void Game::start()
 	SDL_Event event;
 	bool is_running = true;
 	SceneManager* scene_manager = SceneManager::getInstance();
-	Uint32 frameStart;
-    int frameTime;
+	Uint64 frameStart = SDL_GetTicks64();
+	Uint64 frameEnd = SDL_GetTicks64();
+    Uint64 frameTime;
 	while (is_running)
 	{
 		//std::cout << "Game_running" << std::endl;
-		frameStart = SDL_GetTicks();
+	
+		
+		float dt = frameEnd - frameStart;
+		frameStart = frameEnd;
+		
 		while(SDL_PollEvent(&event)){
 			if(event.type == SDL_QUIT){
 				is_running = false;
@@ -57,7 +63,7 @@ void Game::start()
 				scene_manager->on_input();
 			}
 		}		
-		scene_manager->on_update(1000 / GAME_TPS);
+		scene_manager->on_update(dt);
 		this->renderer.clear();
 		scene_manager->on_render(renderer);
 		this->renderer.present();
@@ -66,6 +72,7 @@ void Game::start()
 		if (1000/GAME_TPS > frameTime) {
             SDL_Delay(1000/GAME_TPS - frameTime);
         }
+		frameEnd = SDL_GetTicks64();
 	}
 
 }
