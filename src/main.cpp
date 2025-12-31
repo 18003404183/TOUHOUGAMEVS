@@ -7,6 +7,7 @@ int main(int argc,char* argv[]) {
 	}
 	//game.load_resources();
 	game.start();
+	game.end();
     
 	return 0;
 }

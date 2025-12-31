@@ -10,7 +10,7 @@ public:
     Atlas(Texture* texture);
 
 private:
-    glm::vec2 cell;
+    //glm::vec2 cell;
     Texture* texture;
 };
 
