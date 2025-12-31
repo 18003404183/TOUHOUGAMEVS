@@ -1,6 +1,8 @@
 #pragma once
 
 #include"Texture.h"
+#include"includes.h"
+
 class Atlas
 {
 public:
