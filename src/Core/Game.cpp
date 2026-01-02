@@ -27,6 +27,8 @@ bool Game::init_game()
 	ResourcesManager::getInstance()->set_renderer(&renderer);
 	this->load_resources();
 	SceneManager::getInstance()->loadScene(SceneType::MainMenu);
+
+	Context::Instances()->init();
 	return true;
 }
 
@@ -73,6 +75,8 @@ void Game::start()
             SDL_Delay(1000/GAME_TPS - frameTime);
         }
 		frameEnd = SDL_GetTicks64();
+		int frame = Context::Instances()->game_frame++;
+		std::cout<<"current_frame"<<frame<<std::endl;
 	}
 
 }

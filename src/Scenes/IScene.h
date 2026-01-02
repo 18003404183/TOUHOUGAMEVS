@@ -25,8 +25,9 @@ protected:
 	//ÿ����������ά��һ���Լ�����Ⱦ��
 
 	//�������� ���ڱ�Ƕ����Ƿ���Ҫ��������?
-	bool isRenderQueueDirty;
-	bool isUpdateQueueDirty;
+	bool is_render_queue_dirty;
+	bool is_update_queue_dirty;
 
+	int scene_frame;
 
 };

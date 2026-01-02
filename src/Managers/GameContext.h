@@ -22,6 +22,10 @@ public:
         return context;
     }
 
+    void init(){
+        this->game_frame = 0;
+    }
+
     void set_player_context(glm::vec2 position,
 	glm::vec2 velocity,
 	bool active,
