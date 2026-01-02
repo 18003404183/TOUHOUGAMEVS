@@ -41,7 +41,7 @@ void MainScene::on_enter()
 	//this->clock();
 	//调用this后relese模式下程序暂停 debug没有问题
 
-	this->clock.setCallback([this](){
+	this->clock.set_callback([this](){
 
 		std::cout<<this<<std::endl;//没问题
 		std::cout<<"daugsjdha"<<"this:"<<this<<std::endl;//没问题
@@ -72,6 +72,7 @@ void MainScene::on_enter()
 void MainScene::on_exit()
 {
 	std::cout << "Exiting MainScene" << std::endl;
+	Context::Instances()->set_player_context(player->get_position(),player->get_velocity(),player->isActive(),player->is_alive(),player->get_hp());
 	
 }
 
@@ -103,5 +104,8 @@ void MainScene::on_input()
 {
 	if(IInput::get_key(KeyType::ENTER)->get_keydown())
 		SceneManager::getInstance()->switchScene(SceneType::EndMenu);
-	
+	if(IInput::get_key(KeyType::RIGHT)->get_keydown())
+		this->player->set_velocity({10,0});	
+	if(IInput::get_key(KeyType::RIGHT)->get_keydown())
+		this->player->set_velocity({10,0});	
 }

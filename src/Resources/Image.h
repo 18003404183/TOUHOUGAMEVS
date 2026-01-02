@@ -25,25 +25,25 @@ public:
 	}
 	//get set 方法
 	// data
-	inline Texture* getData() { return data; }
-	inline const Texture* getData() const { return data; }
-	inline void setData(Texture* d) { data = d; }
+	//inline Texture* get_data() { return data; }
+	inline const Texture* get_data() const { return data; }
+	inline void set_data(Texture* d) { data = d; }
 
 	// position
-	inline const glm::vec2 getPos() const { return pos; }
-	inline void setPos(const glm::vec2& p) { pos = p; }
+	inline const glm::vec2 get_pos() const { return pos; }
+	inline void set_pos(const glm::vec2& p) { pos = p; }
 
 	// scale
-	inline glm::vec2 getScale() const { return scale; }
-	inline void setScale(glm::vec2 s) { scale = s; }
+	inline glm::vec2 get_scale() const { return scale; }
+	inline void set_scale(glm::vec2 s) { scale = s; }
 
 	// rotation
-	inline double getRotation() const { return rotation; }
-	inline void setRotation(double r) { rotation = r; }
+	inline double get_rotation() const { return rotation; }
+	inline void set_rotation(double r) { rotation = r; }
 
 	// alpha
-	inline unsigned char getAlpha() const { return alpha; }
-	inline void setAlpha(unsigned char a) { alpha = a; }
+	inline unsigned char get_alpha() const { return alpha; }
+	inline void set_alpha(unsigned char a) { alpha = a; }
 
 	//得到图片的长度宽度
 	inline glm::vec2 get_wh() const {

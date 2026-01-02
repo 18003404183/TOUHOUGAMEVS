@@ -25,7 +25,7 @@ public:
 		this->position = pc.position;
 		//this->player_image = pc.player_image;
 		this->velocity = pc.velocity;
-		this->is_alive = pc.is_alive;
+		this->alive = pc.is_alive;
 	}
 
 	void update(float deltaTime) override;
@@ -33,15 +33,19 @@ public:
 
 	virtual bool isActive() const;
 
-	virtual glm::vec2 getPosition() const;
-	virtual void setPosition(const glm::vec2& newPosition);
-	virtual glm::vec2 getVelocity() const;
-	virtual void setVelocity(const glm::vec2& newVelocity);
+	virtual glm::vec2 get_position() const;
+	virtual void set_position(const glm::vec2& newPosition);
+	virtual glm::vec2 get_velocity() const;
+	virtual void set_velocity(const glm::vec2& newVelocity);
 	virtual void setImage(Image image);
+	virtual bool is_alive() const;
+	virtual void set_alive(bool alive);
+	virtual void set_hp(int hp);
+	virtual int get_hp() const;
 
 
 private:
-	bool is_alive;
+	bool alive;
 	int hp;
 	Image player_image;
 };

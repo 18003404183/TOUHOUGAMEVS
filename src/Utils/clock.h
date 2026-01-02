@@ -6,35 +6,35 @@ class Clock {
 public:
     // 构造：默认 1000 ms，非一次性，repeat=-1 表示无限重复，未激活
     Clock()
-        : max_time(1000), one_shoot(false), repeat_time(-1), call_back(nullptr), current_time(0), is_available(1) {}
+        : max_time(1000), one_shoot(false), repeat_time(-1), call_back(nullptr), current_time(0), is_available_(1) {}
     ~Clock() = default;
 
     // 设置/获取最大时间（毫秒）
-    void setMaxTime(int ms) { max_time = (ms > 0 ? ms : 0); }
-    int getMaxTime() const { return max_time; }
+    void set_max_time(int ms) { max_time = (ms > 0 ? ms : 0); }
+    int get_max_time() const { return max_time; }
 
     // 是否一次触发
-    void setOneShoot(bool v) { one_shoot = v; }
-    bool isOneShoot() const { return one_shoot; }
+    void set_one_shoot(bool v) { one_shoot = v; }
+    bool is_one_shoot() const { return one_shoot; }
 
     // 重复次数（-1 表示无限重复）
-    void setRepeatTime(int times) { repeat_time = times; }
-    int getRepeatTime() const { return repeat_time; }
+    void set_repeat_time(int times) { repeat_time = times; }
+    int get_repeat_time() const { return repeat_time; }
 
     // 设置回调
-    void setCallback(std::function<void()> cb) { call_back = std::move(cb); }
+    void set_callback(std::function<void()> cb) { call_back = std::move(cb); }
 
     // 启动/暂停/恢复/重置
-    void start() { current_time = 0; is_available = 1; }
-    void stop() { is_available = 0; }
-    void pause() { is_available = 0; }
-    void resume() { is_available = 1; }
+    void start() { current_time = 0; is_available_ = 1; }
+    void stop() { is_available_ = 0; }
+    void pause() { is_available_ = 0; }
+    void resume() { is_available_ = 1; }
     void reset() { current_time = 0; }
 
     // 查询
-    bool available() const { return is_available != 0; }
-    int currentTime() const { return current_time; }
-    int remainingTime() const { int rem = max_time - current_time; return (rem > 0 ? rem : 0); }
+    bool available() const { return is_available_ != 0; }
+    int get_current_ime() const { return current_time; }
+    int get_remaining_time() const { int rem = max_time - current_time; return (rem > 0 ? rem : 0); }
 
     // 减少时间（等同于 advance）
     void reduce(int ms) { update(ms); }
@@ -48,17 +48,17 @@ public:
         while (current_time >= max_time && available()) {
             if (call_back){
                 call_back();
-                std::cout<<"回调函数调用11111"<<std::endl;
+                //std::cout<<"回调函数调用11111"<<std::endl;
             }
 
             if (one_shoot) {
-                is_available = 0;
+                is_available_ = 0;
                 break;
             }
 
             if (repeat_time > 0) {
                 --repeat_time;
-                if (repeat_time == 0) { is_available = 0; break; }
+                if (repeat_time == 0) { is_available_ = 0; break; }
             }
 
             current_time -= max_time;
@@ -77,5 +77,5 @@ private:
     // 当前累积时间（毫秒）
     int current_time;
     // 激活标志（0/非0）
-    int is_available;
+    int is_available_;
 };

@@ -46,6 +46,8 @@ public:
     Context(const Context& context) = delete;
     Context& operator=(const Context& b) = delete;
 
+    int game_frame;
+
 private:
     PlayerContext pc;
     Context() = default;

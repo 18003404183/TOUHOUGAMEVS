@@ -21,10 +21,10 @@ public:
 	virtual bool isActive() const;
 	virtual void setActive(bool active);
 
-	virtual glm::vec2 getPosition() const;
-	virtual void setPosition(const glm::vec2& newPosition);
-	virtual glm::vec2 getVelocity() const;
-	virtual void setVelocity(const glm::vec2& newVelocity);
+	virtual glm::vec2 get_position() const;
+	virtual void set_position(const glm::vec2& newPosition);
+	virtual glm::vec2 get_velocity() const;
+	virtual void set_velocity(const glm::vec2& newVelocity);
 	virtual float setHp(int hp);
 	virtual float getHp() const;
 	virtual void takeDamage(float damage);

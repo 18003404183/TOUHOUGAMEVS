@@ -11,10 +11,10 @@ public:
 	virtual bool isActive() const = 0;
 
 	virtual ~IEntity() = default;
-	virtual glm::vec2 getPosition() const = 0;
-	virtual void setPosition(const glm::vec2& newPosition) = 0;
-	virtual glm::vec2 getVelocity() const = 0;
-	virtual void setVelocity(const glm::vec2& newVelocity) = 0;
+	virtual glm::vec2 get_position() const = 0;
+	virtual void set_position(const glm::vec2& newPosition) = 0;
+	virtual glm::vec2 get_velocity() const = 0;
+	virtual void set_velocity(const glm::vec2& newVelocity) = 0;
 
 };
 

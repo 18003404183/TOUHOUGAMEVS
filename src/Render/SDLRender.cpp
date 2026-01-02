@@ -57,7 +57,7 @@ void SDLRender::draw_texture(
     dst.y = dstRecty;
     dst.w = finalW;
     dst.h = finalH;
-    //{image.getPos().x,image.getPos().y,(image.get_wh().x*image.getScale().x),(image.get_wh().y*image.getScale().y)};
+    //{image.get_pos().x,image.get_pos().y,(image.get_wh().x*image.get_scale().x),(image.get_wh().y*image.get_scale().y)};
     SDL_FPoint center;
     center.x = pos.x;
     center.y = pos.y;

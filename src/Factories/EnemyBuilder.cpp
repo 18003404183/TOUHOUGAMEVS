@@ -34,8 +34,8 @@ Enemy* EnemyBuilder::create()
 	enemy->setActive(this->active);
 	enemy->setHp(this->hp);
 	enemy->setAlive(this->is_alive);
-	enemy->setPosition(this->position);
-	enemy->setVelocity(this->velocity);
+	enemy->set_position(this->position);
+	enemy->set_velocity(this->velocity);
 
 	return enemy;
 

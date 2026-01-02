@@ -4,7 +4,7 @@ void Player::update(float deltaTime)
 {
 	std::cout << "Player::update called with deltaTime: " << deltaTime << std::endl;
 	this->position+=this->velocity*deltaTime;
-	this->player_image.setPos(position);
+	this->player_image.set_pos(position);
 }
 
 void Player::render(SDLRender& renderer) const
@@ -18,26 +18,47 @@ bool Player::isActive() const
 	return this->active;
 }
 
-glm::vec2 Player::getPosition() const
+glm::vec2 Player::get_position() const
 {
 	return this->position;
 }
 
-void Player::setPosition(const glm::vec2& newPosition)
+void Player::set_position(const glm::vec2& newPosition)
 {
 	this->position = newPosition;
 }
 
-glm::vec2 Player::getVelocity() const
+glm::vec2 Player::get_velocity() const
 {
 	return this->velocity;
 }
 
-void Player::setVelocity(const glm::vec2& newVelocity)
+void Player::set_velocity(const glm::vec2& newVelocity)
 {
 	this->velocity = newVelocity;
 }
 
 void Player::setImage(Image image){
 	this->player_image = image;
+}
+
+bool Player::is_alive() const
+{
+    return this->alive;
+}
+
+void Player::set_alive(bool alive)
+{
+	this->alive = alive;
+}
+
+void Player::set_hp(int hp)
+{
+	this->hp = hp;
+}
+
+int Player::get_hp() const
+{
+	return this->hp;
+    return 0;
 }

@@ -21,22 +21,22 @@ void Enemy::setActive(bool active)
 	this->active = active;
 }
 
-glm::vec2 Enemy::getPosition() const
+glm::vec2 Enemy::get_position() const
 {
 	return this->position;
 }
 
-void Enemy::setPosition(const glm::vec2& newPosition)
+void Enemy::set_position(const glm::vec2& newPosition)
 {
 	this->position = newPosition;
 }
 
-glm::vec2 Enemy::getVelocity() const
+glm::vec2 Enemy::get_velocity() const
 {
 	return this->velocity;
 }
 
-void Enemy::setVelocity(const glm::vec2& newVelocity)
+void Enemy::set_velocity(const glm::vec2& newVelocity)
 {
 	this->velocity = newVelocity;
 }
