@@ -3,3 +3,6 @@ lib/
 bin/
 html/
 latex/
+/.vs
+/CMakePresets.json
+/CMakeUserPresets.json
