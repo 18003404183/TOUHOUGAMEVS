@@ -21,13 +21,12 @@ public:
 	data(data),pos(pos),scale(scale),rotation(rotation),alpha(alpha)
 	{
 		this->wh = this->get_wh();
-
 	}
 	//get set ·½·¨
 	// data
 	//inline Texture* get_data() { return data; }
 	inline const Texture* get_data() const { return data; }
-	inline void set_data(Texture* d) { data = d; }
+	inline void set_data(Texture* d) { data = d; this->wh = {data->width(),data->height()}; }
 
 	// position
 	inline const glm::vec2 get_pos() const { return pos; }

@@ -3,6 +3,8 @@
 #include"Texture.h"
 #include"includes.h"
 
+//分割texture 成为atlas
+
 class Atlas
 {
 public:

@@ -1,0 +1,44 @@
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.5.2.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "3rd_party", "3rd_party", "{9E2CFF60-6BBE-0BE6-C3AB-4D3E30312150}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SDL_image", "SDL_image", "{C9814910-49AA-F1D1-DEBA-FCC729024610}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "external", "external", "{2F5AEC4E-FA40-F64E-FE4A-6A6E1C014183}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "zlib", "zlib", "{A00E6DF8-F43B-DCB5-F896-2329278970FA}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "contrib", "contrib", "{727AE628-384F-4D1C-E21D-1E37472E5001}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "dotzlib", "dotzlib", "{7B41EA60-C2A4-CA0C-CBA9-02175542BCFA}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotZLib", "3rd_party\SDL_image\external\zlib\contrib\dotzlib\DotZLib\DotZLib.csproj", "{0E9E3095-BD21-0D4A-E08B-D4A5A57E5CD7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0E9E3095-BD21-0D4A-E08B-D4A5A57E5CD7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0E9E3095-BD21-0D4A-E08B-D4A5A57E5CD7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0E9E3095-BD21-0D4A-E08B-D4A5A57E5CD7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0E9E3095-BD21-0D4A-E08B-D4A5A57E5CD7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C9814910-49AA-F1D1-DEBA-FCC729024610} = {9E2CFF60-6BBE-0BE6-C3AB-4D3E30312150}
+		{2F5AEC4E-FA40-F64E-FE4A-6A6E1C014183} = {C9814910-49AA-F1D1-DEBA-FCC729024610}
+		{A00E6DF8-F43B-DCB5-F896-2329278970FA} = {2F5AEC4E-FA40-F64E-FE4A-6A6E1C014183}
+		{727AE628-384F-4D1C-E21D-1E37472E5001} = {A00E6DF8-F43B-DCB5-F896-2329278970FA}
+		{7B41EA60-C2A4-CA0C-CBA9-02175542BCFA} = {727AE628-384F-4D1C-E21D-1E37472E5001}
+		{0E9E3095-BD21-0D4A-E08B-D4A5A57E5CD7} = {7B41EA60-C2A4-CA0C-CBA9-02175542BCFA}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D563613C-CA21-47C2-8986-95E3C98163FB}
+	EndGlobalSection
+EndGlobal
