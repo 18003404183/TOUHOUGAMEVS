@@ -55,6 +55,7 @@ public:
 
 	//实现接口
 	virtual void render(SDLRender& renderer) const override;
+	virtual void render(SDLRender& renderer,glm::vec2 pos) const;
 
 	virtual void update(float deltaTime);
 

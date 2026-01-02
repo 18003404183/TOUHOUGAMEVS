@@ -10,7 +10,7 @@ void Player::update(float deltaTime)
 void Player::render(SDLRender& renderer) const
 {
 	std::cout << "Player::render called" << std::endl;
-	this->player_image.render(renderer);
+	this->player_image.render(renderer,this->position);
 }
 
 bool Player::isActive() const
