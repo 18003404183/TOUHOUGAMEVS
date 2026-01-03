@@ -15,8 +15,3 @@ void Image::render(SDLRender& renderer,glm::vec2 pos) const
     };
     renderer.draw_texture(this->data,pos,this->scale,this->wh,this->rotation,this->alpha);  
 }
-
-void Image::update(float deltatime){
-
-
-}

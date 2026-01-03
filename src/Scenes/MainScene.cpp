@@ -4,6 +4,7 @@
 #include "ResourcesManager.h"
 #include "clock.h"
 #include "GameContext.h"
+#include "Animation.h"
 
 MainScene::MainScene()
 {
@@ -60,14 +61,17 @@ void MainScene::on_enter()
 	Image player_image = Image(v,pos,scale,0,255);
 	Atlas* player_atlas = ResourcesManager::getInstance()->get_atlas("resources\\3.png");
 
-	Context::Instances()->set_player_context(pos,{0,50},true,true,100);
+	Context::Instances()->set_player_context(pos,{0,0},true,true,100);
 	PlayerContext pc = Context::Instances()->get_player_context();
 	this->player = new Player(pc);
 	player->setImage(player_image);
-	player->set_atlas(player_atlas);
+	//player->set_atlas(player_atlas);
+	Animation animation(player_atlas,0.1);
+
 	this->renderables.push_back(player);
 	this->updateables.push_back(player);
-
+	this->player->set_animation(animation);
+	
 	//this->renderables.push_back(image);
 }
 

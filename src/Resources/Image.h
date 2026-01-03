@@ -8,8 +8,7 @@
 class SDLRender;
 
 class Image :
-	public IRenderable,
-	public IUpdateable
+	public IRenderable
 {
 public:
 	Image() = default;
@@ -57,7 +56,7 @@ public:
 	virtual void render(SDLRender& renderer) const override;
 	virtual void render(SDLRender& renderer,glm::vec2 pos) const;
 
-	virtual void update(float deltaTime);
+	//virtual void update(float deltaTime);
 
 private:
 	Texture* data;//ฯํิช

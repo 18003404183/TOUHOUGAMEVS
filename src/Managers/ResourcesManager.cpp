@@ -27,9 +27,9 @@ bool ResourcesManager::loadScene(SceneType type){
 		Atlas* a = this->get_atlas("resources\\3.png");
 		glm::vec2 cell = {10,10};
 		glm::vec2 step = {a->get_texture()->width()/cell.x,a->get_texture()->height()/cell.y};
-		for(float i = 0;i<cell.x;i++){
-			for(float j = 0;j<cell.y;j++){
-				a->add_frame({(int)(i*step.x),(int)(j*step.y),(int)(step.x),(int)(step.y)});
+		for(float i = 0;i<cell.y;i++){
+			for(float j = 0;j<cell.x;j++){
+				a->add_frame({(int)(j*step.x),(int)(i*step.y),(int)(step.x),(int)(step.y)});
 			}
 		}
 

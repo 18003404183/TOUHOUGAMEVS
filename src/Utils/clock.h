@@ -4,14 +4,14 @@
 
 class Clock {
 public:
-    // 构造：默认 1000 ms，非一次性，repeat=-1 表示无限重复，未激活
+    // 构造：默认 1 s，非一次性，repeat=-1 表示无限重复，未激活
     Clock()
-        : max_time(1000), one_shoot(false), repeat_time(-1), call_back(nullptr), current_time(0), is_available_(1) {}
+        : max_time(1), one_shoot(false), repeat_time(-1), call_back(nullptr), current_time(0), is_available_(1) {}
     ~Clock() = default;
 
-    // 设置/获取最大时间（毫秒）
-    void set_max_time(int ms) { max_time = (ms > 0 ? ms : 0); }
-    int get_max_time() const { return max_time; }
+    // 设置/获取最大时间（秒）
+    void set_max_time(float s) { max_time = (s > 0 ? s : 0); }
+    float get_max_time() const { return max_time; }
 
     // 是否一次触发
     void set_one_shoot(bool v) { one_shoot = v; }
@@ -33,14 +33,14 @@ public:
 
     // 查询
     bool available() const { return is_available_ != 0; }
-    int get_current_ime() const { return current_time; }
-    int get_remaining_time() const { int rem = max_time - current_time; return (rem > 0 ? rem : 0); }
+    float get_current_ime() const { return current_time; }
+    float get_remaining_time() const { float rem = max_time - current_time; return (rem > 0 ? rem : 0); }
 
     // 减少时间（等同于 advance）
-    void reduce(int ms) { update(ms); }
+    void reduce(float s) { update(s); }
 
     // 更新闹钟（传入增量毫秒）
-    void update(int delta_ms) {
+    void update(float delta_ms) {
         if (!available() || max_time <= 0 || delta_ms <= 0) return;
         current_time += delta_ms;
 
@@ -66,8 +66,8 @@ public:
     }
 
 private:
-    // 最大时间（毫秒）
-    int max_time;
+    // 最大时间（秒）
+    float max_time;
     // 是否一次性触发
     bool one_shoot;
     // 重复次数（-1 表示无限）
@@ -75,7 +75,7 @@ private:
     // 回调
     std::function<void()> call_back;
     // 当前累积时间（毫秒）
-    int current_time;
+    float current_time;
     // 激活标志（0/非0）
     int is_available_;
 };
