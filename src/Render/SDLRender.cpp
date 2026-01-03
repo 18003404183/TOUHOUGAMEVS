@@ -75,6 +75,40 @@ void SDLRender::draw_texture(
 
 }
 
+void SDLRender::draw_texture(Texture *texture, const glm::vec2 &pos, const glm::vec2 &scale, const glm::vec2 &wh, const SDL_Rect& cell, double rotation, unsigned char alpha)
+{
+    if(!texture){
+        std::cerr << "绘制内容为空" << std::endl;
+        return;
+    }
+    float finalW = wh.x * scale.x;
+    float finalH = wh.y * scale.y;
+
+    float dstRectx = pos.x - (finalW / 2.0f); 
+    float dstRecty = pos.y - (finalH / 2.0f);
+
+    SDL_FRect dst;
+    dst.x = dstRectx;
+    dst.y = dstRecty;
+    dst.w = finalW;
+    dst.h = finalH;
+    //{image.get_pos().x,image.get_pos().y,(image.get_wh().x*image.get_scale().x),(image.get_wh().y*image.get_scale().y)};
+    SDL_FPoint center;
+    center.x = pos.x;
+    center.y = pos.y;
+
+
+    SDL_RenderCopyExF(
+        this->renderer,
+        texture->get_data(),
+        &cell,
+        &dst,
+        rotation,
+        &center,
+        SDL_RendererFlip::SDL_FLIP_NONE
+    );
+}
+
 void SDLRender::draw_text(std::string text, int x, int y){
     // Minimal placeholder: text rendering not implemented (requires SDL_ttf)
     (void)text; (void)x; (void)y;

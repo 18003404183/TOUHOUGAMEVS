@@ -3,6 +3,7 @@
 #include"IRenderable.h"
 #include"IUpdateable.h"
 #include"Image.h"
+#include"Atlas.h"
 #include"GameContext.h"
 
 class Player : public IEntity, public IRenderable, public IUpdateable
@@ -42,11 +43,13 @@ public:
 	virtual void set_alive(bool alive);
 	virtual void set_hp(int hp);
 	virtual int get_hp() const;
+	virtual void set_atlas(Atlas* atlas);
 
 
 private:
 	bool alive;
 	int hp;
 	Image player_image;
+	Atlas* player_atlas;
 };
 
