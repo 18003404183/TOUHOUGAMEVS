@@ -1,6 +1,0 @@
-[submodule "3rd_party/SDL"]
-	path = 3rd_party/SDL
-	url = https://github.com/libsdl-org/SDL.git
-[submodule "3rd_party/SDL_image"]
-	path = 3rd_party/SDL_image
-	url = https://github.com/libsdl-org/SDL_image.git
