@@ -29,7 +29,7 @@ public:
 	bool loadScene(SceneType type);
 
 	//?????? ???delete??????????
-	void clearSceneResources();
+	void clearSceneResources();//记得删除对应资源 而不只是将map置空
 	void clearAllResources();
 
 

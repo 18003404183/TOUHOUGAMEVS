@@ -7,3 +7,4 @@ latex/
 /.vs
 /CMakePresets.json
 /CMakeUserPresets.json
+/resources
