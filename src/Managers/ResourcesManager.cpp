@@ -23,9 +23,9 @@ bool ResourcesManager::loadScene(SceneType type){
 
 	if(type == SceneType::MainMenu){
 		this->load_texture("resources\\2.png");
-		this->load_atlas("resources\\3.png");
-		Atlas* a = this->get_atlas("resources\\3.png");
-		glm::vec2 cell = {10,10};
+		this->load_atlas("resources\\6.png");
+		Atlas* a = this->get_atlas("resources\\6.png");
+		glm::vec2 cell = {11,5};
 		glm::vec2 step = {a->get_texture()->width()/cell.x,a->get_texture()->height()/cell.y};
 		for(float i = 0;i<cell.y;i++){
 			for(float j = 0;j<cell.x;j++){

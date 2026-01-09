@@ -59,7 +59,7 @@ void MainScene::on_enter()
 	scale.y = 1;
 
 	Image player_image = Image(v,pos,scale,0,255);
-	Atlas* player_atlas = ResourcesManager::getInstance()->get_atlas("resources\\3.png");
+	Atlas* player_atlas = ResourcesManager::getInstance()->get_atlas("resources\\6.png");
 
 	Context::Instances()->set_player_context(pos,{0,0},true,true,100);
 	PlayerContext pc = Context::Instances()->get_player_context();
