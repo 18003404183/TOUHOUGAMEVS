@@ -29,6 +29,11 @@ public:
 		this->alive = pc.is_alive;
 	}
 
+	Player(const Player& other){
+
+	}
+
+
 	void update(float deltaTime) override;
 	void render(SDLRender& renderer) const override;
 

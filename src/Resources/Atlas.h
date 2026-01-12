@@ -14,8 +14,18 @@ public:
         this->wh = {this->texture->width(),this->texture->height()};
     }
 
+    Atlas(Texture* texture,glm::vec2 cell){
+        this->texture = texture;
+        glm::vec2 step = {this->get_texture()->width()/cell.x,this->get_texture()->height()/cell.y};
+		for(float i = 1;i<2;i++){
+			for(float j = 0;j<cell.x;j++){
+				this->add_frame({(int)(j*step.x),(int)(i*step.y),(int)(step.x),(int)(step.y)});
+			}
+		}
+    }
+
     ~Atlas(){
-        delete this->texture;
+        //delete this->texture;
     }
 
     //这里需要按照顺序加入图片

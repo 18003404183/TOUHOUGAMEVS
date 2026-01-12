@@ -42,6 +42,7 @@ public:
 
 	void load_atlas(const std::string path);
 	void load_atlas(const std::string path,std::string name);
+	void load_atlas(const std::string path,glm::vec2 cell);
 	Atlas* get_atlas(std::string name);
 
 	void set_renderer(SDLRender* renderer);

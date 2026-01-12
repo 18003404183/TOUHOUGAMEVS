@@ -1,4 +1,4 @@
-#pragma once 
+#pragma once
 
 #include"clock.h"
 #include"Atlas.h"
@@ -25,6 +25,8 @@ private:
     glm::vec2 scale;
     //渲染时在屏幕上的宽高
     glm::vec2 wh;
+
+
 
 public:
     Animation() = default;
@@ -90,8 +92,12 @@ public:
     void update(float delta) override{
 
         this->clock.update(delta);
+        if(clock.is_triggrted()){
+           this->current_index = (this->current_index+1)%(this->atlas->get_max_index());            
+        }
 
     }
+
     void render(SDLRender& renderer,glm::vec2 pos) const{
 
         if(!this->atlas){ 
@@ -101,7 +107,6 @@ public:
         renderer.draw_texture(this->atlas->get_texture(),pos,this->scale,{this->atlas->get_frame(current_index).w,this->atlas->get_frame(current_index).h},this->atlas->get_frame(current_index),0,255);
 
     }
-
 
     ~Animation(){}
 

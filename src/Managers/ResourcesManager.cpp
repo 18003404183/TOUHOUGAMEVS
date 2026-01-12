@@ -20,20 +20,15 @@ bool ResourcesManager::loadScene(std::string path, std::string file_type)
 }
 
 bool ResourcesManager::loadScene(SceneType type){
-
+	uint64_t time = SDL_GetTicks64();
 	if(type == SceneType::MainMenu){
 		this->load_texture("resources\\2.png");
-		this->load_atlas("resources\\6.png");
-		Atlas* a = this->get_atlas("resources\\6.png");
-		glm::vec2 cell = {11,5};
-		glm::vec2 step = {a->get_texture()->width()/cell.x,a->get_texture()->height()/cell.y};
-		for(float i = 0;i<cell.y;i++){
-			for(float j = 0;j<cell.x;j++){
-				a->add_frame({(int)(j*step.x),(int)(i*step.y),(int)(step.x),(int)(step.y)});
-			}
-		}
-
+		this->load_atlas("resources\\6.png",glm::vec2{11,5});
 	}
+
+	uint64_t end = SDL_GetTicks64();
+
+	std::cout<<"加载资源时间"<<end-time<<std::endl;
 
 	return true;
 }
@@ -69,6 +64,14 @@ void ResourcesManager::load_atlas(const std::string path, std::string name)
 	t->load(path,this->renderer->get_renderer());
 	Atlas* a = new Atlas(t);
 	this->Scene_Atlas[name] = a;
+}
+
+void ResourcesManager::load_atlas(const std::string path,glm::vec2 cell)
+{
+	Texture* t = new Texture;
+	t->load(path,this->renderer->get_renderer());
+	Atlas* a = new Atlas(t,cell);
+	this->Scene_Atlas[path] = a;
 }
 
 Atlas *ResourcesManager::get_atlas(std::string name)

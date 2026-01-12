@@ -31,7 +31,7 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 add_subdirectory(${LIB_PATH}/SDL)
 add_subdirectory(${LIB_PATH}/SDL_image)
 
-file(GLOB_RECURSE SOURCE_FILES 
+file(GLOB_RECURSE SOURCE_FILES
     "${SRC_PATH}/*.cpp"
     "${SRC_PATH}/*.c"
 )
@@ -40,7 +40,7 @@ file(GLOB_RECURSE SOURCE_FILES
 file(GLOB_RECURSE HEADER_FILES
     "${SRC_PATH}/*.h"
 )
- 
+
 
 include_directories(
     ${SRC_PATH}
@@ -60,13 +60,15 @@ include_directories(
     ${LIB_PATH}/glm
 )
 
+list(FILTER SOURCE_FILES EXCLUDE REGEX ".*EasyX.*")
+
 link_directories(
     ${LIB_PATH}/EasyX/lib/VC2015/x64
 )
 
 add_executable(main ${SOURCE_FILES} ${HEADER_FILES})
 
-target_link_libraries(main PRIVATE 
+target_link_libraries(main PRIVATE
     EasyXa.lib
     SDL2_image::SDL2_image-static
     )

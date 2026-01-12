@@ -6,7 +6,7 @@ class Clock {
 public:
     // 构造：默认 1 s，非一次性，repeat=-1 表示无限重复，未激活
     Clock()
-        : max_time(1), one_shoot(false), repeat_time(-1), call_back(nullptr), current_time(0), is_available_(1) {}
+        : max_time(1), one_shoot(false), repeat_time(-1), call_back(nullptr), current_time(0), is_available_(1),is_triggrted_(false) {}
     ~Clock() = default;
 
     // 设置/获取最大时间（秒）
@@ -36,6 +36,11 @@ public:
     float get_current_ime() const { return current_time; }
     float get_remaining_time() const { float rem = max_time - current_time; return (rem > 0 ? rem : 0); }
 
+    bool is_triggrted(){
+
+        return this->is_triggrted_;
+    }
+
     // 减少时间（等同于 advance）
     void reduce(float s) { update(s); }
 
@@ -46,6 +51,7 @@ public:
 
         // 处理可能跨越多个周期的情况
         while (current_time >= max_time && available()) {
+            this->is_triggrted_ = true;
             if (call_back){
                 call_back();
                 //std::cout<<"回调函数调用11111"<<std::endl;
@@ -53,6 +59,7 @@ public:
 
             if (one_shoot) {
                 is_available_ = 0;
+                is_triggrted_ = false;
                 break;
             }
 
@@ -62,7 +69,9 @@ public:
             }
 
             current_time -= max_time;
+            this->is_triggrted_ = false;
         }
+
     }
 
 private:
@@ -78,4 +87,7 @@ private:
     float current_time;
     // 激活标志（0/非0）
     int is_available_;
+
+    //当前闹钟是否可触发 用来方便轮询
+    bool is_triggrted_;
 };
