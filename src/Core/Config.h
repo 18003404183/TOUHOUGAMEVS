@@ -1,3 +1,4 @@
+//负责存放一些游戏配置
 #pragma once
 
 #define GAME_TPS 60
