@@ -5,6 +5,7 @@
 #include"Image.h"
 #include"Animation.h"
 #include"GameContext.h"
+#include"Collider.h"
 
 class Player : public IEntity, public IRenderable, public IUpdateable
 {
@@ -33,6 +34,10 @@ public:
 
 	}
 
+	Player& operator=(const Player& other){
+
+	}
+
 
 	void update(float deltaTime) override;
 	void render(SDLRender& renderer) const override;
@@ -51,7 +56,10 @@ public:
 	//virtual void set_atlas(Atlas* atlas);
 	virtual void set_animation(Animation animation);
 	virtual Animation& get_animation();
-
+	virtual const Shape* get_shape() const;
+	virtual void set_shape(Shape* shape);
+	//碰撞后执行的逻辑
+	void on_collision();
 
 private:
 
@@ -59,5 +67,7 @@ private:
 	int hp;
 	Image player_image;
 	Animation player_animation;
+	Shape* shape;
+
 };
 

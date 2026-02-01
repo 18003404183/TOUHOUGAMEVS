@@ -2,6 +2,7 @@
 #include"EnemyType.h"
 #include"Enemy.h"
 
+
 class EnemyBuilder
 {
 public:
@@ -14,5 +15,9 @@ private:
 	glm::vec2 position;
 	glm::vec2 velocity;
 	bool active;
+
+	Shape* shape;
+	Image image;
+	
 };
 

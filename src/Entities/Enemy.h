@@ -3,7 +3,7 @@
 #include "IUpdateable.h"
 #include "IRenderable.h"
 #include "Image.h"
-
+#include "Collider.h"
 
 class Enemy :
     public IEntity,
@@ -32,9 +32,18 @@ public:
 	virtual bool isAlive() const;
 	virtual void setAlive(bool alive);
 
+	void set_image(Image& image);
+	Image& get_image();
+
+	void set_shape(Shape* shape);
+	const Shape* get_shape() const;
+
+	void on_collision();
+
 private:
 	bool is_alive;
 	float hp;
 	Image image;
+	Shape* shape;
 };
 

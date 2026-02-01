@@ -1,4 +1,3 @@
-// IRenderable IUpdateable IEntity 继承以下接口
 // 不用继承接口 防止多余开销
 class Danmaku{
 public:
@@ -38,6 +37,9 @@ private:
 
 // 附加数据 使用Vector<float> 
 
-//  
+// 是否active(比如是否已经碰撞 不active的弹幕不会更新与进行碰撞检测)
+
+// 
+
 
 };

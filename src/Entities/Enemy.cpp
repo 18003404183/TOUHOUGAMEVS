@@ -3,12 +3,14 @@
 
 void Enemy::update(float deltaTime)
 {
+	this->position += this->velocity;
 	std::cout << "Enemy::update called with deltaTime: " << deltaTime << std::endl;
 }
 
 void Enemy::render(SDLRender& renderer) const
 {
 	std::cout << "Enemy::render called" << std::endl;
+	this->image.render(renderer,this->position);
 }
 
 bool Enemy::isActive() const
@@ -64,4 +66,24 @@ bool Enemy::isAlive() const
 void Enemy::setAlive(bool alive)
 {
 	this->is_alive = alive;
+}
+
+void Enemy::set_shape(Shape* shape){
+	this->shape = shape;
+}
+
+const Shape* Enemy::get_shape() const{
+	return this->shape;
+}
+
+void Enemy::on_collision(){
+	std::cout<<"敌人发生碰撞"<<std::endl;
+}
+
+void Enemy::set_image(Image& image){
+	this->image = image;
+}
+
+Image& Enemy::get_image(){
+	return this->image;
 }

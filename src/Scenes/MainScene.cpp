@@ -105,6 +105,10 @@ void MainScene::on_input() {
     SceneManager::getInstance()->switchScene(SceneType::EndMenu);
   if (IInput::get_key(KeyType::RIGHT)->get_keydown())
     this->player->set_velocity({10, 0});
-  if (IInput::get_key(KeyType::RIGHT)->get_keydown())
-    this->player->set_velocity({10, 0});
+  if (IInput::get_key(KeyType::LEFT)->get_keydown())
+    this->player->set_velocity({-10,0});
+  if (IInput::get_key(KeyType::DOWN)->get_keydown())
+    this->player->set_velocity({0,10});
+  if (IInput::get_key(KeyType::UP)->get_keydown())
+    this->player->set_velocity({0,-10});
 }

@@ -80,3 +80,15 @@ Animation& Player::get_animation()
 {
     return this->player_animation;
 }
+
+const Shape* Player::get_shape() const{
+	return this->shape;
+}
+
+void Player::set_shape(Shape* shape){
+	this->shape = shape;
+}
+
+void Player::on_collision(){
+	std::cout<<"玩家发生碰撞"<<std::endl;
+}

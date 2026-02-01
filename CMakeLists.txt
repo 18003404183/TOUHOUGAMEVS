@@ -56,6 +56,7 @@ include_directories(
     ${SRC_PATH}/Scenes
     ${SRC_PATH}/Scripting
     ${SRC_PATH}/Utils
+    ${SRC_PATH}/Physical
     ${LIB_PATH}/EasyX/include
     ${LIB_PATH}/glm
 )

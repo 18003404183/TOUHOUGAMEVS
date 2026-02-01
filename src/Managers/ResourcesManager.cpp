@@ -23,6 +23,8 @@ bool ResourcesManager::loadScene(SceneType type){
 	uint64_t time = SDL_GetTicks64();
 	if(type == SceneType::MainMenu){
 		this->load_texture("resources\\2.png");
+		this->load_texture("resources\\4.png");
+		this->load_texture("resources\\3.png");
 		this->load_atlas("resources\\6.png",glm::vec2{11,5});
 	}
 
