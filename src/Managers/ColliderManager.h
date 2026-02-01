@@ -9,6 +9,8 @@ using collision_func = std::function<void()>;
 
 class ColliderManager{
 public:
+    std::vector<Player*> player_collider_list;
+    std::vector<Enemy*> enemy_collider_list;
 
     static ColliderManager* get_instance();
     //检测碰撞从所有队列中
@@ -22,8 +24,7 @@ public:
 private:
     ColliderManager() = default;
     static ColliderManager* collidermanager;
-    std::vector<Player*> player_collider_list;
-    std::vector<Enemy*> enemy_collider_list;
+
     std::vector<Shape*> shape_list;
     std::unordered_map<std::string,int> shape_id_map;
     std::unordered_map<std::string,int> func_id_map;

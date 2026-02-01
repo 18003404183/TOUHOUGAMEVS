@@ -77,7 +77,7 @@ const Shape* Enemy::get_shape() const{
 }
 
 void Enemy::on_collision(){
-	std::cout<<"敌人发生碰撞"<<std::endl;
+	std::cout<<"enemy on collision"<<std::endl;
 }
 
 void Enemy::set_image(Image& image){
@@ -87,3 +87,12 @@ void Enemy::set_image(Image& image){
 Image& Enemy::get_image(){
 	return this->image;
 }
+
+bool Enemy::get_is_collision() const{
+	return this->is_collision;
+}
+
+void Enemy::set_is_collision(bool collision){
+	this->is_collision = collision;
+}
+

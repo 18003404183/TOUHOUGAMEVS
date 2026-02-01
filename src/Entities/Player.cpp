@@ -90,5 +90,13 @@ void Player::set_shape(Shape* shape){
 }
 
 void Player::on_collision(){
-	std::cout<<"玩家发生碰撞"<<std::endl;
+	std::cout<<"player on collision"<<std::endl;
+}
+
+bool Player::get_is_collision() const{
+	return this->is_collision;
+}
+
+void Player::set_is_collision(bool collision){
+	this->is_collision = collision;
 }

@@ -61,6 +61,10 @@ public:
 	//碰撞后执行的逻辑
 	void on_collision();
 
+	bool get_is_collision() const;
+	void set_is_collision(bool collision);
+
+
 private:
 
 	bool alive;
@@ -68,6 +72,6 @@ private:
 	Image player_image;
 	Animation player_animation;
 	Shape* shape;
-
+	bool is_collision = false;
 };
 

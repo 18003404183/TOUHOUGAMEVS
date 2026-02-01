@@ -10,7 +10,7 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		this->is_alive = true;
 		this->position = { 0,0 };
 		this->velocity = { 10,0 };
-		this->shape = new CircleShape(5);
+		this->shape = new CircleShape(500);
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\2.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;
@@ -22,7 +22,7 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		this->is_alive = true;
 		this->position = { 10,0 };
 		this->velocity = { 0,0 };
-		this->shape = new CircleShape(10);
+		this->shape = new CircleShape(1000);
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\3.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;
@@ -34,7 +34,7 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		this->is_alive = true;
 		this->position = { 20,0 };
 		this->velocity = { 0,0 };
-		this->shape = new CircleShape(15);
+		this->shape = new CircleShape(1500);
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\4.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;

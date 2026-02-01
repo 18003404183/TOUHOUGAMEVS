@@ -40,10 +40,16 @@ public:
 
 	void on_collision();
 
+	bool get_is_collision() const;
+	void set_is_collision(bool collision);
+
+	
+
 private:
 	bool is_alive;
 	float hp;
 	Image image;
 	Shape* shape;
+	bool is_collision = false;
 };
 
