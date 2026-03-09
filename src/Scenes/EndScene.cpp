@@ -20,6 +20,7 @@ void EndScene::on_enter() {
 	this->renderables.push_back(enemybuilder.create());
 	this->updateables.push_back(enemybuilder.create());
 
+
 	enemybuilder.create_enemy(EnemyType::common);
 	this->renderables.push_back(enemybuilder.create());
 	this->updateables.push_back(enemybuilder.create());

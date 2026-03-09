@@ -1,33 +1,82 @@
 #pragma once
-#include"includes.h"
 
-//碰撞实现思路
-//在这里写一些struct 来定义形状的各种数学数据
-//写一个算法库 里面的函数专门负责判断是否碰撞
-//写一个碰撞管理器 用于检测 并执行 实体间的碰撞
-//对于子弹等大量出现的实体 写一个形状枚举和碰撞后执行逻辑的枚举
-// 在ColliderManager里使用 vector<shape*> vector<function*> 来存储 需要的时候访问
+#include"IEntity.h"
+#include <functional>
 
-enum class ShapeType {
-    Circle,
-    Box
+enum class ShapeType{
+    circle,
+    rect
 };
 
-
-struct Shape {
-    ShapeType type;
-    Shape(ShapeType t) : type(t) {}
-    virtual ~Shape() = default;
+class Shape{
+public:
+    Shape(){};
+    Shape(ShapeType shape_type):shape_type(shape_type){};
+    virtual void set_shape(ShapeType shapetype){this->shape_type = shape_type;}
+    virtual ShapeType get_shape(){return this->shape_type;}
+    virtual Shape* clone() = 0;
+    ~Shape() = default;
+protected:
+    ShapeType shape_type;
 };
 
-// 圆形数据
-struct CircleShape : public Shape {
-    float radius;
-    CircleShape(float r) : Shape(ShapeType::Circle), radius(r) {}
+class Circle : public Shape{
+public:
+
+    Circle(){
+        this->shape_type = ShapeType::circle;
+    }
+    Circle(float r){
+        this->r = r;
+        this->shape_type = ShapeType::circle;
+    }
+    float get_r(){
+        return this->r;
+    }
+    void set_r(float r){
+        this->r = r;
+    }
+
+    Shape* clone(){
+        return new Circle(*this);
+    }
+
+protected:
+    float r;
 };
 
-// 矩形数据
-struct BoxShape : public Shape {
-    float width, height;
-    BoxShape(float w, float h) : Shape(ShapeType::Box), width(w), height(h) {}
+class Rectangle : public Shape{
+public:
+    Rectangle(){
+        this->shape_type = ShapeType::rect;
+    }
+
+    Shape* clone(){
+        return new Rectangle(*this);
+    }
+};
+
+class Collider{
+public:
+    Collider() = delete;
+    Collider(Shape* shape,int layer,std::function<void(Collider* other)> func,IEntity* entity);
+    Collider(Shape* shape,int layer,IEntity* entity);
+    Collider(const Collider& other);
+    Collider operator=(const Collider& other);
+    void set_layer(int layer);
+    void set_on_collid(std::function<void(Collider* other)> func);
+    void run_on_collid(Collider* collider);
+    void set_shape(Shape* shape);
+    int get_layer();
+    Shape* get_shape();
+    void set_owner(IEntity* entity);
+    IEntity* get_owner();
+    ~Collider();
+private:
+    int layer;
+    std::function<void(Collider* other)> on_collid;
+    Shape* shape;
+
+    //考虑加上持有者的信息 void* 但是这么做依赖于每个entity都有记录的自己的type
+    IEntity* owner;
 };

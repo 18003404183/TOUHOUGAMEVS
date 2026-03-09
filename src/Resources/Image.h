@@ -11,17 +11,17 @@ class Image :
 	public IRenderable
 {
 public:
-	Image() = default;
+	Image() = default; 
 	Image(Texture* image):data(image){};
 	~Image() = default;
 
-	// È«ÊôÐÔ¹¹Ôìº¯Êý
+	// È«ï¿½ï¿½ï¿½Ô¹ï¿½ï¿½ìº¯ï¿½ï¿½
 	Image(Texture* data,glm::vec2 pos,glm::vec2 scale,float rotation,unsigned char alpha):
 	data(data),pos(pos),scale(scale),rotation(rotation),alpha(alpha)
 	{
 		this->wh = this->get_wh();
 	}
-	//get set ·½·¨
+	//get set ï¿½ï¿½ï¿½ï¿½
 	// data
 	//inline Texture* get_data() { return data; }
 	inline const Texture* get_data() const { return data; }
@@ -43,7 +43,7 @@ public:
 	inline unsigned char get_alpha() const { return alpha; }
 	inline void set_alpha(unsigned char a) { alpha = a; }
 
-	//µÃµ½Í¼Æ¬µÄ³¤¶È¿í¶È
+	//ï¿½Ãµï¿½Í¼Æ¬ï¿½Ä³ï¿½ï¿½È¿ï¿½ï¿½ï¿½
 	inline glm::vec2 get_wh() const {
 		if(!data) return {0,0};
 		glm::vec2 a;
@@ -52,24 +52,24 @@ public:
 		return a;
 	}
 
-	//ÊµÏÖ½Ó¿Ú
+	//Êµï¿½Ö½Ó¿ï¿½
 	virtual void render(SDLRender& renderer) const override;
 	virtual void render(SDLRender& renderer,glm::vec2 pos) const;
 
 	//virtual void update(float deltaTime);
 
 private:
-	Texture* data;//ÏíÔª
+	Texture* data;//ï¿½ï¿½Ôª
 
-	//³¤¿í
+	//ï¿½ï¿½ï¿½ï¿½
 	glm::vec2 wh;
-	//Î»ÖÃfloat ÊÇÍ¼ÏñµÄÖÐÐÄµã
+	//Î»ï¿½ï¿½float ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½
 	glm::vec2 pos;
-	//Ëõ·Å±ÈÀý float
+	//ï¿½ï¿½ï¿½Å±ï¿½ï¿½ï¿½ float
 	glm::vec2 scale;
-	//Ðý×ª½Ç¶È float
+	//ï¿½ï¿½×ªï¿½Ç¶ï¿½ float
 	double rotation;
-	//Í¸Ã÷¶È  unsigned char
+	//Í¸ï¿½ï¿½ï¿½ï¿½  unsigned char
 	unsigned char alpha = 255;
 };
 

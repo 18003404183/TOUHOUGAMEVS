@@ -11,9 +11,12 @@ class Enemy :
 	public IRenderable
 {
 public:
-	Enemy() = default;
+	Enemy(){
+		this->entity_type = EntityType::Enemy;
+	};
 	virtual ~Enemy() override = default;
 
+	Collider* collider;
 
 	void update(float deltaTime) override;
 	void render(SDLRender& renderer) const override;

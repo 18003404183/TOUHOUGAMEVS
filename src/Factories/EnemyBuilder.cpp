@@ -1,5 +1,6 @@
 #include "EnemyBuilder.h"
 #include"ResourcesManager.h"
+#include"ColliderManager.h"
 
 void EnemyBuilder::create_enemy(EnemyType enemytype)
 {
@@ -10,22 +11,24 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		this->is_alive = true;
 		this->position = { 0,0 };
 		this->velocity = { 10,0 };
-		this->shape = new CircleShape(500);
+		// this->shape = new CircleShape(500);
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\2.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
 	}
 	else if (enemytype == EnemyType::common) {
 		std::cout << "Creating common enemy" << std::endl;
 		this->active = true;
-		this->hp = 20;
+		this->hp = 20; 
 		this->is_alive = true;
 		this->position = { 10,0 };
 		this->velocity = { 0,0 };
-		this->shape = new CircleShape(1000);
+		// this->shape = new CircleShape(1000);
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\3.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
 	}
 	else if (enemytype == EnemyType::large) {
 		std::cout << "Creating large enemy" << std::endl;
@@ -34,10 +37,12 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		this->is_alive = true;
 		this->position = { 20,0 };
 		this->velocity = { 0,0 };
-		this->shape = new CircleShape(1500);
+		// this->shape = new CircleShape(1500);
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\4.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
+
 	}
 }
 
@@ -51,7 +56,12 @@ Enemy* EnemyBuilder::create()
 	enemy->set_velocity(this->velocity);
 	enemy->set_shape(this->shape);
 	enemy->set_image(this->image);
-
+	enemy->collider = collider;
+	enemy->collider->set_owner(enemy);
+	enemy->collider->set_on_collid([e = enemy](Collider* other){
+		e->setAlive(false);
+		std::cout<<"wwv"<<std::endl;
+	});
 	return enemy;
 
 }

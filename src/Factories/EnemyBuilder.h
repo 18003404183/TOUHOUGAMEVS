@@ -16,6 +16,8 @@ private:
 	glm::vec2 velocity;
 	bool active;
 
+	Collider* collider;
+
 	Shape* shape;
 	Image image;
 	

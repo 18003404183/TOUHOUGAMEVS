@@ -9,8 +9,10 @@ Game::Game()
 Game::~Game()
 {
 	std::cout << "Game destroyed" << std::endl;
-}
+} 
 
+
+ 
 bool Game::init_game()
 {
 	

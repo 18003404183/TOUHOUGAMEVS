@@ -33,7 +33,7 @@ public:
         free_data(); 
         data = other.data; 
         w = other.w; 
-        h = other.h; 
+        h = other.h;
         other.data = nullptr; 
         other.w = other.h = 0;
     } 

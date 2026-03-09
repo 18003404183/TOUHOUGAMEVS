@@ -29,10 +29,9 @@ bool ResourcesManager::loadScene(SceneType type){
 	}
 
 	uint64_t end = SDL_GetTicks64();
-
 	std::cout<<"加载资源时间"<<end-time<<std::endl;
 
-	return true;
+	return true; 
 }
 
 void ResourcesManager::load_texture(const std::string& path){

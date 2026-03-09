@@ -81,22 +81,12 @@ Animation& Player::get_animation()
     return this->player_animation;
 }
 
-const Shape* Player::get_shape() const{
-	return this->shape;
+void Player::set_collider(Collider* collider)
+{
+	this->collider = collider;
 }
 
-void Player::set_shape(Shape* shape){
-	this->shape = shape;
-}
-
-void Player::on_collision(){
-	std::cout<<"player on collision"<<std::endl;
-}
-
-bool Player::get_is_collision() const{
-	return this->is_collision;
-}
-
-void Player::set_is_collision(bool collision){
-	this->is_collision = collision;
+Collider *Player::get_collider()
+{
+    return this->collider;
 }

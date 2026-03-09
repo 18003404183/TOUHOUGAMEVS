@@ -1,6 +1,6 @@
 #pragma once
 #include"includes.h"
-
+#include"Collider.h"
 //如果一个字段是全局的 那么字段包含的所有数据也应该是全局的
 
 struct PlayerContext
@@ -10,6 +10,7 @@ struct PlayerContext
 	bool active = true;
     bool is_alive;
 	int hp;
+    //Collider collider;
 	//Image player_image;
 };
 
@@ -46,7 +47,7 @@ public:
     PlayerContext get_player_context(){
         return pc;
     }
-
+    
     Context(const Context& context) = delete;
     Context& operator=(const Context& b) = delete;
 
