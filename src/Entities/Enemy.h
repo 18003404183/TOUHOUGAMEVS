@@ -4,7 +4,7 @@
 #include "IRenderable.h"
 #include "Image.h"
 #include "Collider.h"
-
+#include "Animation.h"
 class Enemy :
     public IEntity,
     public IUpdateable,
@@ -46,7 +46,9 @@ public:
 	bool get_is_collision() const;
 	void set_is_collision(bool collision);
 
-	
+	void set_animation(const Animation& animation){
+		this->enemy_animation = animation;
+	}
 
 private:
 	bool is_alive;
@@ -54,5 +56,6 @@ private:
 	Image image;
 	Shape* shape;
 	bool is_collision = false;
+	Animation enemy_animation;
 };
 

@@ -46,6 +46,7 @@ void Collider::set_on_collid(std::function<void(Collider* other)> func)
 
 void Collider::run_on_collid(Collider *collider)
 {
+    if(!this->on_collid) return;
     this->on_collid(collider);
 }
 

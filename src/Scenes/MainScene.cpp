@@ -69,7 +69,7 @@ void MainScene::on_enter() {
   // player->set_atlas(player_atlas);
   Animation animation(player_atlas, 0.1);
 
-  Collider* player_collider = ColliderManager::get_instance()->create_collider(new Circle(10),1,player);
+  Collider* player_collider = ColliderManager::get_instance()->create_collider(new Circle(10),0,player);
 
   this->renderables.push_back(player);
   this->updateables.push_back(player);
@@ -100,8 +100,8 @@ void MainScene::on_update(float deltatime) {
   IInput::update();
   // ColliderManager::get_instance()->check_collider();
   // ColliderManager::get_instance()->execute_collider_logic();
-  std::cout << "Updating MainScene: " << deltatime << " seconds elapsed."
-            << std::endl;
+  //std::cout << "Updating MainScene: " << deltatime << " seconds elapsed."
+            //<< std::endl;
   ColliderManager::get_instance()->check_and_resolve_collisions();
 }
 
@@ -115,7 +115,7 @@ void MainScene::on_render(SDLRender &renderer) {
     a->render(renderer);
   }
   // render->draw_text("MainScene",10,10);
-  std::cout << "Rendering MainScene" << std::endl;
+  //std::cout << "Rendering MainScene" << std::endl;
 }
 
 void MainScene::on_input() {

@@ -26,6 +26,7 @@ bool ResourcesManager::loadScene(SceneType type){
 		this->load_texture("resources\\4.png");
 		this->load_texture("resources\\3.png");
 		this->load_atlas("resources\\6.png",glm::vec2{11,5});
+		this->load_atlas("resources\\7.png",glm::vec2{11,5});
 	}
 
 	uint64_t end = SDL_GetTicks64();

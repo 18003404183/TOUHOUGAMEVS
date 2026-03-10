@@ -56,6 +56,8 @@ Enemy* EnemyBuilder::create()
 	enemy->set_velocity(this->velocity);
 	enemy->set_shape(this->shape);
 	enemy->set_image(this->image);
+	Animation animation(ResourcesManager::getInstance()->get_atlas("resources\\7.png"),0.1);
+	enemy->set_animation(animation);
 	enemy->collider = collider;
 	enemy->collider->set_owner(enemy);
 	enemy->collider->set_on_collid([e = enemy](Collider* other){

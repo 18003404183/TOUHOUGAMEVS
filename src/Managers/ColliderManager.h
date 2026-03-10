@@ -53,7 +53,7 @@ public:
             for(size_t j = i + 1; j < this->collider_list.size(); ++j){
                 Collider* c1 = this->collider_list[i].get();
                 Collider* c2 = this->collider_list[j].get();//这里裸指针不会删除资源
-
+                if(c1->get_layer() == c2->get_layer()) continue;
                 if(CollisionSolution::CheckCollision(c1,c2)){
                     this->collision_events.push_back({c1,c2});
 

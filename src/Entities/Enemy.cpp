@@ -4,13 +4,15 @@
 void Enemy::update(float deltaTime)
 {
 	this->position += this->velocity;
+	this->enemy_animation.update(deltaTime);
 	std::cout << "Enemy::update called with deltaTime: " << deltaTime << std::endl;
 }
 
 void Enemy::render(SDLRender& renderer) const
 {
 	std::cout << "Enemy::render called" << std::endl;
-	this->image.render(renderer,this->position);
+	//this->image.render(renderer,this->position);
+	this->enemy_animation.render(renderer,this->position);
 }
 
 bool Enemy::isActive() const
