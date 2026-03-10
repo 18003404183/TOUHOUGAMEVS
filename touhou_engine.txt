@@ -1,0 +1,2692 @@
+.\src\main.cpp
+---
+#include"Core/Game.h"
+int main(int argc,char* argv[]) {
+
+	Game game;
+	if(!game.init_game()){
+		return 0;
+	}
+	
+	//game.load_resources();
+	game.start();
+	game.end();
+    
+	return 0;
+}
+
+
+
+---
+.\src\Core\Config.h
+---
+//负责存放一些游戏配置
+#pragma once
+
+#define GAME_TPS 60
+#define LIB_GRAPHIC 0 //0="easyx",1="SDL"
+//#define MAIN_WINDOW_WIDTH 800
+//#define MAIN_WINDOW_HEIGHT 600
+
+const int MAIN_WINDOW_WIDTH = 800;
+const int MAIN_WINDOW_HEIGHT = 600;
+
+---
+.\src\Core\Game.cpp
+---
+#include "Game.h"
+#include "Config.h"
+
+Game::Game()
+{
+	std::cout << "Game created" << std::endl;
+}
+
+Game::~Game()
+{
+	std::cout << "Game destroyed" << std::endl;
+} 
+
+
+ 
+bool Game::init_game()
+{
+	
+	std::cout << "Game initialized" << std::endl;
+	ResourcesManager::getInstance();
+	//EasyxWindow easyx_window;
+	//easyx_window.init();
+	SDLWindows* windows = new SDLWindows;
+	windows->init(MAIN_WINDOW_WIDTH,MAIN_WINDOW_HEIGHT);
+	
+	this->renderer=SDLRender();
+	renderer.init(windows->get_sdl_window());
+	
+	ResourcesManager::getInstance()->set_renderer(&renderer);
+	this->load_resources();
+	SceneManager::getInstance()->loadScene(SceneType::MainMenu);
+
+	Context::Instances()->init();
+	return true;
+}
+
+void Game::load_resources()
+{
+	std::cout << "Resources loaded(Game)" << std::endl;
+	ResourcesManager::getInstance()->loadSceneTotal("1","json");
+	//ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
+}
+
+void Game::start()
+{
+	std::cout << "Game started" << std::endl;
+	SDL_Event event;
+	bool is_running = true;
+	SceneManager* scene_manager = SceneManager::getInstance();
+	Uint64 frameStart = SDL_GetTicks64();
+	Uint64 frameEnd = SDL_GetTicks64();
+    Uint64 frameTime;
+	while (is_running)
+	{
+		//std::cout << "Game_running" << std::endl;
+	
+		
+		float dt = frameEnd - frameStart;
+		frameStart = frameEnd;
+		
+		while(SDL_PollEvent(&event)){
+			if(event.type == SDL_QUIT){
+				is_running = false;
+			}
+			if(!scene_manager->current_scene_null()){
+				//把事件传输给场景处理
+				scene_manager->on_input();
+			}
+		}		
+		scene_manager->on_update(1.0/GAME_TPS);
+		this->renderer.clear();
+		scene_manager->on_render(renderer);
+		this->renderer.present();
+
+		frameTime = SDL_GetTicks() - frameStart;
+		if (1000/GAME_TPS > frameTime) {
+            SDL_Delay(1000/GAME_TPS - frameTime);
+        }
+		frameEnd = SDL_GetTicks64();
+		int frame = Context::Instances()->game_frame++;
+		std::cout<<"current_frame"<<frame<<std::endl;
+	}
+
+}
+
+void Game::end(){
+	//delete this->renderer;
+	return;
+
+}
+
+---
+.\src\Core\Game.h
+---
+#pragma once
+#include "IWindows.h"
+#include "ResourcesManager.h"
+#include "SceneManager.h"
+#include "includes.h"
+// #include"EasyxWindow.h"
+// #include"EasyxRender.h"
+#include "SDLRender.h"
+#include "SDLWindow.h"
+#include <SDL.h>
+
+class Game {
+public:
+  Game();
+  ~Game();
+
+  bool init_game();
+  void load_resources();
+  void start();
+  void end();
+
+private:
+  SDLRender renderer;
+};
+
+
+---
+.\src\Entities\Danmaku.cpp
+---
+
+
+---
+.\src\Entities\Danmaku.h
+---
+// 不用继承接口 防止多余开销
+class Danmaku{
+public:
+    //Danmaku b = new Danmaku(a)
+    //b = a
+    Danmaku() = default;
+
+    Danmaku(const Danmaku& other){
+
+    }
+
+    Danmaku& operator=(const Danmaku& other){
+
+    }
+
+    // 实现update方法
+
+    // 实现renderable方法
+
+    // 实现碰撞体的方法
+
+    //各种get set 方法
+
+    ~Danmaku() = default; 
+
+private:
+
+// 弹幕的坐标 (vector<glm::vec2>) 为了让有些多坐标弹幕能够确定位置(比如激光需要起始坐标与终止坐标)
+    
+// image 负责弹幕的贴图
+
+// 碰撞体接口 负责弹幕的碰撞检测 
+
+// 弹幕的类型
+
+// 运动函数接口
+
+// 附加数据 使用Vector<float> 
+
+// 是否active(比如是否已经碰撞 不active的弹幕不会更新与进行碰撞检测)
+
+// 
+
+
+};
+
+---
+.\src\Entities\Enemy.cpp
+---
+#include "Enemy.h"
+
+
+void Enemy::update(float deltaTime)
+{
+	this->position += this->velocity;
+	this->enemy_animation.update(deltaTime);
+	std::cout << "Enemy::update called with deltaTime: " << deltaTime << std::endl;
+}
+
+void Enemy::render(SDLRender& renderer) const
+{
+	std::cout << "Enemy::render called" << std::endl;
+	//this->image.render(renderer,this->position);
+	this->enemy_animation.render(renderer,this->position);
+}
+
+bool Enemy::isActive() const
+{
+	return this->active;
+}
+
+void Enemy::setActive(bool active)
+{
+	this->active = active;
+}
+
+glm::vec2 Enemy::get_position() const
+{
+	return this->position;
+}
+
+void Enemy::set_position(const glm::vec2& newPosition)
+{
+	this->position = newPosition;
+}
+
+glm::vec2 Enemy::get_velocity() const
+{
+	return this->velocity;
+}
+
+void Enemy::set_velocity(const glm::vec2& newVelocity)
+{
+	this->velocity = newVelocity;
+}
+
+float Enemy::setHp(int hp)
+{
+	return this->hp = hp;
+}
+
+float Enemy::getHp() const
+{
+	return this->hp;
+}
+
+void Enemy::takeDamage(float damage)
+{
+	this->hp -= damage;
+}
+
+bool Enemy::isAlive() const
+{
+	return this->is_alive;
+}
+
+void Enemy::setAlive(bool alive)
+{
+	this->is_alive = alive;
+}
+
+void Enemy::set_shape(Shape* shape){
+	this->shape = shape;
+}
+
+const Shape* Enemy::get_shape() const{
+	return this->shape;
+}
+
+void Enemy::on_collision(){
+	std::cout<<"enemy on collision"<<std::endl;
+}
+
+void Enemy::set_image(Image& image){
+	this->image = image;
+}
+
+Image& Enemy::get_image(){
+	return this->image;
+}
+
+bool Enemy::get_is_collision() const{
+	return this->is_collision;
+}
+
+void Enemy::set_is_collision(bool collision){
+	this->is_collision = collision;
+}
+
+
+
+---
+.\src\Entities\Enemy.h
+---
+#pragma once
+#include "IEntity.h"
+#include "IUpdateable.h"
+#include "IRenderable.h"
+#include "Image.h"
+#include "Collider.h"
+#include "Animation.h"
+class Enemy :
+    public IEntity,
+    public IUpdateable,
+	public IRenderable
+{
+public:
+	Enemy(){
+		this->entity_type = EntityType::Enemy;
+	};
+	virtual ~Enemy() override = default;
+
+	Collider* collider;
+
+	void update(float deltaTime) override;
+	void render(SDLRender& renderer) const override;
+
+	virtual bool isActive() const;
+	virtual void setActive(bool active);
+
+	virtual glm::vec2 get_position() const;
+	virtual void set_position(const glm::vec2& newPosition);
+	virtual glm::vec2 get_velocity() const;
+	virtual void set_velocity(const glm::vec2& newVelocity);
+	virtual float setHp(int hp);
+	virtual float getHp() const;
+	virtual void takeDamage(float damage);
+
+	virtual bool isAlive() const;
+	virtual void setAlive(bool alive);
+
+	void set_image(Image& image);
+	Image& get_image();
+
+	void set_shape(Shape* shape);
+	const Shape* get_shape() const;
+
+	void on_collision();
+
+	bool get_is_collision() const;
+	void set_is_collision(bool collision);
+
+	void set_animation(const Animation& animation){
+		this->enemy_animation = animation;
+	}
+
+private:
+	bool is_alive;
+	float hp;
+	Image image;
+	Shape* shape;
+	bool is_collision = false;
+	Animation enemy_animation;
+};
+
+
+
+---
+.\src\Entities\IEntity.h
+---
+#pragma once
+#include"includes.h"
+
+enum class EntityType{
+	Player,
+	Enemy,
+	Danmaku
+};
+
+class IEntity
+{
+protected:
+	glm::vec2 position{0,0};
+	glm::vec2 velocity{0,0};
+	// 实体是否活跃 不活跃的实体不参与任何运算
+	bool active = true;
+	//也许每个entity都应该持有自己的type? 方便运行时类型转换
+	EntityType entity_type;	
+
+public:
+	virtual bool isActive() const = 0;
+	virtual EntityType get_entity_type() const {return this->entity_type;};
+	virtual ~IEntity() = default;
+	virtual glm::vec2 get_position() const = 0;
+	virtual void set_position(const glm::vec2& newPosition) = 0;
+	virtual glm::vec2 get_velocity() const = 0;
+	virtual void set_velocity(const glm::vec2& newVelocity) = 0;
+
+};
+
+
+
+---
+.\src\Entities\Player.cpp
+---
+#include "Player.h"
+
+void Player::update(float deltaTime)
+{
+	std::cout << "Player::update called with deltaTime: " << deltaTime << std::endl;
+	this->position+=this->velocity*deltaTime;
+	this->player_animation.update(deltaTime);
+	//this->player_image.set_pos(position);
+}
+
+void Player::render(SDLRender& renderer) const
+{
+	std::cout << "Player::render called" << std::endl;
+	//this->player_image.render(renderer,this->position);
+	//renderer.draw_texture(this->player_atlas->get_texture(),this->position,{1,1},{200,200},this->player_atlas->get_frame(Context::Instances()->game_frame%(this->player_atlas->get_max_index())),0,255);
+	this->player_animation.render(renderer,this->position);
+}
+
+bool Player::isActive() const
+{
+	return this->active;
+}
+
+glm::vec2 Player::get_position() const
+{
+	return this->position;
+}
+
+void Player::set_position(const glm::vec2& newPosition)
+{
+	this->position = newPosition;
+}
+
+glm::vec2 Player::get_velocity() const
+{
+	return this->velocity;
+}
+
+void Player::set_velocity(const glm::vec2& newVelocity)
+{
+	this->velocity = newVelocity;
+}
+
+void Player::setImage(Image image){
+	this->player_image = image;
+}
+
+bool Player::is_alive() const
+{
+    return this->alive;
+}
+
+void Player::set_alive(bool alive)
+{
+	this->alive = alive;
+}
+
+void Player::set_hp(int hp)
+{
+	this->hp = hp;
+}
+
+int Player::get_hp() const
+{
+	return this->hp;
+    return 0;
+}
+
+// void Player::set_atlas(Atlas *atlas)
+// {
+// 	this->player_atlas = atlas;
+// }
+
+void Player::set_animation(Animation animation)
+{
+	this->player_animation = animation;
+}
+
+Animation& Player::get_animation()
+{
+    return this->player_animation;
+}
+
+void Player::set_collider(Collider* collider)
+{
+	this->collider = collider;
+}
+
+Collider *Player::get_collider()
+{
+    return this->collider;
+}
+
+
+---
+.\src\Entities\Player.h
+---
+#pragma once
+#include"IEntity.h"
+#include"IRenderable.h"
+#include"IUpdateable.h"
+#include"Image.h"
+#include"Animation.h"
+#include"GameContext.h"
+#include"Collider.h"
+
+class Player : public IEntity, public IRenderable, public IUpdateable
+{
+public:
+	Player() = default;
+	~Player() = default;
+
+	Player(glm::vec2 pos,glm::vec2 v,int hp,const Image& image,Collider* collider):collider(collider){
+		this->position = pos;
+		this->velocity = v;
+		this->active = true;
+		this->hp = 100;
+		this->player_image = image;
+		this->entity_type = EntityType::Player;
+		this->collider->set_on_collid([this](Collider* other){
+			this->alive = false;
+			std::cout << "die" << std::endl; 
+		});
+	}
+
+	Player(glm::vec2 pos,glm::vec2 v,int hp){
+		this->position = pos;
+		this->velocity = v;
+		this->active = true;
+		this->hp = 100;
+		this->entity_type = EntityType::Player;
+	}
+
+	Player(PlayerContext pc){
+		this->active = pc.active;
+		this->hp = pc.hp;
+		this->position = pc.position;
+		//this->player_image = pc.player_image;
+		this->velocity = pc.velocity;
+		this->alive = pc.is_alive;
+	}
+
+	Player(const Player& other) = delete;
+	Player& operator=(const Player& other) = delete;
+
+
+	void update(float deltaTime) override;
+	void render(SDLRender& renderer) const override;
+
+	bool isActive() const;
+
+	glm::vec2 get_position() const;
+	void set_position(const glm::vec2& newPosition);
+	glm::vec2 get_velocity() const;
+	void set_velocity(const glm::vec2& newVelocity);
+	void setImage(Image image);
+	bool is_alive() const;
+	void set_alive(bool alive);
+	void set_hp(int hp);
+	int get_hp() const;
+	//virtual void set_atlas(Atlas* atlas);
+	void set_animation(Animation animation);
+	Animation& get_animation();
+	//virtual const Shape* get_shape() const;
+	//virtual void set_shape(Shape* shape);
+	void set_collider(Collider* collider);
+	Collider* get_collider();
+private:
+	bool alive;
+	int hp;
+	Image player_image;
+	Animation player_animation;
+	//Shape* shape;
+	Collider* collider;
+};
+
+
+
+---
+.\src\Entities\Type\EnemyType.h
+---
+#pragma once
+enum class EnemyType
+{
+	small,
+	common,
+	large
+};
+
+
+---
+.\src\Factories\EnemyBuilder.cpp
+---
+#include "EnemyBuilder.h"
+#include"ResourcesManager.h"
+#include"ColliderManager.h"
+
+void EnemyBuilder::create_enemy(EnemyType enemytype)
+{
+	if (enemytype == EnemyType::small) {
+		std::cout << "Creating small enemy" << std::endl;
+		this->active = true;
+		this->hp = 10;
+		this->is_alive = true;
+		this->position = { 200,200 };
+		this->velocity = { 10,0 };
+		// this->shape = new CircleShape(500);
+		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\2.png");	
+		Image image(t,this->position,{1,1},0,255);
+		this->image = image;
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
+	}
+	else if (enemytype == EnemyType::common) {
+		std::cout << "Creating common enemy" << std::endl;
+		this->active = true;
+		this->hp = 20; 
+		this->is_alive = true;
+		this->position = { 300,0 };
+		this->velocity = { 0,0 };
+		// this->shape = new CircleShape(1000);
+		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\3.png");	
+		Image image(t,this->position,{1,1},0,255);
+		this->image = image;
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
+	}
+	else if (enemytype == EnemyType::large) {
+		std::cout << "Creating large enemy" << std::endl;
+		this->active = true;
+		this->hp = 30;
+		this->is_alive = true;
+		this->position = { 100,0 };
+		this->velocity = { 0,0 };
+		// this->shape = new CircleShape(1500);
+		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\4.png");	
+		Image image(t,this->position,{1,1},0,255);
+		this->image = image;
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
+
+	}
+}
+
+Enemy* EnemyBuilder::create()
+{
+	Enemy* enemy = new Enemy;
+	enemy->setActive(this->active);
+	enemy->setHp(this->hp);
+	enemy->setAlive(this->is_alive);
+	enemy->set_position(this->position);
+	enemy->set_velocity(this->velocity);
+	enemy->set_shape(this->shape);
+	enemy->set_image(this->image);
+	Animation animation(ResourcesManager::getInstance()->get_atlas("resources\\7.png"),0.1);
+	enemy->set_animation(animation);
+	enemy->collider = collider;
+	enemy->collider->set_owner(enemy);
+	enemy->collider->set_on_collid([e = enemy](Collider* other){
+		e->setAlive(false);
+		std::cout<<"wwv"<<std::endl;
+	});
+	return enemy;
+
+}
+
+
+---
+.\src\Factories\EnemyBuilder.h
+---
+#pragma once
+#include"EnemyType.h"
+#include"Enemy.h"
+
+
+class EnemyBuilder
+{
+public:
+	void create_enemy(EnemyType enemytype);
+	Enemy* create();
+
+private:
+	float hp;
+	bool is_alive;
+	glm::vec2 position;
+	glm::vec2 velocity;
+	bool active;
+
+	Collider* collider;
+
+	Shape* shape;
+	Image image;
+	
+};
+
+
+
+---
+.\src\Input\IInput.cpp
+---
+#include "IInput.h"
+
+IInput* IInput::input = nullptr;
+
+IInput::IInput() {
+	for (int i = 0; i < (int)KeyType::_count; i++) {
+		keys[i] = new Key((KeyType)i);
+	}
+}
+IInput* IInput::get() {
+	if (input == nullptr)input = new IInput();
+	return input;
+}
+bool IInput::update() {
+	bool upd = 0;
+	get();
+	for (int i = 0; i < (int)KeyType::_count; i++) {
+		upd = upd || input->keys[i]->update();
+	}
+	return upd;
+}
+Key* IInput::get_key(KeyType k) {
+	return get()->keys[(int)k];
+}
+
+---
+.\src\Input\IInput.h
+---
+#pragma once
+#include "Key.h"
+
+class IInput
+{
+public:
+	static IInput* get();
+	static bool update();
+	static Key* get_key(KeyType k);
+private:
+	IInput();
+	Key* keys[(const int)(KeyType::_count)];
+	static IInput* input;
+};
+
+
+
+---
+.\src\Input\Key.cpp
+---
+#include "Key.h"
+
+
+Key::Key(KeyType key):key_(key){
+	state = 0;
+	state_prev = 0;
+}
+bool Key::update() {
+	state_prev = state;
+	state = (GetAsyncKeyState(Keys[(int)key_]) & 0x8000) != 0;
+	return state_prev != state;
+}
+bool Key::get_state() {
+	return state;
+}
+bool Key::get_keydown() {
+	return (!state_prev) && state;
+}
+bool Key::get_keyup() {
+	return state_prev && (!state);
+}
+
+---
+.\src\Input\Key.h
+---
+#pragma once
+
+#include "KeyType.h"
+#include "includes.h"
+
+class Key
+{
+public:
+	Key(KeyType key);
+	const KeyType key_;
+	bool update();
+	bool get_state();
+	bool get_keydown();
+	bool get_keyup();
+private:
+	bool state;
+	bool state_prev;
+};
+
+
+
+
+
+---
+.\src\Input\KeyType.h
+---
+#pragma once
+#include "includes.h"
+
+
+enum class KeyType
+{
+	UP,
+	DOWN,
+	LEFT,
+	RIGHT,
+	Z,
+	X,
+	C,
+	SHIFT,
+	CTRL,
+	ENTER,
+	_count
+};
+
+const int Keys[] = { VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, 'Z', 'X', 'C', VK_SHIFT, VK_CONTROL, VK_RETURN };
+
+
+
+---
+.\src\Interface\IRenderable.h
+---
+#pragma once
+#include"SDLRender.h"
+
+class SDLRender;
+
+class IRenderable {
+public:
+
+	virtual ~IRenderable() = default;
+	virtual void render(SDLRender& renderer) const = 0;
+
+protected:
+	//���ȼ� ���ȼ��ߵĺ����(��ʾ�����ϲ�)
+	float render_priority;
+};
+
+---
+.\src\Interface\IUpdateable.h
+---
+#pragma once
+class IUpdateable
+{
+public:
+	virtual void update(float deltaTime) = 0;
+	virtual ~IUpdateable() = default;
+};
+
+
+
+---
+.\src\Managers\ColliderManager.cpp
+---
+#include"ColliderManager.h"
+
+ColliderManager* ColliderManager::collider_manager = nullptr;
+
+---
+.\src\Managers\ColliderManager.h
+---
+#pragma once
+
+#include"CollisionSolver.h"
+#include"Collider.h"
+#include"unordered_map"
+#include<vector>
+#include<memory>
+
+struct CollisionEvent{
+    Collider* collider_object1;
+    Collider* collider_object2; 
+};
+
+class ColliderManager{
+public:
+
+
+    static ColliderManager* get_instance(){
+        if(collider_manager == nullptr){
+            collider_manager = new ColliderManager;
+        }
+        return collider_manager;
+    }
+
+    // Collider& create_collider(){
+    //     auto new_collider = std::make_unique<Collider>();
+    //     auto& collider = *new_collider;
+    //     collider_list.push_back(std::move(new_collider));
+    //     return collider;
+    // }
+
+    Collider* create_collider(Shape *shape, int layer,IEntity* owner){
+        auto new_collider = std::make_unique<Collider>(shape,layer,owner);
+        auto collider = new_collider.get();
+        collider_list.push_back(std::move(new_collider));
+        return collider;
+    }
+
+    void destory_collider(Collider& collider){
+        for(auto i = collider_list.begin();i!=collider_list.end();i++){
+            if((*i).get() == &collider){
+                collider_list.erase(i);
+                return;
+            }
+        }
+    }
+
+    void check_and_resolve_collisions(){
+        // 清除事件列表
+        this->collision_events.clear();       
+        // 循环判断是否碰撞 将每个碰撞体向下转型成type标志的类型 接着调用碰撞算法库里面的函数 将所有检测到的碰撞产生一个碰撞事件并且存入队列
+        for(size_t i = 0; i < this->collider_list.size(); ++i){
+            for(size_t j = i + 1; j < this->collider_list.size(); ++j){
+                Collider* c1 = this->collider_list[i].get();
+                Collider* c2 = this->collider_list[j].get();//这里裸指针不会删除资源
+                if(c1->get_layer() == c2->get_layer()) continue;
+                if(CollisionSolution::CheckCollision(c1,c2)){
+                    this->collision_events.push_back({c1,c2});
+
+                }
+            }
+        }
+        //对于队列里的每一个碰撞体 确认存在碰撞函数后执行碰撞回调函数
+        for(auto i : this->collision_events){
+            i.collider_object1->run_on_collid(i.collider_object2);
+            i.collider_object2->run_on_collid(i.collider_object1);
+        }
+    }
+
+    ~ColliderManager(){
+        this->collider_list.clear();
+        this->collision_events.clear();
+    };
+
+
+private:
+    ColliderManager() = default;
+
+    static ColliderManager* collider_manager;
+
+    std::vector<std::unique_ptr<Collider>> collider_list;
+    std::vector<CollisionEvent> collision_events;
+
+};
+
+---
+.\src\Managers\GameContext.cpp
+---
+#include"GameContext.h"
+
+Context* Context::context = nullptr;
+
+
+---
+.\src\Managers\GameContext.h
+---
+#pragma once
+#include"includes.h"
+#include"Collider.h"
+//如果一个字段是全局的 那么字段包含的所有数据也应该是全局的
+
+struct PlayerContext
+{
+    glm::vec2 position{0,0};
+	glm::vec2 velocity{0,0};
+	bool active = true;
+    bool is_alive;
+	int hp;
+    //Collider collider;
+	//Image player_image;
+};
+
+class Context{
+public:
+    static Context* Instances(){
+        if(!context){
+            context = new Context();
+        }
+        return context;
+    }
+
+    void init(){
+        this->game_frame = 0;
+    }
+
+    void set_player_context(glm::vec2 position,
+	glm::vec2 velocity,
+	bool active,
+    bool is_alive,
+	int hp){
+        this->pc.position = position;
+        this->pc.active = active;
+        this->pc.hp = hp;
+        this->pc.is_alive = is_alive;
+        this->pc.velocity = velocity;
+        //this->pc.player_image = player_image;
+    }
+
+    void set_player_context(PlayerContext pc){
+        this->pc = pc;
+    }
+
+    PlayerContext get_player_context(){
+        return pc;
+    }
+    
+    Context(const Context& context) = delete;
+    Context& operator=(const Context& b) = delete;
+
+    int game_frame;
+
+private:
+    PlayerContext pc;
+    Context() = default;
+    static Context* context; 
+};
+
+
+
+
+
+---
+.\src\Managers\ResourcesManager.cpp
+---
+#include "ResourcesManager.h"
+
+ResourcesManager* ResourcesManager::resources_manager = nullptr;
+
+bool ResourcesManager::loadSceneTotal(std::string path, std::string file_type)
+{
+	std::cout << "����ȫ���ļ�" << file_type << "��" << ",��·��" << path << std::endl;
+
+	return true;
+}
+
+bool ResourcesManager::loadScene(std::string path, std::string file_type)
+{
+	//�����ļ�
+	std::cout << "�����ļ�" << file_type << "��" << ",��·��" << path << std::endl;
+	
+	//��������Դ����ϣ��
+
+	return true;
+}
+
+bool ResourcesManager::loadScene(SceneType type){
+	uint64_t time = SDL_GetTicks64();
+	if(type == SceneType::MainMenu){
+		this->load_texture("resources\\2.png");
+		this->load_texture("resources\\4.png");
+		this->load_texture("resources\\3.png");
+		this->load_atlas("resources\\6.png",glm::vec2{11,5});
+		this->load_atlas("resources\\7.png",glm::vec2{11,5});
+	}
+
+	uint64_t end = SDL_GetTicks64();
+	std::cout<<"加载资源时间"<<end-time<<std::endl;
+
+	return true; 
+}
+
+void ResourcesManager::load_texture(const std::string& path){
+	Texture* t = new Texture;
+	t->load(path,this->renderer->get_renderer());
+	this->Scene_Texture[path] = t;
+}
+
+void ResourcesManager::load_texture(const std::string &path, std::string name)
+{
+	Texture* t = new Texture;
+	t->load(path,this->renderer->get_renderer());
+	this->Scene_Texture[name] = t;
+}
+
+Texture* ResourcesManager::get_texture(std::string name) {
+	return this->Scene_Texture[name];
+}
+
+void ResourcesManager::load_atlas(const std::string path)
+{
+	Texture* t = new Texture;
+	t->load(path,this->renderer->get_renderer());
+	Atlas* a = new Atlas(t);
+	this->Scene_Atlas[path] = a;
+}
+
+void ResourcesManager::load_atlas(const std::string path, std::string name)
+{
+	Texture* t = new Texture;
+	t->load(path,this->renderer->get_renderer());
+	Atlas* a = new Atlas(t);
+	this->Scene_Atlas[name] = a;
+}
+
+void ResourcesManager::load_atlas(const std::string path,glm::vec2 cell)
+{
+	Texture* t = new Texture;
+	t->load(path,this->renderer->get_renderer());
+	Atlas* a = new Atlas(t,cell);
+	this->Scene_Atlas[path] = a;
+}
+
+Atlas *ResourcesManager::get_atlas(std::string name)
+{
+	if(!this->Scene_Atlas[name])
+    	return nullptr;
+	return Scene_Atlas[name];
+}
+
+
+void ResourcesManager::set_renderer(SDLRender* renderer){
+ 	this->renderer = renderer;
+}
+
+---
+.\src\Managers\ResourcesManager.h
+---
+#pragma once
+#include"includes.h"
+#include"Texture.h"
+#include"Atlas.h"
+#include"Font.h"
+#include<unordered_map>
+#include"IRender.h"
+#include"SceneType.h"
+#include"SDLRender.h"
+
+class ResourcesManager
+{
+public:
+	
+	static ResourcesManager* getInstance() {
+		if (!resources_manager) {
+			resources_manager = new ResourcesManager;
+		}
+
+		return resources_manager;
+	};
+
+	~ResourcesManager() = default;//????????????????
+
+	bool loadSceneTotal(std::string path, std::string file_type);
+	//???????????"json????xml???????"
+	bool loadScene(std::string path, std::string file_type);
+
+	bool loadScene(SceneType type);
+
+	//?????? ???delete??????????
+	void clearSceneResources();//记得删除对应资源 而不只是将map置空
+	void clearAllResources();
+
+
+	ResourcesManager(const ResourcesManager& res) = delete;
+	ResourcesManager& operator=(const ResourcesManager& res) = delete;
+	
+	void load_texture(const std::string& path);
+	void load_texture(const std::string& path,std::string name);
+	Texture* get_texture(std::string name);
+
+	void load_atlas(const std::string path);
+	void load_atlas(const std::string path,std::string name);
+	void load_atlas(const std::string path,glm::vec2 cell);
+	Atlas* get_atlas(std::string name);
+
+	void set_renderer(SDLRender* renderer);
+
+private:
+	ResourcesManager() = default;
+	std::unordered_map<std::string, Texture*> global_Texture;
+	std::unordered_map<std::string, Font*> global_Font;
+	std::unordered_map<std::string, Atlas*> global_Atlas;
+
+	//????????????��??? ???????��??????????
+	std::unordered_map<std::string, Texture*> Scene_Texture;
+	std::unordered_map<std::string, Font*> Scene_Font;
+	std::unordered_map<std::string, Atlas*> Scene_Atlas;
+
+	static ResourcesManager* resources_manager;
+
+	SDLRender* renderer = nullptr;
+	
+};
+
+
+
+---
+.\src\Managers\SceneManager.cpp
+---
+#include "SceneManager.h"
+
+SceneManager* SceneManager::scene_manager = nullptr;
+
+SceneManager* SceneManager::getInstance() {
+	if (scene_manager == nullptr) {
+		scene_manager = new SceneManager();
+	}
+	return scene_manager;
+}
+
+void SceneManager::loadScene(SceneType scenetype)
+{
+	if (scenetype == SceneType::MainMenu)
+	{
+		this->current_scene = this->main_scene;
+		current_scene->on_enter();
+	}
+}
+
+void SceneManager::unloadScene()
+{
+	current_scene->on_exit();
+	this->current_scene = nullptr;
+}
+
+void SceneManager::switchScene(SceneType scenetype)
+{
+	current_scene->on_exit();
+	if (scenetype == SceneType::MainMenu) {
+		this->current_scene = this->main_scene;
+	}
+	if (scenetype == SceneType::EndMenu) {
+		this->current_scene = this->end_scene;
+	}
+	this->current_scene->on_enter();
+}
+
+void SceneManager::on_update(float deltatime)
+{
+	this->current_scene->on_update(deltatime);
+
+}
+
+void SceneManager::on_input() {
+	this->current_scene->on_input();
+}
+
+void SceneManager::on_render(SDLRender& renderer) {
+	this->current_scene->on_render(renderer);
+}
+
+bool SceneManager::current_scene_null(){
+	return !current_scene;
+}
+
+---
+.\src\Managers\SceneManager.h
+---
+#pragma once
+
+#include"Player.h"
+#include"SceneType.h"
+#include"IScene.h"
+#include"MainScene.h"
+#include"EndScene.h"
+#include"SDLRender.h"
+
+class SceneManager
+{
+public:
+	static SceneManager* getInstance();
+	void loadScene(SceneType scenetype);
+	void unloadScene();
+	void switchScene(SceneType scenetype);
+	void on_update(float deltatime);
+	void on_input();
+	void on_render(SDLRender& renderer);
+	bool current_scene_null();
+	SceneManager(SceneManager& scene_manager) = delete;
+	SceneManager& operator=(SceneManager& scene_manager) = delete;
+
+private:
+
+	SceneManager() =  default;
+	~SceneManager() = default;
+	IScene* current_scene;
+
+	MainScene* main_scene = new MainScene();
+	EndScene* end_scene = new EndScene();
+
+	static SceneManager* scene_manager;
+
+};
+
+
+
+---
+.\src\Physical\Collider.cpp
+---
+#include"Collider.h"
+
+
+Collider::Collider(Shape *shape, int layer, std::function<void(Collider* other)> func,IEntity* owner)
+{
+    assert(this->shape != nullptr && "Collider initialization failed: Shape cannot be null!");
+    this->shape = shape;
+    this->layer = layer;
+    this->on_collid = func;
+    this->owner = owner;
+
+}
+
+Collider::Collider(Shape *shape, int layer,IEntity* owner)
+{
+    assert(this->shape != nullptr && "Collider initialization failed: Shape cannot be null!");
+    this->layer = layer;
+    this->owner = owner;
+    this->shape = shape->clone();
+}
+
+Collider::Collider(const Collider &other)
+{
+    this->layer = other.layer;
+
+    this->shape = shape->clone();
+
+}
+
+Collider Collider::operator=(const Collider &other)
+{
+    this->layer = other.layer;
+    this->shape = other.shape->clone();
+    return Collider(shape->clone(),this->layer,nullptr);
+}
+
+void Collider::set_layer(int layer)
+{
+    this->layer = layer;
+}
+
+void Collider::set_on_collid(std::function<void(Collider* other)> func)
+{
+    this->on_collid = func;
+}
+
+void Collider::run_on_collid(Collider *collider)
+{
+    if(!this->on_collid) return;
+    this->on_collid(collider);
+}
+
+void Collider::set_shape(Shape *shape)
+{
+    if(!shape) return;
+    if(this->shape == shape) return;
+    delete this->shape;
+    this->shape = shape->clone();
+}
+
+int Collider::get_layer()
+{
+
+    return this->layer;
+}
+
+Shape *Collider::get_shape()
+{
+    return this->shape;
+}
+
+void Collider::set_owner(IEntity* entity){
+    this->owner = entity;
+}
+
+IEntity *Collider::get_owner()
+{
+    return this->owner;
+}
+
+Collider::~Collider()
+{
+    delete this->shape;
+}
+
+
+---
+.\src\Physical\Collider.h
+---
+#pragma once
+
+#include"IEntity.h"
+#include <functional>
+
+enum class ShapeType{
+    circle,
+    rect
+};
+
+class Shape{
+public:
+    Shape(){};
+    Shape(ShapeType shape_type):shape_type(shape_type){};
+    virtual void set_shape(ShapeType shapetype){this->shape_type = shape_type;}
+    virtual ShapeType get_shape(){return this->shape_type;}
+    virtual Shape* clone() = 0;
+    ~Shape() = default;
+protected:
+    ShapeType shape_type;
+};
+
+class Circle : public Shape{
+public:
+
+    Circle(){
+        this->shape_type = ShapeType::circle;
+    }
+    Circle(float r){
+        this->r = r;
+        this->shape_type = ShapeType::circle;
+    }
+    float get_r(){
+        return this->r;
+    }
+    void set_r(float r){
+        this->r = r;
+    }
+
+    Shape* clone(){
+        return new Circle(*this);
+    }
+
+protected:
+    float r;
+};
+
+class Rectangle : public Shape{
+public:
+    Rectangle(){
+        this->shape_type = ShapeType::rect;
+    }
+
+    Shape* clone(){
+        return new Rectangle(*this);
+    }
+};
+
+class Collider{
+public:
+    Collider() = delete;
+    Collider(Shape* shape,int layer,std::function<void(Collider* other)> func,IEntity* entity);
+    Collider(Shape* shape,int layer,IEntity* entity);
+    Collider(const Collider& other);
+    Collider operator=(const Collider& other);
+    void set_layer(int layer);
+    void set_on_collid(std::function<void(Collider* other)> func);
+    void run_on_collid(Collider* collider);
+    void set_shape(Shape* shape);
+    int get_layer();
+    Shape* get_shape();
+    void set_owner(IEntity* entity);
+    IEntity* get_owner();
+    ~Collider();
+private:
+    int layer;
+    std::function<void(Collider* other)> on_collid;
+    Shape* shape;
+
+    //考虑加上持有者的信息 void* 但是这么做依赖于每个entity都有记录的自己的type
+    IEntity* owner;
+};
+
+
+---
+.\src\Physical\CollisionSolver.h
+---
+#pragma once
+
+#include"Collider.h"
+
+class CollisionSolution{
+public:
+
+    static bool CheckCollision(Collider* a,Collider* b){
+        ShapeType typeA = a->get_shape()->get_shape();
+        ShapeType typeB = b->get_shape()->get_shape();
+
+        if(typeA == ShapeType::circle && typeB == ShapeType::circle){
+            Circle* c1 = static_cast<Circle*>(a->get_shape());
+            Circle* c2 = static_cast<Circle*>(b->get_shape());
+            return CheckCircleCircle(
+                a->get_owner()->get_position(),
+                b->get_owner()->get_position(),
+                c1->get_r(),
+                c2->get_r()      
+        );
+        }
+
+        return false;
+    }
+
+    static bool CheckCircleCircle(glm::vec2 pos1,glm::vec2 pos2,float r1,float r2){
+        float x = pos1.x - pos2.x;
+        float y = pos1.y - pos2.y;
+        return x*x + y*y <= (r1 + r2)*(r1 + r2);
+    }
+
+    static bool CheckCircleRect(){
+
+    }
+
+    static bool CheckRectRect(){
+
+    }
+
+
+
+
+};
+
+
+
+---
+.\src\Render\Camera.cpp
+---
+#include "Camera.h"
+
+
+---
+.\src\Render\Camera.h
+---
+#pragma once
+class Camera
+{
+
+
+};
+
+
+
+---
+.\src\Render\EasyxWindow.cpp
+---
+#include "EasyxWindow.h"
+
+EasyxWindow::EasyxWindow()
+{
+
+}
+
+EasyxWindow::~EasyxWindow()
+{
+
+}
+
+bool EasyxWindow::init(int w,int h)
+{
+	initgraph(w,h);
+	return true;
+}
+
+
+
+
+---
+.\src\Render\EasyxWindow.h
+---
+#pragma once
+#include "IWindows.h"
+#include <easyx.h>
+
+class EasyxWindow :
+    public IWindows
+{
+public:
+    EasyxWindow();
+    ~EasyxWindow();
+	bool init(int w,int h) override;
+};
+
+
+
+---
+.\src\Render\IRender.cpp
+---
+#include "IRender.h"
+
+
+---
+.\src\Render\IRender.h
+---
+#pragma once
+
+#include"Texture.h"
+#include"Camera.h"
+#include<string>
+
+class Texture;
+
+class IRender
+{
+public:
+	
+	IRender() = default;
+	virtual ~IRender() = default;
+
+	virtual void init(void* window = nullptr) = 0;
+
+	virtual void clear() = 0;
+
+	virtual Texture* load_texture(const std::string path) = 0;
+	virtual void  draw_texture(Texture* image, int x, int y) = 0;
+	virtual void draw_text(std::string, int x, int y) = 0;
+
+
+protected:
+
+};
+
+
+
+---
+.\src\Render\IWindows.cpp
+---
+#include "IWindows.h"
+
+
+
+
+---
+.\src\Render\IWindows.h
+---
+#pragma once
+class IWindows
+{
+public:
+	IWindows() = default;
+	virtual ~IWindows() = default;
+
+	virtual bool init(int w,int h) = 0;
+
+protected:
+
+};
+
+
+
+---
+.\src\Render\SDLRender.cpp
+---
+#include"SDLRender.h"
+#include "../Resources/Texture.h"
+#include <iostream>
+
+void SDLRender::init(SDL_Window* window){
+    if(window == nullptr) return;
+    this->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);//开启垂直同步来保持平滑
+}
+
+void SDLRender::clear(){
+    SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, 255); // 设置黑色
+    SDL_RenderClear(this->renderer); // 清理
+}
+
+void SDLRender::present() {
+    SDL_RenderPresent(this->renderer); // 显示
+}
+
+
+// void SDLRender::draw_texture(Texture* image, int x, int y){
+// }
+
+// void SDLRender::draw_text(std::string text, int x, int y){
+// }
+
+void SDLRender::draw_texture(Texture* image, int x, int y){
+    if (!image || !image->is_valid()) return;
+    SDL_Texture* tex = image->native();
+    if (!tex || !this->renderer) return;
+
+    SDL_Rect dst;
+    dst.x = x;
+    dst.y = y;
+    dst.w = image->width();
+    dst.h = image->height();
+
+    SDL_RenderCopy(this->renderer, tex, nullptr, &dst);
+}
+
+void SDLRender::draw_texture(
+        Texture* texture, 
+        const glm::vec2& pos, 
+        const glm::vec2& scale,
+        const glm::vec2& wh,
+        double rotation, 
+        unsigned char alpha){
+    //pos代表图像的中心点
+
+    float finalW = wh.x * scale.x;
+    float finalH = wh.y * scale.y;
+
+    float dstRectx = pos.x - (finalW / 2.0f); 
+    float dstRecty = pos.y - (finalH / 2.0f);
+
+    SDL_FRect dst;
+    dst.x = dstRectx;
+    dst.y = dstRecty;
+    dst.w = finalW;
+    dst.h = finalH;
+    //{image.get_pos().x,image.get_pos().y,(image.get_wh().x*image.get_scale().x),(image.get_wh().y*image.get_scale().y)};
+    SDL_FPoint center;
+    center.x = pos.x;
+    center.y = pos.y;
+
+
+    SDL_RenderCopyExF(
+        this->renderer,
+        texture->get_data(),
+        NULL,
+        &dst,
+        rotation,
+        &center,
+        SDL_RendererFlip::SDL_FLIP_NONE
+    );
+
+}
+
+void SDLRender::draw_texture(Texture *texture, const glm::vec2 &pos, const glm::vec2 &scale, const glm::vec2 &wh, const SDL_Rect& cell, double rotation, unsigned char alpha)
+{
+    if(!texture){
+        std::cerr << "绘制内容为空" << std::endl;
+        return;
+    }
+    float finalW = wh.x * scale.x;
+    float finalH = wh.y * scale.y;
+
+    float dstRectx = pos.x - (finalW / 2.0f); 
+    float dstRecty = pos.y - (finalH / 2.0f);
+
+    SDL_FRect dst;
+    dst.x = dstRectx;
+    dst.y = dstRecty;
+    dst.w = finalW;
+    dst.h = finalH;
+    //{image.get_pos().x,image.get_pos().y,(image.get_wh().x*image.get_scale().x),(image.get_wh().y*image.get_scale().y)};
+    SDL_FPoint center;
+    center.x = pos.x;
+    center.y = pos.y;
+
+
+    SDL_RenderCopyExF(
+        this->renderer,
+        texture->get_data(),
+        &cell,
+        &dst,
+        rotation,
+        &center,
+        SDL_RendererFlip::SDL_FLIP_NONE
+    );
+}
+
+void SDLRender::draw_text(std::string text, int x, int y){
+    // Minimal placeholder: text rendering not implemented (requires SDL_ttf)
+    (void)text; (void)x; (void)y;
+    std::cerr << "[SDLRender] draw_text not implemented (requires SDL_ttf)" << std::endl;
+}
+
+
+---
+.\src\Render\SDLRender.h
+---
+#pragma once
+
+#include"IRender.h"
+#include<SDL.h>
+#include"includes.h"
+
+class SDLRender
+{
+public:
+	SDLRender() = default;
+
+	virtual void init(SDL_Window* window = nullptr);
+
+	virtual void clear();
+
+	//virtual Texture* load_texture(const std::string path);
+	virtual void  draw_texture(Texture* image, int x, int y);
+	//提供默认全部的图片渲染
+	virtual void draw_texture(
+        Texture* texture, 
+        const glm::vec2& pos, 
+        const glm::vec2& scale,
+        const glm::vec2& wh,
+        double rotation, 
+        unsigned char alpha);
+	//手动的规定渲染图片的哪个部分 用于图集
+	virtual void draw_texture(
+        Texture* texture, 
+        const glm::vec2& pos, 
+        const glm::vec2& scale,
+        const glm::vec2& wh,
+		const SDL_Rect& cell,
+        double rotation, 
+        unsigned char alpha);
+
+	virtual void draw_text(std::string text, int x, int y);
+
+	SDL_Renderer* get_renderer(){
+		return this->renderer;
+	}
+
+	void present();
+
+private:
+	SDL_Renderer* renderer = nullptr;
+};
+
+---
+.\src\Render\SDLWindow.cpp
+---
+#include"SDLWindow.h"
+
+bool SDLWindows::init(int w,int h){
+    if(SDL_Init(SDL_INIT_VIDEO)<0){
+		std::cout<<"cant init:"<<std::endl;
+		return false;
+	}
+
+	this->window = SDL_CreateWindow(
+		"TOUHOUGAME",
+		SDL_WINDOWPOS_CENTERED,
+		SDL_WINDOWPOS_CENTERED,
+		w,
+		h,
+		SDL_WINDOW_SHOWN
+	);
+
+	if(window == nullptr){
+		std::cerr<<"Window could not be created! SDL_Error"<<SDL_GetError();
+		return false;
+	}
+    return true;
+
+}
+
+SDL_Window* SDLWindows::get_sdl_window(){
+    return this->window;
+}
+
+
+---
+.\src\Render\SDLWindow.h
+---
+#pragma once
+
+#include"IWindows.h"
+#include<SDL.h>
+#include<iostream>
+
+
+class SDLWindows
+{
+public:
+    SDLWindows() = default;
+    ~SDLWindows() = default;
+
+    virtual bool init(int w,int h);
+
+    SDL_Window* get_sdl_window();
+
+private:
+    SDL_Window* window;
+};
+
+---
+.\src\Resources\Animation.cpp
+---
+#include"Animation.h"
+
+
+
+---
+.\src\Resources\Animation.h
+---
+#pragma once
+
+#include"clock.h"
+#include"Atlas.h"
+#include"IRenderable.h"
+#include"IUpdateable.h"
+#include"SDLRender.h"
+
+class Animation :
+public IUpdateable
+{
+private:
+    
+    //目前帧
+    int current_index;
+    //帧合集
+    Atlas* atlas;
+    //帧计时器
+    Clock clock;
+    //是否是循环动画
+    bool is_loop;
+    //一个动画帧持续多少游戏时
+    float frame_speed;
+    //动画缩放比例
+    glm::vec2 scale;
+    //渲染时在屏幕上的宽高
+    glm::vec2 wh;
+
+
+
+public:
+    Animation() = default;
+
+    Animation(Atlas* atlas,float frame_speed){
+        this->current_index = 0;
+        this->is_loop = true;
+        this->atlas = atlas;
+        //单位为秒
+        this->frame_speed = frame_speed;
+
+        clock.set_max_time(frame_speed);
+        clock.set_one_shoot(!is_loop);
+        clock.set_callback([this](){
+            this->current_index = (this->current_index+1)%(this->atlas->get_max_index()); 
+            std::cout<<"current_frame:"<<this->current_index<<std::endl;
+        });
+
+        this->scale = {1,1};
+        //this->wh = {atlas->get_frame(current_index).w,atlas->get_frame(current_index).h};
+        this->clock.start();
+
+    }
+
+    Animation(const Animation& animation){
+        this->atlas = animation.atlas;
+        this->clock = animation.clock;
+        this->current_index = 0;
+        this->frame_speed = animation.frame_speed;
+        this->is_loop = animation.is_loop;
+        this->scale = animation.scale;
+
+        clock.set_max_time(frame_speed);
+        clock.set_one_shoot(!is_loop);
+        clock.set_callback([this](){
+            this->current_index = (this->current_index+1)%(this->atlas->get_max_index());
+            std::cout<<"current_frame:"<<this->current_index<<std::endl;
+        });
+        
+    }
+
+    Animation& operator=(const Animation& other){
+
+        if(&other == this) return *this;
+
+        this->atlas = other.atlas;
+        this->clock = other.clock;
+        this->current_index = 0;
+        this->frame_speed = other.frame_speed;
+        this->is_loop = other.is_loop;
+        this->scale = other.scale;
+
+        clock.set_max_time(frame_speed);
+        clock.set_one_shoot(!is_loop);
+        clock.set_callback([this](){
+            this->current_index = (this->current_index+1)%(this->atlas->get_max_index());
+            std::cout<<"current_frame:"<<this->current_index<<std::endl;
+        });  
+
+        return *this;
+    }
+
+    void update(float delta) override{
+
+        this->clock.update(delta);
+        if(clock.is_triggrted()){
+           this->current_index = (this->current_index+1)%(this->atlas->get_max_index());            
+        }
+
+    }
+
+    void render(SDLRender& renderer,glm::vec2 pos) const{
+
+        if(!this->atlas){ 
+            std::cerr << "no atlas" << std::endl; 
+            return;
+        };
+        renderer.draw_texture(this->atlas->get_texture(),pos,this->scale,{this->atlas->get_frame(current_index).w,this->atlas->get_frame(current_index).h},this->atlas->get_frame(current_index),0,255);
+
+    }
+
+    ~Animation(){}
+
+};
+
+
+---
+.\src\Resources\Atlas.cpp
+---
+#include "Atlas.h"
+
+
+---
+.\src\Resources\Atlas.h
+---
+#pragma once
+
+#include"Texture.h"
+#include"includes.h"
+
+//分割texture 成为atlas
+
+class Atlas
+{
+public:
+    Atlas() = default;
+    Atlas(Texture* texture){
+        this->texture = texture;
+        this->wh = {this->texture->width(),this->texture->height()};
+    }
+
+    Atlas(Texture* texture,glm::vec2 cell){
+        this->texture = texture;
+        glm::vec2 step = {this->get_texture()->width()/cell.x,this->get_texture()->height()/cell.y};
+		for(float i = 1;i<2;i++){
+			for(float j = 0;j<cell.x;j++){
+				this->add_frame({(int)(j*step.x),(int)(i*step.y),(int)(step.x),(int)(step.y)});
+			}
+		}
+    }
+
+    ~Atlas(){
+        //delete this->texture;
+    }
+
+    //这里需要按照顺序加入图片
+    void add_frame(SDL_Rect cell){
+        this->frames.push_back(cell);
+    }
+
+    SDL_Rect get_frame(int index){
+        return this->frames[index];
+    }
+
+    void clear_frames(){
+        this->frames.clear();
+    }
+
+    Texture* get_texture(){
+        return this->texture;
+    }
+
+    void set_texture(Texture* texture){
+        this->texture = texture;
+        this->wh = {texture->width(),texture->height()};
+    }
+
+    int get_max_index(){
+        return this->frames.size();
+    }
+
+private:
+    std::vector<SDL_Rect> frames;
+    glm::vec2 wh;
+    Texture* texture;
+};
+
+
+
+---
+.\src\Resources\Font.cpp
+---
+#include "Font.h"
+
+
+---
+.\src\Resources\Font.h
+---
+#pragma once
+class Font
+{
+
+    
+};
+
+
+
+---
+.\src\Resources\Image.cpp
+---
+#include "Image.h"
+
+void Image::render(SDLRender& renderer) const
+{
+    if(!this->data){
+        std::cout<<"no data"<<std::endl;
+    };
+    renderer.draw_texture(this->data,this->pos,this->scale,this->wh,this->rotation,this->alpha);
+}
+
+void Image::render(SDLRender& renderer,glm::vec2 pos) const
+{
+    if(!this->data){
+        std::cout<<"no data"<<std::endl;
+    };
+    renderer.draw_texture(this->data,pos,this->scale,this->wh,this->rotation,this->alpha);  
+}
+
+
+---
+.\src\Resources\Image.h
+---
+#pragma once
+
+#include"Texture.h"
+#include"IRenderable.h"
+#include"IUpdateable.h"
+#include"includes.h"
+
+class SDLRender;
+
+class Image :
+	public IRenderable
+{
+public:
+	Image() = default; 
+	Image(Texture* image):data(image){};
+	~Image() = default;
+
+	// ȫ���Թ��캯��
+	Image(Texture* data,glm::vec2 pos,glm::vec2 scale,float rotation,unsigned char alpha):
+	data(data),pos(pos),scale(scale),rotation(rotation),alpha(alpha)
+	{
+		this->wh = this->get_wh();
+	}
+	//get set ����
+	// data
+	//inline Texture* get_data() { return data; }
+	inline const Texture* get_data() const { return data; }
+	inline void set_data(Texture* d) { data = d; this->wh = {data->width(),data->height()}; }
+
+	// position
+	inline const glm::vec2 get_pos() const { return pos; }
+	inline void set_pos(const glm::vec2& p) { pos = p; }
+
+	// scale
+	inline glm::vec2 get_scale() const { return scale; }
+	inline void set_scale(glm::vec2 s) { scale = s; }
+
+	// rotation
+	inline double get_rotation() const { return rotation; }
+	inline void set_rotation(double r) { rotation = r; }
+
+	// alpha
+	inline unsigned char get_alpha() const { return alpha; }
+	inline void set_alpha(unsigned char a) { alpha = a; }
+
+	//�õ�ͼƬ�ĳ��ȿ���
+	inline glm::vec2 get_wh() const {
+		if(!data) return {0,0};
+		glm::vec2 a;
+		a.x = this->data->width();
+		a.y = this->data->height();
+		return a;
+	}
+
+	//ʵ�ֽӿ�
+	virtual void render(SDLRender& renderer) const override;
+	virtual void render(SDLRender& renderer,glm::vec2 pos) const;
+
+	//virtual void update(float deltaTime);
+
+private:
+	Texture* data;//��Ԫ
+
+	//����
+	glm::vec2 wh;
+	//λ��float ��ͼ������ĵ�
+	glm::vec2 pos;
+	//���ű��� float
+	glm::vec2 scale;
+	//��ת�Ƕ� float
+	double rotation;
+	//͸����  unsigned char
+	unsigned char alpha = 255;
+};
+
+
+
+---
+.\src\Resources\Texture.cpp
+---
+#include "Texture.h"
+
+#include <SDL.h>
+#include <SDL_image.h>
+
+void Texture::free_data() {
+	if (data) {
+		SDL_DestroyTexture(data);
+		data = nullptr;
+		w = h = 0;
+	}
+}
+
+bool Texture::load(const std::string& path, SDL_Renderer* renderer)
+{
+	free_data();
+
+	if (!renderer) {
+		std::cerr << "[Texture] SDL_Renderer required to load texture: " << path << std::endl;
+		return false;
+	}
+
+	SDL_Surface* surf = IMG_Load(path.c_str());
+	if (!surf) {
+		std::cerr << "[Texture] IMG_Load failed: " << IMG_GetError() << " path=" << path << std::endl;
+		return false;
+	}
+
+	SDL_Texture* tex = SDL_CreateTextureFromSurface(renderer,surf);
+	if (!tex) {
+		std::cerr << "[Texture] SDL_CreateTextureFromSurface failed: " << SDL_GetError() << " path=" << path << std::endl;
+		SDL_FreeSurface(surf);
+		return false;
+	}
+
+	w = surf->w;
+	h = surf->h;
+	SDL_FreeSurface(surf);
+
+	data = tex;
+	return true;
+}
+
+
+
+---
+.\src\Resources\Texture.h
+---
+#pragma once
+
+#include <string>
+#include <iostream>
+#include <SDL.h>
+#include <SDL_image.h>
+
+enum class ImageData
+{
+    ImageE,
+    ImageS
+};
+
+class SDLRender;
+
+class Texture
+{
+public:
+    Texture() : data(nullptr), w(0), h(0) {}
+    ~Texture() { free_data(); }
+
+    // non-copyable
+    Texture(const Texture&) = delete;
+    Texture& operator=(const Texture&) = delete;
+
+    // movable
+    Texture(Texture&& other) noexcept : data(other.data), w(other.w), h(other.h) { other.data = nullptr; other.w = other.h = 0; }
+
+    Texture& operator=(Texture&& other) noexcept 
+    { 
+    if (this != &other) 
+    { 
+        free_data(); 
+        data = other.data; 
+        w = other.w; 
+        h = other.h;
+        other.data = nullptr; 
+        other.w = other.h = 0;
+    } 
+    return *this; 
+    }
+
+    // Load using SDL renderer. If renderer==nullptr the load fails for SDL textures.
+    bool load(const std::string& path, SDL_Renderer* renderer = nullptr);
+
+    SDL_Texture* native() const { return data; }
+    bool is_valid() const { return data != nullptr; }
+    int width() const { return w; }
+    int height() const { return h; }
+
+    SDL_Texture* get_data()
+    {
+        if(!this->data){
+            std::cout<<"nt data"<<std::endl;
+            return nullptr;
+        }
+        return this->data;
+    }
+
+protected:
+    void free_data();
+
+private:
+    SDL_Texture* data;
+    int w, h;
+};
+
+---
+.\src\Scenes\EndScene.cpp
+---
+#include "EndScene.h"
+
+
+EndScene::EndScene() {
+	// Constructor implementation
+	std::cout << "EndScene created" << std::endl;
+}
+
+EndScene::~EndScene() {
+	// Destructor implementation
+	std::cout << "EndScene destroyed" << std::endl;
+}
+
+void EndScene::on_enter() {
+	
+	std::cout << "EndScene::on_enter() called" << std::endl;
+	EnemyBuilder enemybuilder;
+	enemybuilder.create_enemy(EnemyType::small);
+
+	this->renderables.push_back(enemybuilder.create());
+	this->updateables.push_back(enemybuilder.create());
+
+
+	enemybuilder.create_enemy(EnemyType::common);
+	this->renderables.push_back(enemybuilder.create());
+	this->updateables.push_back(enemybuilder.create());
+
+	enemybuilder.create_enemy(EnemyType::large);
+	this->renderables.push_back(enemybuilder.create());
+	this->updateables.push_back(enemybuilder.create());
+}
+
+void EndScene::on_exit() {
+	std::cout << "EndScene::on_exit() called" << std::endl;
+}
+
+void EndScene::on_update(float delta_time) {
+	std::cout << "EndScene::on_update() called with delta_time: " << delta_time << std::endl;
+}
+
+void EndScene::on_render(SDLRender& renderer) {
+	std::cout << "EndScene::on_render() called" << std::endl;
+}
+
+void EndScene::on_input() {
+	std::cout << "EndScene::on_input() called" << std::endl;
+}
+
+
+
+---
+.\src\Scenes\EndScene.h
+---
+#pragma once
+#include"IScene.h"
+#include"Enemy.h"
+#include"Player.h"
+#include"EnemyBuilder.h"
+#include"EnemyType.h"
+#include"IInput.h"
+
+class EndScene :
+    public IScene
+{
+public:
+	EndScene();
+	~EndScene();
+
+	virtual void on_enter();
+	virtual void on_exit();
+	virtual void on_update(float deltatime);
+	virtual void on_render(SDLRender& renderer);
+	virtual void on_input();
+};
+
+
+
+---
+.\src\Scenes\MainScene.cpp
+---
+#include "MainScene.h"
+#include "SceneManager.h"
+// #include "EasyxRender.h"
+#include "Animation.h"
+#include "GameContext.h"
+#include "ResourcesManager.h"
+#include "clock.h"
+#include "ColliderManager.h"
+
+MainScene::MainScene() {
+  IInput::get();
+  std::cout << "MainScene Constructor" << std::endl;
+}
+
+MainScene::~MainScene() { std::cout << "MainScene Destructor" << std::endl; }
+
+void MainScene::on_enter() {
+  ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
+  ColliderManager::get_instance();
+  
+
+  std::cout << "Entering MainScene" << std::endl;
+  EnemyBuilder enemybuilder;
+  enemybuilder.create_enemy(EnemyType::small);
+  Enemy *a = enemybuilder.create();
+  this->renderables.push_back(a);
+  this->updateables.push_back(a);
+  // ColliderManager::get_instance()->enemy_collider_list.push_back(a);
+
+  enemybuilder.create_enemy(EnemyType::common);
+  Enemy *b = enemybuilder.create();
+  this->renderables.push_back(b);
+  this->updateables.push_back(b);
+  // ColliderManager::get_instance()->enemy_collider_list.push_back(b);
+
+  enemybuilder.create_enemy(EnemyType::large);
+  Enemy *c = enemybuilder.create();
+  this->renderables.push_back(c);
+  this->updateables.push_back(c);
+  // ColliderManager::get_instance()->enemy_collider_list.push_back(c);
+  // this->clock();
+  // 调用this后relese模式下程序暂停 debug没有问题
+
+  this->clock.set_callback([this]() {
+    std::cout << this << std::endl;                           // 没问题
+    std::cout << "daugsjdha" << "this:" << this << std::endl; // 没问题
+    std::cout << "踹刷u读书u和古代u上高低" << "this:" << this
+              << std::endl; // 没问题
+    // std::cout<<"踹刷u读书u和古代u上高低"<<this<<std::endl;//程序强制暂停
+  });
+
+  Texture *v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
+  glm::vec2 pos;
+  glm::vec2 scale;
+  pos.x = 205;
+  pos.y = 205;
+  scale.x = 1;
+  scale.y = 1;
+
+  Image player_image = Image(v, pos, scale, 0, 255);
+  Atlas *player_atlas =
+      ResourcesManager::getInstance()->get_atlas("resources\\6.png");
+
+  Context::Instances()->set_player_context(pos, {0, 0}, true, true, 100);
+  PlayerContext pc = Context::Instances()->get_player_context();
+  this->player = new Player(pos,{0,0},100);
+
+  player->setImage(player_image);
+  // player->set_atlas(player_atlas);
+  Animation animation(player_atlas, 0.1);
+
+  Collider* player_collider = ColliderManager::get_instance()->create_collider(new Circle(10),0,player);
+
+  this->renderables.push_back(player);
+  this->updateables.push_back(player);
+  this->player->set_animation(animation);
+  player->set_collider(player_collider);
+  player->get_collider()->set_on_collid([p = this->player](Collider* other){
+      p->set_alive(false);
+			std::cout << "die" << std::endl; 
+		});
+  // this->player->set_shape(new CircleShape(100));
+  // ColliderManager::get_instance()->player_collider_list.push_back(player);
+
+  // this->renderables.push_back(image);
+}
+
+void MainScene::on_exit() { 
+  std::cout << "Exiting MainScene" << std::endl;
+  Context::Instances()->set_player_context(
+      player->get_position(), player->get_velocity(), player->isActive(),
+      player->is_alive(), player->get_hp());
+}
+
+void MainScene::on_update(float deltatime) {
+  for (IUpdateable *a : this->updateables) {
+    a->update(deltatime);
+  }
+  this->clock.update(deltatime);
+  IInput::update();
+  // ColliderManager::get_instance()->check_collider();
+  // ColliderManager::get_instance()->execute_collider_logic();
+  //std::cout << "Updating MainScene: " << deltatime << " seconds elapsed."
+            //<< std::endl;
+  ColliderManager::get_instance()->check_and_resolve_collisions();
+}
+
+void MainScene::on_render(SDLRender &renderer) {
+
+  // Texture* a =
+  // ResourcesManager::getInstance()->get_texture("resources\\2.png");
+  // renderer->draw_texture(a, 0,0);
+
+  for (IRenderable *a : this->renderables) {
+    a->render(renderer);
+  }
+  // render->draw_text("MainScene",10,10);
+  //std::cout << "Rendering MainScene" << std::endl;
+}
+
+void MainScene::on_input() {
+  if (IInput::get_key(KeyType::ENTER)->get_keydown())
+    SceneManager::getInstance()->switchScene(SceneType::EndMenu);
+  if (IInput::get_key(KeyType::RIGHT)->get_keydown())
+    this->player->set_velocity({10, 0});
+  if (IInput::get_key(KeyType::LEFT)->get_keydown())
+    this->player->set_velocity({-10,0});
+  if (IInput::get_key(KeyType::DOWN)->get_keydown())
+    this->player->set_velocity({0,10});
+  if (IInput::get_key(KeyType::UP)->get_keydown())
+    this->player->set_velocity({0,-10});
+}
+
+
+---
+.\src\Scenes\MainScene.h
+---
+#pragma once
+#include "Enemy.h"
+#include "EnemyBuilder.h"
+#include "EnemyType.h"
+#include "IInput.h"
+#include "IScene.h"
+#include "Player.h"
+// #include"EasyxRender.h"
+#include "Clock.h"
+
+class MainScene : public IScene {
+public:
+  MainScene();
+  ~MainScene();
+
+  virtual void on_enter();
+  virtual void on_exit();
+  virtual void on_update(float deltatime);
+  virtual void on_render(SDLRender &renderer);
+  virtual void on_input();
+
+private:
+  Clock clock;
+
+  Player *player = nullptr;
+};
+
+
+---
+.\src\Scenes\SceneType.h
+---
+#pragma once
+
+enum class SceneType
+{
+	MainMenu,
+	Scene1,
+	EndMenu
+};
+
+---
+.\src\Utils\clock.h
+---
+#pragma once
+
+#include <functional>
+
+class Clock {
+public:
+    // 构造：默认 1 s，非一次性，repeat=-1 表示无限重复，未激活
+    Clock()
+        : max_time(1), one_shoot(false), repeat_time(-1), call_back(nullptr), current_time(0), is_available_(1),is_triggrted_(false) {}
+    ~Clock() = default;
+
+    // 设置/获取最大时间（秒）
+    void set_max_time(float s) { max_time = (s > 0 ? s : 0); }
+    float get_max_time() const { return max_time; }
+
+    // 是否一次触发
+    void set_one_shoot(bool v) { one_shoot = v; }
+    bool is_one_shoot() const { return one_shoot; }
+
+    // 重复次数（-1 表示无限重复）
+    void set_repeat_time(int times) { repeat_time = times; }
+    int get_repeat_time() const { return repeat_time; }
+
+    // 设置回调
+    void set_callback(std::function<void()> cb) { call_back = std::move(cb); }
+
+    // 启动/暂停/恢复/重置
+    void start() { current_time = 0; is_available_ = 1; }
+    void stop() { is_available_ = 0; }
+    void pause() { is_available_ = 0; }
+    void resume() { is_available_ = 1; }
+    void reset() { current_time = 0; }
+
+    // 查询
+    bool available() const { return is_available_ != 0; }
+    float get_current_ime() const { return current_time; }
+    float get_remaining_time() const { float rem = max_time - current_time; return (rem > 0 ? rem : 0); }
+
+    bool is_triggrted(){
+
+        return this->is_triggrted_;
+    }
+
+    // 减少时间（等同于 advance）
+    void reduce(float s) { update(s); }
+
+    // 更新闹钟（传入增量毫秒）
+    void update(float delta_ms) {
+        if (!available() || max_time <= 0 || delta_ms <= 0) return;
+        current_time += delta_ms;
+
+        // 处理可能跨越多个周期的情况
+        while (current_time >= max_time && available()) {
+            this->is_triggrted_ = true;
+            if (call_back){
+                call_back();
+                //std::cout<<"回调函数调用11111"<<std::endl;
+            }
+
+            if (one_shoot) {
+                is_available_ = 0;
+                is_triggrted_ = false;
+                break;
+            }
+
+            if (repeat_time > 0) {
+                --repeat_time;
+                if (repeat_time == 0) { is_available_ = 0; break; }
+            }
+
+            current_time -= max_time;
+            this->is_triggrted_ = false;
+        }
+
+    }
+
+private:
+    // 最大时间（秒）
+    float max_time;
+    // 是否一次性触发
+    bool one_shoot;
+    // 重复次数（-1 表示无限）
+    int repeat_time;
+    // 回调
+    std::function<void()> call_back;
+    // 当前累积时间（毫秒）
+    float current_time;
+    // 激活标志（0/非0）
+    int is_available_;
+
+    //当前闹钟是否可触发 用来方便轮询
+    bool is_triggrted_;
+};
+
+---
+.\src\Utils\includes.h
+---
+#pragma once
+#include <chrono>
+#include <glm.hpp>
+#include <iostream>
+#include <vector>
+#include<Windows.h>
+#include <SDL.h>
+#include <SDL_image.h>
+
+#undef small
+
+
+---
