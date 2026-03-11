@@ -34,11 +34,13 @@ add_subdirectory(${LIB_PATH}/SDL_image)
 file(GLOB_RECURSE SOURCE_FILES
     "${SRC_PATH}/*.cpp"
     "${SRC_PATH}/*.c"
+    "${LIB_PATH}/Imgui/*.cpp"
 )
 
 
 file(GLOB_RECURSE HEADER_FILES
     "${SRC_PATH}/*.h"
+
 )
 
 
@@ -59,6 +61,7 @@ include_directories(
     ${SRC_PATH}/Physical
     ${LIB_PATH}/EasyX/include
     ${LIB_PATH}/glm
+    ${LIB_PATH}/Imgui
 )
 
 list(FILTER SOURCE_FILES EXCLUDE REGEX ".*EasyX.*")

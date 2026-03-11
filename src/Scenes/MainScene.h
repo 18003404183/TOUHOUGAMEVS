@@ -7,6 +7,7 @@
 #include "Player.h"
 // #include"EasyxRender.h"
 #include "Clock.h"
+#include "ColliderManager.h"
 
 class MainScene : public IScene {
 public:

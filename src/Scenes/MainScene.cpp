@@ -5,7 +5,7 @@
 #include "GameContext.h"
 #include "ResourcesManager.h"
 #include "clock.h"
-#include "ColliderManager.h"
+#include "Danmaku.h"
 
 MainScene::MainScene() {
   IInput::get();
@@ -18,6 +18,13 @@ void MainScene::on_enter() {
   ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
   ColliderManager::get_instance();
   
+  auto t = std::make_unique<DanmakuPool>(10000);
+  ResourcesManager::getInstance()->register_danmaku_texture("");
+  DanmakuPrefab dp;
+  dp.base_radius = 0;
+  dp.base_scale = {1,1};
+  dp.shape_type = DanmakuShape::Circle;
+
 
   std::cout << "Entering MainScene" << std::endl;
   EnemyBuilder enemybuilder;
@@ -25,20 +32,17 @@ void MainScene::on_enter() {
   Enemy *a = enemybuilder.create();
   this->renderables.push_back(a);
   this->updateables.push_back(a);
-  // ColliderManager::get_instance()->enemy_collider_list.push_back(a);
 
   enemybuilder.create_enemy(EnemyType::common);
   Enemy *b = enemybuilder.create();
   this->renderables.push_back(b);
   this->updateables.push_back(b);
-  // ColliderManager::get_instance()->enemy_collider_list.push_back(b);
 
   enemybuilder.create_enemy(EnemyType::large);
   Enemy *c = enemybuilder.create();
   this->renderables.push_back(c);
   this->updateables.push_back(c);
-  // ColliderManager::get_instance()->enemy_collider_list.push_back(c);
-  // this->clock();
+
   // 调用this后relese模式下程序暂停 debug没有问题
 
   this->clock.set_callback([this]() {
@@ -79,10 +83,7 @@ void MainScene::on_enter() {
       p->set_alive(false);
 			std::cout << "die" << std::endl; 
 		});
-  // this->player->set_shape(new CircleShape(100));
-  // ColliderManager::get_instance()->player_collider_list.push_back(player);
 
-  // this->renderables.push_back(image);
 }
 
 void MainScene::on_exit() { 
@@ -98,24 +99,18 @@ void MainScene::on_update(float deltatime) {
   }
   this->clock.update(deltatime);
   IInput::update();
-  // ColliderManager::get_instance()->check_collider();
-  // ColliderManager::get_instance()->execute_collider_logic();
-  //std::cout << "Updating MainScene: " << deltatime << " seconds elapsed."
-            //<< std::endl;
+
   ColliderManager::get_instance()->check_and_resolve_collisions();
 }
 
 void MainScene::on_render(SDLRender &renderer) {
 
-  // Texture* a =
-  // ResourcesManager::getInstance()->get_texture("resources\\2.png");
-  // renderer->draw_texture(a, 0,0);
+
 
   for (IRenderable *a : this->renderables) {
     a->render(renderer);
   }
-  // render->draw_text("MainScene",10,10);
-  //std::cout << "Rendering MainScene" << std::endl;
+  
 }
 
 void MainScene::on_input() {

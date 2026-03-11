@@ -31,6 +31,19 @@ bool Game::init_game()
 	SceneManager::getInstance()->loadScene(SceneType::MainMenu);
 
 	Context::Instances()->init();
+
+
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; 
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     
+    ImGui::StyleColorsDark();                             
+
+    // 绑定 SDL 窗口和渲染器后端
+    ImGui_ImplSDL2_InitForSDLRenderer(windows->get_sdl_window(), renderer.get_renderer());
+    ImGui_ImplSDLRenderer2_Init(renderer.get_renderer());
+
 	return true;
 }
 
@@ -59,6 +72,7 @@ void Game::start()
 		frameStart = frameEnd;
 		
 		while(SDL_PollEvent(&event)){
+			ImGui_ImplSDL2_ProcessEvent(&event);
 			if(event.type == SDL_QUIT){
 				is_running = false;
 			}
@@ -66,10 +80,26 @@ void Game::start()
 				//把事件传输给场景处理
 				scene_manager->on_input();
 			}
-		}		
+		}
+		// 开启 ImGui 新的一帧
+		ImGui_ImplSDLRenderer2_NewFrame();
+        ImGui_ImplSDL2_NewFrame();
+        ImGui::NewFrame();
+
+        // 绘制性能仪表盘 (Profiler)
+        ImGui::Begin("Engine Profiler");
+        ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
+        ImGui::Text("Frame Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
+        ImGui::Text("Game Frame: %d", Context::Instances()->game_frame);
+        ImGui::End();
+		
 		scene_manager->on_update(1.0/GAME_TPS);
 		this->renderer.clear();
 		scene_manager->on_render(renderer);
+
+		ImGui::Render();
+        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer.get_renderer());
+
 		this->renderer.present();
 
 		frameTime = SDL_GetTicks() - frameStart;
@@ -85,6 +115,9 @@ void Game::start()
 
 void Game::end(){
 	//delete this->renderer;
+	ImGui_ImplSDLRenderer2_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
 	return;
 
 }

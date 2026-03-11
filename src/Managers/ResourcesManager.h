@@ -7,6 +7,7 @@
 #include"IRender.h"
 #include"SceneType.h"
 #include"SDLRender.h"
+#include"Danmaku.h"
 
 class ResourcesManager
 {
@@ -47,6 +48,9 @@ public:
 
 	void set_renderer(SDLRender* renderer);
 
+	uint16_t register_danmaku_texture(const std::string path);
+	Texture* get_danmaku_texture(uint16_t id);
+
 private:
 	ResourcesManager() = default;
 	std::unordered_map<std::string, Texture*> global_Texture;
@@ -57,6 +61,8 @@ private:
 	std::unordered_map<std::string, Texture*> Scene_Texture;
 	std::unordered_map<std::string, Font*> Scene_Font;
 	std::unordered_map<std::string, Atlas*> Scene_Atlas;
+
+	std::vector<std::unique_ptr<Texture>> danmaku_texture;
 
 	static ResourcesManager* resources_manager;
 
