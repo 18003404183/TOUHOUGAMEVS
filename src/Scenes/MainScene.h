@@ -8,6 +8,7 @@
 // #include"EasyxRender.h"
 #include "Clock.h"
 #include "ColliderManager.h"
+#include "Danmaku.h"
 
 class MainScene : public IScene {
 public:
@@ -24,4 +25,7 @@ private:
   Clock clock;
 
   Player *player = nullptr;
+
+  DanmakuPool* enemy_bullets = nullptr; 
+  uint16_t test_prefab_id; // 存一下我们要发射的预制体 ID
 };

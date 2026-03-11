@@ -33,7 +33,8 @@ enum class DanmakuCmdType {
     WAIT,
     SET_SPEED,
     TURN_ANGLE,
-    ACCELERATE
+    ACCELERATE,
+    SMOOTH_TURN
 };
 
 struct DanmakuPrefab{

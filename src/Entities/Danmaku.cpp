@@ -78,6 +78,32 @@ void DanmakuPool::update(float dt) {
                             d.cmd_timer = 0.0f;
                         }
                         break;
+                    case DanmakuCmdType::SMOOTH_TURN:
+
+                        // param1 = 需要转动的总角度 (例如 90 度，记得转成弧度)
+                        // param2 = 转向耗费的总时间 (例如 1.0 秒)
+                        
+                        // 计算当前的角速度 (单位：弧度/秒)
+                        float angular_speed = (cmd.param1 * (3.14159265f / 180.0f)) / cmd.param2;
+                        
+                        // 推进角度
+                        d.current_angle += angular_speed * dt;
+                        
+                        // 累加时间
+                        d.cmd_timer += dt;
+                        
+                        // 检查这个动作是否做完了
+                        if (d.cmd_timer >= cmd.param2) {
+                            // 动作完成！进入下一条指令
+                            d.current_cmd_index++;
+                            d.cmd_timer = 0.0f;
+                            
+                            // 【防微小误差战术】浮点数相加必有误差，为了防止最后偏了几度，
+                            // 我们最好在这里直接把角度 snap (咬合) 到极其精确的目标值。
+                            // （不过对于简单的弹幕游戏，不写这段 snap 也没事，直接进入下一条即可）
+                        }
+                        break;
+
                 }
             }
         }

@@ -91,12 +91,12 @@ void ResourcesManager::set_renderer(SDLRender* renderer){
 uint16_t ResourcesManager::register_danmaku_texture(const std::string path)
 {	
 	std::unique_ptr<Texture> t = std::make_unique<Texture>();
-	t.get()->load(path);
+	t.get()->load(path,this->renderer->get_renderer());
 	this->danmaku_texture.push_back(std::move(t));
     return static_cast<uint16_t>(danmaku_texture.size() - 1);
 }
 
-Texture *ResourcesManager::get_danmaku_texture(uint16_t id)
+Texture* ResourcesManager::get_danmaku_texture(uint16_t id)
 {
     return this->danmaku_texture[id].get();
 }
