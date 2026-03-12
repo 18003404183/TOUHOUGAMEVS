@@ -5,6 +5,13 @@
 #include "ResourcesManager.h"
 #include "clock.h"
 #include "Danmaku.h"
+#include <fstream> 
+#include "json.hpp"
+#include "imgui.h"
+#include "imgui_impl_sdl2.h"
+#include "imgui_impl_sdlrenderer2.h"
+
+using json = nlohmann::json; 
 
 MainScene::MainScene() {
     IInput::get();
@@ -48,23 +55,50 @@ void MainScene::on_enter() {
     this->test_prefab_id = this->enemy_bullets->register_prefab(dp);
     // ==========================================
 
+    std::ifstream file("resources\\level1.json");
+    if(!file.is_open()){
+        std::cerr << "未打开文件"<<std::endl;
+    }
+    else{
+        json level_data;
+        file >> level_data;
 
-    std::cout << "Entering MainScene" << std::endl;
-    EnemyBuilder enemybuilder;
-    enemybuilder.create_enemy(EnemyType::small);
-    Enemy *a = enemybuilder.create();
-    this->renderables.push_back(a);
-    this->updateables.push_back(a);
+        std::cout << "成功加载关卡" << level_data["level_name"].get<std::string>() << std::endl;
+        
+        EnemyBuilder enemybuilder;
 
-    enemybuilder.create_enemy(EnemyType::common);
-    Enemy *b = enemybuilder.create();
-    this->renderables.push_back(b);
-    this->updateables.push_back(b);
+        for(const auto& wave : level_data["waves"]){
+            for (const auto& enemy_data : wave["enemies"]) {
+                
+                // 读取 JSON 中的字符串类型，并转换为枚举
+                std::string type_str = enemy_data["type"].get<std::string>();
+                EnemyType type = EnemyType::common; // 默认给个 common
+                
+                if (type_str == "small") type = EnemyType::small;
+                else if (type_str == "common") type = EnemyType::common;
+                else if (type_str == "large") type = EnemyType::large;
 
-    enemybuilder.create_enemy(EnemyType::large);
-    Enemy *c = enemybuilder.create();
-    this->renderables.push_back(c);
-    this->updateables.push_back(c);
+                // 使用你的工厂生成基础敌人
+                enemybuilder.create_enemy(type);
+                Enemy* e = enemybuilder.create();
+
+                // 🌟 核心点：用 JSON 里的数据覆盖默认数据！
+                float x = enemy_data["x"].get<float>();
+                float y = enemy_data["y"].get<float>();
+                int hp = enemy_data["hp"].get<int>();
+
+                e->set_position({x, y});
+                e->setHp(hp);
+
+                // 挂载到场景中
+                this->renderables.push_back(e);
+                this->updateables.push_back(e);
+            }
+        }
+    }
+
+
+
 
     EventManager::get_instance()->subscribe(EventType::PlayerDead,[](const Event& event){
         
@@ -116,14 +150,15 @@ void MainScene::on_update(float deltatime) {
         a->update(deltatime);
     }
     this->clock.update(deltatime);
+    ImGui::Begin("danmaku count");
+    ImGui::Text("danmaku: %d",this->enemy_bullets->count);
+    ImGui::End();
 
     //IInput::update();
 
     ColliderManager::get_instance()->check_and_resolve_collisions();
 
-    // ==========================================
-    // 弹幕池极速更新与降维打击碰撞
-    // ==========================================
+
     if (this->enemy_bullets) {
         this->enemy_bullets->update(deltatime);
         this->enemy_bullets->check_player_hit(this->player);

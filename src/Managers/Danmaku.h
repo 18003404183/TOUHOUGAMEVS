@@ -99,12 +99,12 @@ public:
     void render(SDLRender& renderer);
     void check_player_hit(Player* player);
 
+    int count;
 
 private:
     std::vector<DanmakuData> pool;
     std::vector<DanmakuPrefab> prefabs;
     std::vector<TrajectoryTemplate> trajectories;
 
-    int count;
 
 };
