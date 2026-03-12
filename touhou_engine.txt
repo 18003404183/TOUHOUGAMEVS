@@ -193,54 +193,287 @@ private:
 ---
 .\src\Entities\Danmaku.cpp
 ---
+#include "Danmaku.h"
+#include <cmath>
 
+DanmakuPool::DanmakuPool(size_t pool_size) {
+    // 一次性分配连续物理内存，杜绝 new/delete
+    pool.resize(pool_size);
+    for (auto& d : pool) {
+        d.active = false;
+    }
+}
+
+uint16_t DanmakuPool::register_prefab(const DanmakuPrefab& prefab) {
+    prefabs.push_back(prefab);
+    return static_cast<uint16_t>(prefabs.size() - 1);
+}
+
+uint16_t DanmakuPool::register_trajectory(const TrajectoryTemplate& traj) {
+    trajectories.push_back(traj);
+    return static_cast<uint16_t>(trajectories.size() - 1);
+}
+
+void DanmakuPool::spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_speed, float initial_angle) {
+    if (prefab_id >= prefabs.size()) return;
+
+    for (auto& d : pool) {
+        if (!d.active) {
+            d.active = true;
+            d.prefab_id = prefab_id;
+            d.pos = start_pos;
+            d.current_speed = initial_speed;
+            d.current_angle = initial_angle;
+            
+            // 绑定轨迹模板并重置状态机
+            d.trajectory_id = prefabs[prefab_id].default_traj_id;
+            d.current_cmd_index = 0;
+            d.cmd_timer = 0.0f;
+            
+            // 初始化向量
+            d.vel.x = std::cos(d.current_angle) * d.current_speed;
+            d.vel.y = std::sin(d.current_angle) * d.current_speed;
+            return; // 激活成功，撤退
+        }
+    }
+}
+
+void DanmakuPool::update(float dt) {
+    for (auto& d : pool) {
+        if (!d.active) continue;
+
+        // 1. 指令流状态机解析
+        if (d.trajectory_id < trajectories.size()) {
+            const auto& traj = trajectories[d.trajectory_id];
+            
+            if (d.current_cmd_index < traj.commands.size()) {
+                const auto& cmd = traj.commands[d.current_cmd_index];
+                
+                switch (cmd.type) {
+                    case DanmakuCmdType::WAIT:
+                        d.cmd_timer += dt;
+                        if (d.cmd_timer >= cmd.param1) {
+                            d.current_cmd_index++; // 时间到，执行下一条
+                            d.cmd_timer = 0.0f;
+                        }
+                        break;
+                    case DanmakuCmdType::SET_SPEED:
+                        d.current_speed = cmd.param1;
+                        d.current_cmd_index++;
+                        break;
+                    case DanmakuCmdType::TURN_ANGLE:
+                        d.current_angle += cmd.param1 * (3.14159f / 180.0f); // 角度转弧度
+                        d.current_cmd_index++;
+                        break;
+                    case DanmakuCmdType::ACCELERATE:
+                        d.current_speed += cmd.param1 * dt;
+                        d.cmd_timer += dt;
+                        if (d.cmd_timer >= cmd.param2) { // param2 设为加速持续时间
+                            d.current_cmd_index++;
+                            d.cmd_timer = 0.0f;
+                        }
+                        break;
+                    case DanmakuCmdType::SMOOTH_TURN:
+
+                        // param1 = 需要转动的总角度 (例如 90 度，记得转成弧度)
+                        // param2 = 转向耗费的总时间 (例如 1.0 秒)
+                        
+                        // 计算当前的角速度 (单位：弧度/秒)
+                        float angular_speed = (cmd.param1 * (3.14159265f / 180.0f)) / cmd.param2;
+                        
+                        // 推进角度
+                        d.current_angle += angular_speed * dt;
+                        
+                        // 累加时间
+                        d.cmd_timer += dt;
+                        
+                        // 检查这个动作是否做完了
+                        if (d.cmd_timer >= cmd.param2) {
+                            // 动作完成！进入下一条指令
+                            d.current_cmd_index++;
+                            d.cmd_timer = 0.0f;
+                            
+                            // 【防微小误差战术】浮点数相加必有误差，为了防止最后偏了几度，
+                            // 我们最好在这里直接把角度 snap (咬合) 到极其精确的目标值。
+                            // （不过对于简单的弹幕游戏，不写这段 snap 也没事，直接进入下一条即可）
+                        }
+                        break;
+
+                }
+            }
+        }
+
+        // 2. 物理运动推演
+        d.vel.x = std::cos(d.current_angle) * d.current_speed;
+        d.vel.y = std::sin(d.current_angle) * d.current_speed;
+        d.pos += d.vel * dt;
+
+        // 3. 屏幕边界剔除 (根据你设置的 800x600，稍微留点缓冲区)
+        if (d.pos.x < -100 || d.pos.x > 900 || d.pos.y < -100 || d.pos.y > 700) {
+            d.active = false;
+        }
+    }
+}
+
+void DanmakuPool::render(SDLRender& renderer) {
+    auto res_mgr = ResourcesManager::getInstance();
+
+    for (const auto& d : pool) {
+        if (!d.active) continue;
+
+        const auto& prefab = prefabs[d.prefab_id];
+        Texture* tex = res_mgr->get_danmaku_texture(prefab.texture_id);
+
+        // 如果需要子弹朝向运动方向，可以直接传入 d.current_angle (转换成角度)
+        double render_angle = d.current_angle * (180.0 / 3.1415926535);
+
+        renderer.draw_texture(
+            tex, 
+            d.pos, 
+            prefab.base_scale, 
+            prefab.base_size, 
+            render_angle, 
+            255 // alpha 默认不透明，后续可加到 d 中
+        );
+    }
+}
+
+void DanmakuPool::check_player_hit(Player* player) {
+    if (!player || !player->is_alive()) return;
+
+    glm::vec2 p_pos = player->get_position();
+    float p_radius = 2.0f; // 核心判定点
+
+    for (auto& d : pool) {
+        if (!d.active) continue;
+
+        const auto& prefab = prefabs[d.prefab_id];
+        
+        if (prefab.shape_type == DanmakuShape::Circle) {
+            float dx = d.pos.x - p_pos.x;
+            float dy = d.pos.y - p_pos.y;
+            float dist_sq = dx * dx + dy * dy;
+            float hit_r = prefab.base_radius + p_radius;
+
+            if (dist_sq <= hit_r * hit_r) {
+                player->set_alive(false);
+                d.active = false;
+                std::cout << "[Core] Player hit by Danmaku!" << std::endl;
+                // 后续可以触发事件系统
+            }
+        }
+    }
+}
 
 ---
 .\src\Entities\Danmaku.h
 ---
-// 不用继承接口 防止多余开销
-class Danmaku{
-public:
-    //Danmaku b = new Danmaku(a)
-    //b = a
-    Danmaku() = default;
+#pragma once
 
-    Danmaku(const Danmaku& other){
+#include"includes.h"
+#include"SDL_render.h"
+#include"ResourcesManager.h"
+#include"Player.h"
 
-    }
-
-    Danmaku& operator=(const Danmaku& other){
-
-    }
-
-    // 实现update方法
-
-    // 实现renderable方法
-
-    // 实现碰撞体的方法
-
-    //各种get set 方法
-
-    ~Danmaku() = default; 
-
-private:
-
-// 弹幕的坐标 (vector<glm::vec2>) 为了让有些多坐标弹幕能够确定位置(比如激光需要起始坐标与终止坐标)
-    
-// image 负责弹幕的贴图
-
-// 碰撞体接口 负责弹幕的碰撞检测 
-
-// 弹幕的类型
-
-// 运动函数接口
-
-// 附加数据 使用Vector<float> 
-
-// 是否active(比如是否已经碰撞 不active的弹幕不会更新与进行碰撞检测)
-
+// 目前的思路是将弹幕作为一个单独的系统 采用纯粹的数据形式来存储弹幕 弹幕的渲染和更新交由弹幕管理系统完成
+// 弹幕的渲染: 1.在resourcemanager单独开一条弹幕贴图的vector 不使用unorder_map 因为每次循环都要查询 需要考虑开销
+// 2. 弹幕管理系统单独负责弹幕的渲染 参数接收一个渲染器再接收弹幕texture的id用于渲染 当然也可以重载更多的参数 能够自定义贴图大小 旋转等
+// 对于数据的存储 采用享元 DanmakuData负责储存一个弹幕独有的信息(这个弹幕的类型 位置 速度 旋转角度 执行指令的时间 目前在执行第几个指令 是否存活等)
+// DanmakuPrefab 用于存放一类弹幕公用的数据 比如渲染方面的 使用哪个贴图 渲染时如何渲染(初始旋转角度 缩放比例等) 更新方面的 比如执行哪个指令集
+// 3 弹幕管理系统的更新 系统里写一个状态机 做一个指令结构体 储存指令类型 参数(比如相关指令执行的数量 执行持续多长时间) 然后将这些指令存入一个指令集 
+// 每个弹幕通过读取指令集来形成不同的轨迹 每类弹幕共享一个指令集 弹幕自身存储自己对指令集的执行情况(执行了多长时间 执行到第几个)
+// 弹幕管理器最终会通过指令的种类 各种参数等 来分辨该如何执行指令
+// 4 碰撞的逻辑: 为类型单独写碰撞 比如一个函数接收实体指针(或存储实体指针的vector) 然后检测  
+// 为了方便区分 可能会在场景里多维护一份enemy的队列 如果可能存在多玩家了话 可能需要多维护一份player队列
+// 5 弹幕管理系统总结
+// 弹幕管理系统维护几个vector 分别存储danmakudata danmakuprefab trajectories
+// 弹幕管理系统提供接口创建以上三种类型 对于弹幕的处理依赖于内部对象池 外部只需要输入构建弹幕需要的参数便可
 // 
 
+
+// 碰撞体类型
+enum class DanmakuShape : uint8_t{
+    Circle,
+    Rect,
+    Laser
+};
+
+// 指令类型
+enum class DanmakuCmdType {
+    WAIT,
+    SET_SPEED,
+    TURN_ANGLE,
+    ACCELERATE,
+    SMOOTH_TURN
+};
+
+struct DanmakuPrefab{
+    uint16_t texture_id;//存在资源管理器中的弹幕贴图队列中
+    glm::vec2 base_size;     // 贴图原始大小
+    glm::vec2 base_scale;    // 默认缩放
+    DanmakuShape shape_type; // 碰撞形状
+    float base_radius;       // 基础碰撞判定半径
+    uint16_t default_traj_id;// 默认绑定的轨迹模板 ID
+};
+
+struct DanmakuData{
+    glm::vec2 pos;
+    glm::vec2 vel;
+    float current_speed;
+    float current_angle;
+
+    uint16_t prefab_id;//预制菜id
+    uint16_t trajectory_id;//轨迹id
+
+    uint8_t current_cmd_index;
+    float cmd_timer;
+
+    bool active;
+
+};
+
+// 指令
+struct DanmakuCommand
+{
+    DanmakuCmdType type;
+    float param1; //参数1
+    float param2; // 参数2
+};
+
+//指令队列 / 轨迹模板
+struct TrajectoryTemplate
+{
+    std::vector<DanmakuCommand> commands;
+};
+
+class DanmakuPool{
+public:
+    DanmakuPool() = delete;
+    DanmakuPool(size_t pool_size);
+    ~DanmakuPool() = default;
+
+    
+    // 对象池不可拷贝 
+    DanmakuPool(const DanmakuPool& other) = delete;
+    DanmakuPool operator=(const DanmakuPool& other) = delete;
+
+    //用于注册
+    uint16_t register_prefab(const DanmakuPrefab& prefab);
+    uint16_t register_trajectory(const TrajectoryTemplate& traj);
+
+    // 用于生成子弹
+    void spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_speed, float initial_angle);
+
+    //各种执行阶段
+    void update(float delta);
+    void render(SDLRender& renderer);
+    void check_player_hit(Player* player);
+
+
+private:
+    std::vector<DanmakuData> pool;
+    std::vector<DanmakuPrefab> prefabs;
+    std::vector<TrajectoryTemplate> trajectories;
 
 };
 
@@ -755,24 +988,30 @@ private:
 IInput* IInput::input = nullptr;
 
 IInput::IInput() {
-	for (int i = 0; i < (int)KeyType::_count; i++) {
-		keys[i] = new Key((KeyType)i);
-	}
+    for (int i = 0; i < (int)KeyType::_count; i++) {
+        keys[i] = new Key((KeyType)i);
+    }
 }
+
 IInput* IInput::get() {
-	if (input == nullptr)input = new IInput();
-	return input;
+    if (input == nullptr) input = new IInput();
+    return input;
 }
+
 bool IInput::update() {
-	bool upd = 0;
-	get();
-	for (int i = 0; i < (int)KeyType::_count; i++) {
-		upd = upd || input->keys[i]->update();
-	}
-	return upd;
+    bool upd = false; // 严谨的初始化
+    get();
+    
+    for (int i = 0; i < (int)KeyType::_count; i++) {
+
+        bool key_changed = input->keys[i]->update();
+        upd = upd || key_changed;
+    }
+    return upd;
 }
+
 Key* IInput::get_key(KeyType k) {
-	return get()->keys[(int)k];
+    return get()->keys[(int)k];
 }
 
 ---
@@ -799,25 +1038,33 @@ private:
 .\src\Input\Key.cpp
 ---
 #include "Key.h"
-
+#include <SDL.h>
 
 Key::Key(KeyType key):key_(key){
-	state = 0;
-	state_prev = 0;
+    state = false;
+    state_prev = false;
 }
+
 bool Key::update() {
-	state_prev = state;
-	state = (GetAsyncKeyState(Keys[(int)key_]) & 0x8000) != 0;
-	return state_prev != state;
+    state_prev = state;
+    
+    // 获取 SDL 内部维护的全局键盘状态数组
+    const Uint8* currentKeyStates = SDL_GetKeyboardState(NULL);
+    
+    // 直接通过数组下标极速寻址，判断当前键是否被按下
+    state = currentKeyStates[Keys[(int)key_]];
+    
+    return state_prev != state;
 }
+
 bool Key::get_state() {
-	return state;
+    return state;
 }
 bool Key::get_keydown() {
-	return (!state_prev) && state;
+    return (!state_prev) && state;
 }
 bool Key::get_keyup() {
-	return state_prev && (!state);
+    return state_prev && (!state);
 }
 
 ---
@@ -851,26 +1098,36 @@ private:
 ---
 #pragma once
 #include "includes.h"
-
+#include <SDL.h> // 必须引入 SDL
 
 enum class KeyType
 {
-	UP,
-	DOWN,
-	LEFT,
-	RIGHT,
-	Z,
-	X,
-	C,
-	SHIFT,
-	CTRL,
-	ENTER,
-	_count
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT,
+    Z,
+    X,
+    C,
+    SHIFT,
+    CTRL,
+    ENTER,
+    _count
 };
 
-const int Keys[] = { VK_UP, VK_DOWN, VK_LEFT, VK_RIGHT, 'Z', 'X', 'C', VK_SHIFT, VK_CONTROL, VK_RETURN };
-
-
+// 战术核心：直接映射到 SDL 的底层键盘扫描码
+const SDL_Scancode Keys[] = { 
+    SDL_SCANCODE_UP, 
+    SDL_SCANCODE_DOWN, 
+    SDL_SCANCODE_LEFT, 
+    SDL_SCANCODE_RIGHT, 
+    SDL_SCANCODE_Z, 
+    SDL_SCANCODE_X, 
+    SDL_SCANCODE_C, 
+    SDL_SCANCODE_LSHIFT, 
+    SDL_SCANCODE_LCTRL, 
+    SDL_SCANCODE_RETURN 
+};
 
 ---
 .\src\Interface\IRenderable.h
@@ -1168,6 +1425,20 @@ void ResourcesManager::set_renderer(SDLRender* renderer){
  	this->renderer = renderer;
 }
 
+uint16_t ResourcesManager::register_danmaku_texture(const std::string path)
+{	
+	std::unique_ptr<Texture> t = std::make_unique<Texture>();
+	t.get()->load(path,this->renderer->get_renderer());
+	this->danmaku_texture.push_back(std::move(t));
+    return static_cast<uint16_t>(danmaku_texture.size() - 1);
+}
+
+Texture* ResourcesManager::get_danmaku_texture(uint16_t id)
+{
+    return this->danmaku_texture[id].get();
+}
+
+
 ---
 .\src\Managers\ResourcesManager.h
 ---
@@ -1180,6 +1451,7 @@ void ResourcesManager::set_renderer(SDLRender* renderer){
 #include"IRender.h"
 #include"SceneType.h"
 #include"SDLRender.h"
+#include"Danmaku.h"
 
 class ResourcesManager
 {
@@ -1220,6 +1492,9 @@ public:
 
 	void set_renderer(SDLRender* renderer);
 
+	uint16_t register_danmaku_texture(const std::string path);
+	Texture* get_danmaku_texture(uint16_t id);
+
 private:
 	ResourcesManager() = default;
 	std::unordered_map<std::string, Texture*> global_Texture;
@@ -1230,6 +1505,8 @@ private:
 	std::unordered_map<std::string, Texture*> Scene_Texture;
 	std::unordered_map<std::string, Font*> Scene_Font;
 	std::unordered_map<std::string, Atlas*> Scene_Atlas;
+
+	std::vector<std::unique_ptr<Texture>> danmaku_texture;
 
 	static ResourcesManager* resources_manager;
 
@@ -2438,137 +2715,173 @@ public:
 ---
 #include "MainScene.h"
 #include "SceneManager.h"
-// #include "EasyxRender.h"
 #include "Animation.h"
 #include "GameContext.h"
 #include "ResourcesManager.h"
 #include "clock.h"
-#include "ColliderManager.h"
+#include "Danmaku.h"
 
 MainScene::MainScene() {
-  IInput::get();
-  std::cout << "MainScene Constructor" << std::endl;
+    IInput::get();
+    std::cout << "MainScene Constructor" << std::endl;
 }
 
-MainScene::~MainScene() { std::cout << "MainScene Destructor" << std::endl; }
+MainScene::~MainScene() { 
+    std::cout << "MainScene Destructor" << std::endl; 
+    if (enemy_bullets) delete enemy_bullets; // 记得清理战场
+}
 
 void MainScene::on_enter() {
-  ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
-  ColliderManager::get_instance();
-  
+    ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
+    ColliderManager::get_instance();
+    
+    // ==========================================
+    // 弹幕系统初始化 (DOD 架构切入点)
+    // ==========================================
+    // 1. 在堆上实例化内存池 (保证生命周期贯穿整个场景)
+    this->enemy_bullets = new DanmakuPool(10000);
 
-  std::cout << "Entering MainScene" << std::endl;
-  EnemyBuilder enemybuilder;
-  enemybuilder.create_enemy(EnemyType::small);
-  Enemy *a = enemybuilder.create();
-  this->renderables.push_back(a);
-  this->updateables.push_back(a);
-  // ColliderManager::get_instance()->enemy_collider_list.push_back(a);
+    // 2. 注册极速贴图 (请确保 resources\8.png 存在，或者换成 2.png)
+    uint16_t tex_id = ResourcesManager::getInstance()->register_danmaku_texture("resources\\8.png");
+    
+    // 3. 编写酷炫的自定义轨迹模板 (Timeline)
+    TrajectoryTemplate traj;
+    // 指令1：以当前速度飞 0.5 秒
+    traj.commands.push_back({DanmakuCmdType::WAIT, 0.5f, 0.0f});
+    // 指令2：平滑转弯 90 度，耗时 1.0 秒
+    traj.commands.push_back({DanmakuCmdType::SMOOTH_TURN, 90.0f, 1.0f});
+    // 指令3：猛烈加速，每秒加 400 速度，持续 2.0 秒
+    traj.commands.push_back({DanmakuCmdType::ACCELERATE, 400.0f, 2.0f});
+    
+    // 注册轨迹并拿到 ID
+    uint16_t traj_id = this->enemy_bullets->register_trajectory(traj);
 
-  enemybuilder.create_enemy(EnemyType::common);
-  Enemy *b = enemybuilder.create();
-  this->renderables.push_back(b);
-  this->updateables.push_back(b);
-  // ColliderManager::get_instance()->enemy_collider_list.push_back(b);
+    // 4. 组装预制体 (Prefab)
+    DanmakuPrefab dp;
+    dp.texture_id = tex_id; 
+    dp.base_size = {16.0f, 16.0f}; // 强制渲染大小为 16x16，你可以根据实际图片修改
+    dp.base_scale = {1.0f, 1.0f};
+    dp.shape_type = DanmakuShape::Circle;
+    dp.base_radius = 5.0f; // 碰撞判定半径
+    dp.default_traj_id = traj_id; // 绑定刚才写的酷炫轨迹！
 
-  enemybuilder.create_enemy(EnemyType::large);
-  Enemy *c = enemybuilder.create();
-  this->renderables.push_back(c);
-  this->updateables.push_back(c);
-  // ColliderManager::get_instance()->enemy_collider_list.push_back(c);
-  // this->clock();
-  // 调用this后relese模式下程序暂停 debug没有问题
+    // 注册预制体并保存 ID 到成员变量，方便按键时调用
+    this->test_prefab_id = this->enemy_bullets->register_prefab(dp);
+    // ==========================================
 
-  this->clock.set_callback([this]() {
-    std::cout << this << std::endl;                           // 没问题
-    std::cout << "daugsjdha" << "this:" << this << std::endl; // 没问题
-    std::cout << "踹刷u读书u和古代u上高低" << "this:" << this
-              << std::endl; // 没问题
-    // std::cout<<"踹刷u读书u和古代u上高低"<<this<<std::endl;//程序强制暂停
-  });
 
-  Texture *v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
-  glm::vec2 pos;
-  glm::vec2 scale;
-  pos.x = 205;
-  pos.y = 205;
-  scale.x = 1;
-  scale.y = 1;
+    std::cout << "Entering MainScene" << std::endl;
+    EnemyBuilder enemybuilder;
+    enemybuilder.create_enemy(EnemyType::small);
+    Enemy *a = enemybuilder.create();
+    this->renderables.push_back(a);
+    this->updateables.push_back(a);
 
-  Image player_image = Image(v, pos, scale, 0, 255);
-  Atlas *player_atlas =
-      ResourcesManager::getInstance()->get_atlas("resources\\6.png");
+    enemybuilder.create_enemy(EnemyType::common);
+    Enemy *b = enemybuilder.create();
+    this->renderables.push_back(b);
+    this->updateables.push_back(b);
 
-  Context::Instances()->set_player_context(pos, {0, 0}, true, true, 100);
-  PlayerContext pc = Context::Instances()->get_player_context();
-  this->player = new Player(pos,{0,0},100);
+    enemybuilder.create_enemy(EnemyType::large);
+    Enemy *c = enemybuilder.create();
+    this->renderables.push_back(c);
+    this->updateables.push_back(c);
 
-  player->setImage(player_image);
-  // player->set_atlas(player_atlas);
-  Animation animation(player_atlas, 0.1);
+    this->clock.set_callback([this]() {
+        std::cout << "Timer tick. this:" << this << std::endl; 
+    });
 
-  Collider* player_collider = ColliderManager::get_instance()->create_collider(new Circle(10),0,player);
+    Texture *v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
+    glm::vec2 pos(205, 205);
+    glm::vec2 scale(1, 1);
 
-  this->renderables.push_back(player);
-  this->updateables.push_back(player);
-  this->player->set_animation(animation);
-  player->set_collider(player_collider);
-  player->get_collider()->set_on_collid([p = this->player](Collider* other){
-      p->set_alive(false);
-			std::cout << "die" << std::endl; 
-		});
-  // this->player->set_shape(new CircleShape(100));
-  // ColliderManager::get_instance()->player_collider_list.push_back(player);
+    Image player_image = Image(v, pos, scale, 0, 255);
+    Atlas *player_atlas = ResourcesManager::getInstance()->get_atlas("resources\\6.png");
 
-  // this->renderables.push_back(image);
+    Context::Instances()->set_player_context(pos, {0, 0}, true, true, 100);
+    PlayerContext pc = Context::Instances()->get_player_context();
+    this->player = new Player(pos,{0,0},100);
+
+    player->setImage(player_image);
+    Animation animation(player_atlas, 0.1);
+
+    Collider* player_collider = ColliderManager::get_instance()->create_collider(new Circle(10),0,player);
+
+    this->renderables.push_back(player);
+    this->updateables.push_back(player);
+    this->player->set_animation(animation);
+    player->set_collider(player_collider);
+    player->get_collider()->set_on_collid([p = this->player](Collider* other){
+        p->set_alive(false);
+        std::cout << "Player Dead!" << std::endl; 
+    });
 }
 
 void MainScene::on_exit() { 
-  std::cout << "Exiting MainScene" << std::endl;
-  Context::Instances()->set_player_context(
-      player->get_position(), player->get_velocity(), player->isActive(),
-      player->is_alive(), player->get_hp());
+    std::cout << "Exiting MainScene" << std::endl;
+    Context::Instances()->set_player_context(
+        player->get_position(), player->get_velocity(), player->isActive(),
+        player->is_alive(), player->get_hp());
 }
 
 void MainScene::on_update(float deltatime) {
-  for (IUpdateable *a : this->updateables) {
-    a->update(deltatime);
-  }
-  this->clock.update(deltatime);
-  IInput::update();
-  // ColliderManager::get_instance()->check_collider();
-  // ColliderManager::get_instance()->execute_collider_logic();
-  //std::cout << "Updating MainScene: " << deltatime << " seconds elapsed."
-            //<< std::endl;
-  ColliderManager::get_instance()->check_and_resolve_collisions();
+    for (IUpdateable *a : this->updateables) {
+        a->update(deltatime);
+    }
+    this->clock.update(deltatime);
+    IInput::update();
+
+    ColliderManager::get_instance()->check_and_resolve_collisions();
+
+    // ==========================================
+    // 弹幕池极速更新与降维打击碰撞
+    // ==========================================
+    if (this->enemy_bullets) {
+        this->enemy_bullets->update(deltatime);
+        this->enemy_bullets->check_player_hit(this->player);
+    }
 }
 
 void MainScene::on_render(SDLRender &renderer) {
-
-  // Texture* a =
-  // ResourcesManager::getInstance()->get_texture("resources\\2.png");
-  // renderer->draw_texture(a, 0,0);
-
-  for (IRenderable *a : this->renderables) {
-    a->render(renderer);
-  }
-  // render->draw_text("MainScene",10,10);
-  //std::cout << "Rendering MainScene" << std::endl;
+    for (IRenderable *a : this->renderables) {
+        a->render(renderer);
+    }
+    
+    // ==========================================
+    // 弹幕池极速渲染 (基于享元模式)
+    // ==========================================
+    if (this->enemy_bullets) {
+        this->enemy_bullets->render(renderer);
+    }
 }
 
 void MainScene::on_input() {
-  if (IInput::get_key(KeyType::ENTER)->get_keydown())
-    SceneManager::getInstance()->switchScene(SceneType::EndMenu);
-  if (IInput::get_key(KeyType::RIGHT)->get_keydown())
-    this->player->set_velocity({10, 0});
-  if (IInput::get_key(KeyType::LEFT)->get_keydown())
-    this->player->set_velocity({-10,0});
-  if (IInput::get_key(KeyType::DOWN)->get_keydown())
-    this->player->set_velocity({0,10});
-  if (IInput::get_key(KeyType::UP)->get_keydown())
-    this->player->set_velocity({0,-10});
-}
+    if (IInput::get_key(KeyType::ENTER)->get_keydown())
+        SceneManager::getInstance()->switchScene(SceneType::EndMenu);
+    
+    if (IInput::get_key(KeyType::RIGHT)->get_state()) // 改为 get_state() 支持长按平滑移动
+        this->player->set_position(this->player->get_position() + glm::vec2{5, 0});
+    if (IInput::get_key(KeyType::LEFT)->get_state())
+        this->player->set_position(this->player->get_position() + glm::vec2{-5, 0});
+    if (IInput::get_key(KeyType::DOWN)->get_state())
+        this->player->set_position(this->player->get_position() + glm::vec2{0, 5});
+    if (IInput::get_key(KeyType::UP)->get_state())
+        this->player->set_position(this->player->get_position() + glm::vec2{0, -5});
 
+    // ==========================================
+    // 开火测试：按住 Z 键释放华丽的几何弹幕
+    // ==========================================
+    if (IInput::get_key(KeyType::Z)->get_state()) {
+        // 东方经典设计：一帧发射一圈子弹 (例如 12 颗)
+        for (int i = 0; i < 12; i++) {
+            // 计算发射角度 (转为弧度)
+            float angle = i * (360.0f / 12.0f) * (3.14159f / 180.0f);
+            
+            // 从屏幕中心 (400, 300) 发射，初速度 150
+            this->enemy_bullets->spawn(this->test_prefab_id, {400, 300}, 150.0f, angle);
+        }
+    }
+}
 
 ---
 .\src\Scenes\MainScene.h
@@ -2582,6 +2895,8 @@ void MainScene::on_input() {
 #include "Player.h"
 // #include"EasyxRender.h"
 #include "Clock.h"
+#include "ColliderManager.h"
+#include "Danmaku.h"
 
 class MainScene : public IScene {
 public:
@@ -2598,6 +2913,9 @@ private:
   Clock clock;
 
   Player *player = nullptr;
+
+  DanmakuPool* enemy_bullets = nullptr; 
+  uint16_t test_prefab_id; // 存一下我们要发射的预制体 ID
 };
 
 

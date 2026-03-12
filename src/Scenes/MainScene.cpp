@@ -20,23 +20,17 @@ void MainScene::on_enter() {
     ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
     ColliderManager::get_instance();
     
-    // ==========================================
-    // 弹幕系统初始化 (DOD 架构切入点)
-    // ==========================================
-    // 1. 在堆上实例化内存池 (保证生命周期贯穿整个场景)
     this->enemy_bullets = new DanmakuPool(10000);
 
-    // 2. 注册极速贴图 (请确保 resources\8.png 存在，或者换成 2.png)
     uint16_t tex_id = ResourcesManager::getInstance()->register_danmaku_texture("resources\\8.png");
     
-    // 3. 编写酷炫的自定义轨迹模板 (Timeline)
     TrajectoryTemplate traj;
-    // 指令1：以当前速度飞 0.5 秒
+    //以当前速度飞 0.5 秒
     traj.commands.push_back({DanmakuCmdType::WAIT, 0.5f, 0.0f});
-    // 指令2：平滑转弯 90 度，耗时 1.0 秒
-    traj.commands.push_back({DanmakuCmdType::SMOOTH_TURN, 90.0f, 1.0f});
-    // 指令3：猛烈加速，每秒加 400 速度，持续 2.0 秒
-    traj.commands.push_back({DanmakuCmdType::ACCELERATE, 400.0f, 2.0f});
+    //平滑转弯 90 度，耗时 1.0 秒
+    traj.commands.push_back({DanmakuCmdType::SMOOTH_TURN, 360.0f, 1.0f});
+    // 猛烈加速，每秒加 400 速度，持续 2.0 秒
+    //traj.commands.push_back({DanmakuCmdType::ACCELERATE, 400.0f, 2.0f});
     
     // 注册轨迹并拿到 ID
     uint16_t traj_id = this->enemy_bullets->register_trajectory(traj);
@@ -71,6 +65,14 @@ void MainScene::on_enter() {
     Enemy *c = enemybuilder.create();
     this->renderables.push_back(c);
     this->updateables.push_back(c);
+
+    EventManager::get_instance()->subscribe(EventType::PlayerDead,[](const Event& event){
+        
+        if(event.data){
+            int t = *static_cast<int*>(event.data);
+            std::cout<<"收到事件玩家死亡"<<"收到数值"<< t <<"\n";
+        }
+    });
 
     this->clock.set_callback([this]() {
         std::cout << "Timer tick. this:" << this << std::endl; 
@@ -114,7 +116,8 @@ void MainScene::on_update(float deltatime) {
         a->update(deltatime);
     }
     this->clock.update(deltatime);
-    IInput::update();
+
+    //IInput::update();
 
     ColliderManager::get_instance()->check_and_resolve_collisions();
 
@@ -125,6 +128,7 @@ void MainScene::on_update(float deltatime) {
         this->enemy_bullets->update(deltatime);
         this->enemy_bullets->check_player_hit(this->player);
     }
+
 }
 
 void MainScene::on_render(SDLRender &renderer) {
@@ -158,7 +162,7 @@ void MainScene::on_input() {
     // ==========================================
     if (IInput::get_key(KeyType::Z)->get_state()) {
         // 东方经典设计：一帧发射一圈子弹 (例如 12 颗)
-        for (int i = 0; i < 12; i++) {
+        for (int i = 0; i < 50; i++) {
             // 计算发射角度 (转为弧度)
             float angle = i * (360.0f / 12.0f) * (3.14159f / 180.0f);
             
@@ -166,4 +170,13 @@ void MainScene::on_input() {
             this->enemy_bullets->spawn(this->test_prefab_id, {400, 300}, 150.0f, angle);
         }
     }
+
+        // 在 on_input() 中添加：
+    if (IInput::get_key(KeyType::C)->get_keydown()) {
+        static int test_val = 408; // 随便搞个测试数据
+        Event e = { EventType::PlayerDead, &test_val };
+        
+        std::cout << "[Input] 玩家按下了 C 键，准备发布事件..." << std::endl;
+        EventManager::get_instance()->publish(e);
+}
 }

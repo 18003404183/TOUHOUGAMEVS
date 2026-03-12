@@ -41,7 +41,7 @@ void Collider::set_layer(int layer)
 
 void Collider::set_on_collid(std::function<void(Collider* other)> func)
 {
-    this->on_collid = func;
+    this->on_collid = std::move(func);
 }
 
 void Collider::run_on_collid(Collider *collider)

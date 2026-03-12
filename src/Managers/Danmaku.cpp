@@ -1,8 +1,10 @@
 #include "Danmaku.h"
+#include "Config.h"
 #include <cmath>
 
 DanmakuPool::DanmakuPool(size_t pool_size) {
     // 一次性分配连续物理内存，杜绝 new/delete
+    this->count = 0;
     pool.resize(pool_size);
     for (auto& d : pool) {
         d.active = false;
@@ -24,6 +26,8 @@ void DanmakuPool::spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_s
 
     for (auto& d : pool) {
         if (!d.active) {
+
+            this->count++;
             d.active = true;
             d.prefab_id = prefab_id;
             d.pos = start_pos;
@@ -44,6 +48,7 @@ void DanmakuPool::spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_s
 }
 
 void DanmakuPool::update(float dt) {
+    std::cout << this->count << "\n";
     for (auto& d : pool) {
         if (!d.active) continue;
 
@@ -98,9 +103,7 @@ void DanmakuPool::update(float dt) {
                             d.current_cmd_index++;
                             d.cmd_timer = 0.0f;
                             
-                            // 【防微小误差战术】浮点数相加必有误差，为了防止最后偏了几度，
-                            // 我们最好在这里直接把角度 snap (咬合) 到极其精确的目标值。
-                            // （不过对于简单的弹幕游戏，不写这段 snap 也没事，直接进入下一条即可）
+
                         }
                         break;
 
@@ -114,7 +117,8 @@ void DanmakuPool::update(float dt) {
         d.pos += d.vel * dt;
 
         // 3. 屏幕边界剔除 (根据你设置的 800x600，稍微留点缓冲区)
-        if (d.pos.x < -100 || d.pos.x > 900 || d.pos.y < -100 || d.pos.y > 700) {
+        if (d.pos.x < 0-100 || d.pos.x > MAIN_WINDOW_WIDTH+100 || d.pos.y < 0-100 || d.pos.y > MAIN_WINDOW_HEIGHT+100) {
+            this->count--;
             d.active = false;
         }
     }

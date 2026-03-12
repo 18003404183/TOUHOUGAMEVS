@@ -105,4 +105,6 @@ private:
     std::vector<DanmakuPrefab> prefabs;
     std::vector<TrajectoryTemplate> trajectories;
 
+    int count;
+
 };

@@ -9,6 +9,7 @@
 #include "Clock.h"
 #include "ColliderManager.h"
 #include "Danmaku.h"
+#include "EventManager.h"
 
 class MainScene : public IScene {
 public:

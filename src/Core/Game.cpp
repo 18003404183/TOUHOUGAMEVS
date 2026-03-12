@@ -76,10 +76,14 @@ void Game::start()
 			if(event.type == SDL_QUIT){
 				is_running = false;
 			}
-			if(!scene_manager->current_scene_null()){
-				//把事件传输给场景处理
-				scene_manager->on_input();
-			}
+
+		}
+
+		IInput::update();
+
+		if(!scene_manager->current_scene_null()){
+			//把事件传输给场景处理
+			scene_manager->on_input();
 		}
 		// 开启 ImGui 新的一帧
 		ImGui_ImplSDLRenderer2_NewFrame();
