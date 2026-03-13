@@ -91,6 +91,7 @@ void MainScene::on_enter() {
                 e->setHp(hp);
 
                 // 挂载到场景中
+                this->entities.push_back(std::make_unique<IEntity>(e));
                 this->renderables.push_back(e);
                 this->updateables.push_back(e);
             }
