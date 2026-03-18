@@ -78,11 +78,9 @@ void MainScene::on_enter() {
                 else if (type_str == "common") type = EnemyType::common;
                 else if (type_str == "large") type = EnemyType::large;
 
-                // 使用你的工厂生成基础敌人
                 enemybuilder.create_enemy(type);
                 Enemy* e = enemybuilder.create();
 
-                // 🌟 核心点：用 JSON 里的数据覆盖默认数据！
                 float x = enemy_data["x"].get<float>();
                 float y = enemy_data["y"].get<float>();
                 int hp = enemy_data["hp"].get<int>();
@@ -91,7 +89,7 @@ void MainScene::on_enter() {
                 e->setHp(hp);
 
                 // 挂载到场景中
-                this->entities.push_back(std::make_unique<IEntity>(e));
+                this->entities.push_back(std::unique_ptr<IEntity>(e));//不能够使用make_unique来创建 因为IEntity是虚基类 无法实例化 可以先创建裸指针 然后再用unique_ptr接管
                 this->renderables.push_back(e);
                 this->updateables.push_back(e);
             }
@@ -172,9 +170,6 @@ void MainScene::on_render(SDLRender &renderer) {
         a->render(renderer);
     }
     
-    // ==========================================
-    // 弹幕池极速渲染 (基于享元模式)
-    // ==========================================
     if (this->enemy_bullets) {
         this->enemy_bullets->render(renderer);
     }
@@ -193,23 +188,16 @@ void MainScene::on_input() {
     if (IInput::get_key(KeyType::UP)->get_state())
         this->player->set_position(this->player->get_position() + glm::vec2{0, -5});
 
-    // ==========================================
-    // 开火测试：按住 Z 键释放华丽的几何弹幕
-    // ==========================================
     if (IInput::get_key(KeyType::Z)->get_state()) {
-        // 东方经典设计：一帧发射一圈子弹 (例如 12 颗)
         for (int i = 0; i < 50; i++) {
-            // 计算发射角度 (转为弧度)
             float angle = i * (360.0f / 12.0f) * (3.14159f / 180.0f);
             
-            // 从屏幕中心 (400, 300) 发射，初速度 150
             this->enemy_bullets->spawn(this->test_prefab_id, {400, 300}, 150.0f, angle);
         }
     }
 
-        // 在 on_input() 中添加：
     if (IInput::get_key(KeyType::C)->get_keydown()) {
-        static int test_val = 408; // 随便搞个测试数据
+        static int test_val = 408; 
         Event e = { EventType::PlayerDead, &test_val };
         
         std::cout << "[Input] 玩家按下了 C 键，准备发布事件..." << std::endl;

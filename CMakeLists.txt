@@ -62,6 +62,7 @@ include_directories(
     ${LIB_PATH}/EasyX/include
     ${LIB_PATH}/glm
     ${LIB_PATH}/Imgui
+    ${LIB_PATH}/LUA/include
 )
 
 list(FILTER SOURCE_FILES EXCLUDE REGEX ".*EasyX.*")
@@ -84,6 +85,8 @@ if(WIN32)
 else()
     target_link_libraries(main PRIVATE SDL2::SDL2-static)
 endif()
+
+target_link_libraries(main PRIVATE ${LIB_PATH}/LUA/lua55.lib)
 
 add_custom_command(TARGET main POST_BUILD
     # 2. 使用 CMake 内置命令复制整个文件夹

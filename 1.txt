@@ -1,0 +1,2 @@
+set PYTHONUTF8=1
+C:\Users\web\AppData\Roaming\Python\Python313\Scripts\files-to-prompt.exe . -e cpp -e c -e h -e hpp -e lua > touhou_engine.txt
