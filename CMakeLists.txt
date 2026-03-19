@@ -63,6 +63,7 @@ include_directories(
     ${LIB_PATH}/glm
     ${LIB_PATH}/Imgui
     ${LIB_PATH}/LUA/include
+    ${LIB_PATH}/json
     ${LIB_PATH}
 )
 
