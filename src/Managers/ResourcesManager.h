@@ -30,8 +30,8 @@ public:
 	bool loadScene(SceneType type);
 
 	//?????? ???delete??????????
-	void clearSceneResources();//记得删除对应资源 而不只是将map置空
-	void clearAllResources();
+	void clear_scene_resources();//记得删除对应资源 而不只是将map置空
+	void clear_all_resources();
 
 
 	ResourcesManager(const ResourcesManager& res) = delete;
@@ -53,14 +53,14 @@ public:
 
 private:
 	ResourcesManager() = default;
-	std::unordered_map<std::string, Texture*> global_Texture;
-	std::unordered_map<std::string, Font*> global_Font;
-	std::unordered_map<std::string, Atlas*> global_Atlas;
+	std::unordered_map<std::string, std::unique_ptr<Texture>> global_Texture;
+	std::unordered_map<std::string, std::unique_ptr<Font>> global_Font;
+	std::unordered_map<std::string, std::unique_ptr<Atlas>> global_Atlas;
 
 	//????????????��??? ???????��??????????
-	std::unordered_map<std::string, Texture*> Scene_Texture;
-	std::unordered_map<std::string, Font*> Scene_Font;
-	std::unordered_map<std::string, Atlas*> Scene_Atlas;
+	std::unordered_map<std::string, std::unique_ptr<Texture>> Scene_Texture;
+	std::unordered_map<std::string, std::unique_ptr<Font>> Scene_Font;
+	std::unordered_map<std::string, std::unique_ptr<Atlas>> Scene_Atlas;
 
 	std::vector<std::unique_ptr<Texture>> danmaku_texture;
 

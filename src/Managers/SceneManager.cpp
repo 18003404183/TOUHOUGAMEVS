@@ -13,7 +13,7 @@ void SceneManager::loadScene(SceneType scenetype)
 {
 	if (scenetype == SceneType::MainMenu)
 	{
-		this->current_scene = this->main_scene;
+		this->current_scene = this->main_scene.get();
 		current_scene->on_enter();
 	}
 }
@@ -28,10 +28,10 @@ void SceneManager::switchScene(SceneType scenetype)
 {
 	current_scene->on_exit();
 	if (scenetype == SceneType::MainMenu) {
-		this->current_scene = this->main_scene;
+		this->current_scene = this->main_scene.get();
 	}
 	if (scenetype == SceneType::EndMenu) {
-		this->current_scene = this->end_scene;
+		this->current_scene = this->end_scene.get();
 	}
 	this->current_scene->on_enter();
 }

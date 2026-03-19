@@ -36,51 +36,62 @@ bool ResourcesManager::loadScene(SceneType type){
 }
 
 void ResourcesManager::load_texture(const std::string& path){
-	Texture* t = new Texture;
+	//将裸指针实现改为智能指针
+	if(Scene_Texture.find(path) != Scene_Texture.end()){
+		return;
+	}
+	auto t = std::make_unique<Texture>();
 	t->load(path,this->renderer->get_renderer());
-	this->Scene_Texture[path] = t;
+	this->Scene_Texture[path] = std::move(t);
 }
 
 void ResourcesManager::load_texture(const std::string &path, std::string name)
 {
-	Texture* t = new Texture;
+	auto t = std::make_unique<Texture>();
 	t->load(path,this->renderer->get_renderer());
-	this->Scene_Texture[name] = t;
+	this->Scene_Texture[name] = std::move(t);
 }
 
 Texture* ResourcesManager::get_texture(std::string name) {
-	return this->Scene_Texture[name];
+	if(Scene_Texture.find(name) != Scene_Texture.end()){
+		return this->Scene_Texture[name].get();
+	}
+	return nullptr;
+}
+
+void ResourcesManager::clear_scene_resources(){
+	Scene_Texture.clear();
+	Scene_Atlas.clear();
+	Scene_Font.clear();
+	
 }
 
 void ResourcesManager::load_atlas(const std::string path)
 {
-	Texture* t = new Texture;
-	t->load(path,this->renderer->get_renderer());
-	Atlas* a = new Atlas(t);
-	this->Scene_Atlas[path] = a;
+	this->load_texture(path);
+	auto a = std::make_unique<Atlas>(this->get_texture(path));
+	this->Scene_Atlas[path] = std::move(a);
 }
 
 void ResourcesManager::load_atlas(const std::string path, std::string name)
 {
-	Texture* t = new Texture;
-	t->load(path,this->renderer->get_renderer());
-	Atlas* a = new Atlas(t);
-	this->Scene_Atlas[name] = a;
+	this->load_texture(path,name);
+	auto a = std::make_unique<Atlas>(this->get_texture(name));
+	this->Scene_Atlas[name] = std::move(a);
+
 }
 
 void ResourcesManager::load_atlas(const std::string path,glm::vec2 cell)
 {
-	Texture* t = new Texture;
-	t->load(path,this->renderer->get_renderer());
-	Atlas* a = new Atlas(t,cell);
-	this->Scene_Atlas[path] = a;
+	this->load_texture(path);
+	auto a = std::make_unique<Atlas>(this->get_texture(path),cell);
+	this->Scene_Atlas[path] = std::move(a);
 }
-
 Atlas *ResourcesManager::get_atlas(std::string name)
 {
 	if(!this->Scene_Atlas[name])
     	return nullptr;
-	return Scene_Atlas[name];
+	return Scene_Atlas[name].get();
 }
 
 

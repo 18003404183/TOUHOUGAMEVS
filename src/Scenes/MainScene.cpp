@@ -20,14 +20,13 @@ MainScene::MainScene() {
 
 MainScene::~MainScene() { 
     std::cout << "MainScene Destructor" << std::endl; 
-    if (enemy_bullets) delete enemy_bullets; // 记得清理战场
 }
 
 void MainScene::on_enter() {
     ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
     ColliderManager::get_instance();
     
-    this->enemy_bullets = new DanmakuPool(10000);
+    this->enemy_bullets = std::make_unique<DanmakuPool>(10000);
 
     uint16_t tex_id = ResourcesManager::getInstance()->register_danmaku_texture("resources\\8.png");
     
@@ -135,6 +134,8 @@ void MainScene::on_enter() {
         p->set_alive(false);
         std::cout << "Player Dead!" << std::endl; 
     });
+
+    this->entities.push_back(std::unique_ptr<IEntity>(this->player));
 }
 
 void MainScene::on_exit() { 

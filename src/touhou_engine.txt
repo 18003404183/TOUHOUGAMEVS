@@ -1,4 +1,4 @@
-.\src\main.cpp
+.\main.cpp
 ---
 #include"Core/Game.h"
 int main(int argc,char* argv[]) {
@@ -20,7 +20,7 @@ int main(int argc,char* argv[]) {
 
 
 ---
-.\src\Core\Config.h
+.\Core\Config.h
 ---
 //负责存放一些游戏配置
 #pragma once
@@ -34,7 +34,7 @@ const int MAIN_WINDOW_WIDTH = 2500;
 const int MAIN_WINDOW_HEIGHT = 1400;
 
 ---
-.\src\Core\Game.cpp
+.\Core\Game.cpp
 ---
 #include "Game.h"
 #include "Config.h"
@@ -165,7 +165,7 @@ void Game::end(){
 }
 
 ---
-.\src\Core\Game.h
+.\Core\Game.h
 ---
 #pragma once
 #include "IWindows.h"
@@ -198,7 +198,7 @@ private:
 
 
 ---
-.\src\Entities\Enemy.cpp
+.\Entities\Enemy.cpp
 ---
 #include "Enemy.h"
 
@@ -303,7 +303,7 @@ void Enemy::set_is_collision(bool collision){
 
 
 ---
-.\src\Entities\Enemy.h
+.\Entities\Enemy.h
 ---
 #pragma once
 #include "IEntity.h"
@@ -369,7 +369,7 @@ private:
 
 
 ---
-.\src\Entities\IEntity.h
+.\Entities\IEntity.h
 ---
 #pragma once
 #include"includes.h"
@@ -404,7 +404,7 @@ public:
 
 
 ---
-.\src\Entities\Player.cpp
+.\Entities\Player.cpp
 ---
 #include "Player.h"
 
@@ -501,7 +501,7 @@ Collider *Player::get_collider()
 
 
 ---
-.\src\Entities\Player.h
+.\Entities\Player.h
 ---
 #pragma once
 #include"IEntity.h"
@@ -585,7 +585,7 @@ private:
 
 
 ---
-.\src\Entities\Type\EnemyType.h
+.\Entities\Type\EnemyType.h
 ---
 #pragma once
 enum class EnemyType
@@ -597,7 +597,7 @@ enum class EnemyType
 
 
 ---
-.\src\Factories\EnemyBuilder.cpp
+.\Factories\EnemyBuilder.cpp
 ---
 #include "EnemyBuilder.h"
 #include"ResourcesManager.h"
@@ -671,7 +671,7 @@ Enemy* EnemyBuilder::create()
 
 
 ---
-.\src\Factories\EnemyBuilder.h
+.\Factories\EnemyBuilder.h
 ---
 #pragma once
 #include"EnemyType.h"
@@ -701,7 +701,7 @@ private:
 
 
 ---
-.\src\Input\IInput.cpp
+.\Input\IInput.cpp
 ---
 #include "IInput.h"
 
@@ -735,7 +735,7 @@ Key* IInput::get_key(KeyType k) {
 }
 
 ---
-.\src\Input\IInput.h
+.\Input\IInput.h
 ---
 #pragma once
 #include "Key.h"
@@ -755,7 +755,7 @@ private:
 
 
 ---
-.\src\Input\Key.cpp
+.\Input\Key.cpp
 ---
 #include "Key.h"
 #include <SDL.h>
@@ -786,7 +786,7 @@ bool Key::get_keyup() {
 }
 
 ---
-.\src\Input\Key.h
+.\Input\Key.h
 ---
 #pragma once
 
@@ -812,7 +812,7 @@ private:
 
 
 ---
-.\src\Input\KeyType.h
+.\Input\KeyType.h
 ---
 #pragma once
 #include "includes.h"
@@ -848,7 +848,7 @@ const SDL_Scancode Keys[] = {
 };
 
 ---
-.\src\Interface\IRenderable.h
+.\Interface\IRenderable.h
 ---
 #pragma once
 #include"SDLRender.h"
@@ -867,7 +867,7 @@ protected:
 };
 
 ---
-.\src\Interface\IUpdateable.h
+.\Interface\IUpdateable.h
 ---
 #pragma once
 class IUpdateable
@@ -880,14 +880,14 @@ public:
 
 
 ---
-.\src\Managers\ColliderManager.cpp
+.\Managers\ColliderManager.cpp
 ---
 #include"ColliderManager.h"
 
 ColliderManager* ColliderManager::collider_manager = nullptr;
 
 ---
-.\src\Managers\ColliderManager.h
+.\Managers\ColliderManager.h
 ---
 #pragma once
 
@@ -975,7 +975,7 @@ private:
 };
 
 ---
-.\src\Managers\Danmaku.cpp
+.\Managers\Danmaku.cpp
 ---
 #include "Danmaku.h"
 #include "Config.h"
@@ -1153,7 +1153,7 @@ void DanmakuPool::check_player_hit(Player* player) {
 }
 
 ---
-.\src\Managers\Danmaku.h
+.\Managers\Danmaku.h
 ---
 #pragma once
 
@@ -1267,7 +1267,7 @@ private:
 };
 
 ---
-.\src\Managers\Event.h
+.\Managers\Event.h
 ---
 #pragma once
 
@@ -1287,14 +1287,14 @@ struct Event
 
 
 ---
-.\src\Managers\EventManager.cpp
+.\Managers\EventManager.cpp
 ---
 #include"EventManager.h"
 
 EventManager* EventManager::eventmanager = nullptr;
 
 ---
-.\src\Managers\EventManager.h
+.\Managers\EventManager.h
 ---
 # pragma once
 
@@ -1338,7 +1338,7 @@ private:
 };
 
 ---
-.\src\Managers\GameContext.cpp
+.\Managers\GameContext.cpp
 ---
 #include"GameContext.h"
 
@@ -1346,7 +1346,7 @@ Context* Context::context = nullptr;
 
 
 ---
-.\src\Managers\GameContext.h
+.\Managers\GameContext.h
 ---
 #pragma once
 #include"includes.h"
@@ -1414,7 +1414,7 @@ private:
 
 
 ---
-.\src\Managers\ResourcesManager.cpp
+.\Managers\ResourcesManager.cpp
 ---
 #include "ResourcesManager.h"
 
@@ -1532,7 +1532,7 @@ Texture* ResourcesManager::get_danmaku_texture(uint16_t id)
 
 
 ---
-.\src\Managers\ResourcesManager.h
+.\Managers\ResourcesManager.h
 ---
 #pragma once
 #include"includes.h"
@@ -1609,7 +1609,7 @@ private:
 
 
 ---
-.\src\Managers\SceneManager.cpp
+.\Managers\SceneManager.cpp
 ---
 #include "SceneManager.h"
 
@@ -1668,7 +1668,7 @@ bool SceneManager::current_scene_null(){
 }
 
 ---
-.\src\Managers\SceneManager.h
+.\Managers\SceneManager.h
 ---
 #pragma once
 
@@ -1709,7 +1709,7 @@ private:
 
 
 ---
-.\src\Physical\Collider.cpp
+.\Physical\Collider.cpp
 ---
 #include"Collider.h"
 
@@ -1799,7 +1799,7 @@ Collider::~Collider()
 
 
 ---
-.\src\Physical\Collider.h
+.\Physical\Collider.h
 ---
 #pragma once
 
@@ -1886,7 +1886,7 @@ private:
 
 
 ---
-.\src\Physical\CollisionSolver.h
+.\Physical\CollisionSolver.h
 ---
 #pragma once
 
@@ -1935,13 +1935,13 @@ public:
 
 
 ---
-.\src\Render\Camera.cpp
+.\Render\Camera.cpp
 ---
 #include "Camera.h"
 
 
 ---
-.\src\Render\Camera.h
+.\Render\Camera.h
 ---
 #pragma once
 class Camera
@@ -1953,7 +1953,7 @@ class Camera
 
 
 ---
-.\src\Render\EasyxWindow.cpp
+.\Render\EasyxWindow.cpp
 ---
 #include "EasyxWindow.h"
 
@@ -1977,7 +1977,7 @@ bool EasyxWindow::init(int w,int h)
 
 
 ---
-.\src\Render\EasyxWindow.h
+.\Render\EasyxWindow.h
 ---
 #pragma once
 #include "IWindows.h"
@@ -1995,13 +1995,13 @@ public:
 
 
 ---
-.\src\Render\IRender.cpp
+.\Render\IRender.cpp
 ---
 #include "IRender.h"
 
 
 ---
-.\src\Render\IRender.h
+.\Render\IRender.h
 ---
 #pragma once
 
@@ -2034,7 +2034,7 @@ protected:
 
 
 ---
-.\src\Render\IWindows.cpp
+.\Render\IWindows.cpp
 ---
 #include "IWindows.h"
 
@@ -2042,7 +2042,7 @@ protected:
 
 
 ---
-.\src\Render\IWindows.h
+.\Render\IWindows.h
 ---
 #pragma once
 class IWindows
@@ -2060,7 +2060,7 @@ protected:
 
 
 ---
-.\src\Render\SDLRender.cpp
+.\Render\SDLRender.cpp
 ---
 #include"SDLRender.h"
 #include "../Resources/Texture.h"
@@ -2181,7 +2181,7 @@ void SDLRender::draw_text(std::string text, int x, int y){
 
 
 ---
-.\src\Render\SDLRender.h
+.\Render\SDLRender.h
 ---
 #pragma once
 
@@ -2231,7 +2231,7 @@ private:
 };
 
 ---
-.\src\Render\SDLWindow.cpp
+.\Render\SDLWindow.cpp
 ---
 #include"SDLWindow.h"
 
@@ -2264,7 +2264,7 @@ SDL_Window* SDLWindows::get_sdl_window(){
 
 
 ---
-.\src\Render\SDLWindow.h
+.\Render\SDLWindow.h
 ---
 #pragma once
 
@@ -2294,14 +2294,14 @@ private:
 };
 
 ---
-.\src\Resources\Animation.cpp
+.\Resources\Animation.cpp
 ---
 #include"Animation.h"
 
 
 
 ---
-.\src\Resources\Animation.h
+.\Resources\Animation.h
 ---
 #pragma once
 
@@ -2419,13 +2419,13 @@ public:
 
 
 ---
-.\src\Resources\Atlas.cpp
+.\Resources\Atlas.cpp
 ---
 #include "Atlas.h"
 
 
 ---
-.\src\Resources\Atlas.h
+.\Resources\Atlas.h
 ---
 #pragma once
 
@@ -2492,13 +2492,13 @@ private:
 
 
 ---
-.\src\Resources\Font.cpp
+.\Resources\Font.cpp
 ---
 #include "Font.h"
 
 
 ---
-.\src\Resources\Font.h
+.\Resources\Font.h
 ---
 #pragma once
 class Font
@@ -2510,7 +2510,7 @@ class Font
 
 
 ---
-.\src\Resources\Image.cpp
+.\Resources\Image.cpp
 ---
 #include "Image.h"
 
@@ -2532,7 +2532,7 @@ void Image::render(SDLRender& renderer,glm::vec2 pos) const
 
 
 ---
-.\src\Resources\Image.h
+.\Resources\Image.h
 ---
 #pragma once
 
@@ -2612,7 +2612,7 @@ private:
 
 
 ---
-.\src\Resources\Texture.cpp
+.\Resources\Texture.cpp
 ---
 #include "Texture.h"
 
@@ -2660,7 +2660,7 @@ bool Texture::load(const std::string& path, SDL_Renderer* renderer)
 
 
 ---
-.\src\Resources\Texture.h
+.\Resources\Texture.h
 ---
 #pragma once
 
@@ -2730,7 +2730,7 @@ private:
 };
 
 ---
-.\src\Scenes\EndScene.cpp
+.\Scenes\EndScene.cpp
 ---
 #include "EndScene.h"
 
@@ -2783,7 +2783,7 @@ void EndScene::on_input() {
 
 
 ---
-.\src\Scenes\EndScene.h
+.\Scenes\EndScene.h
 ---
 #pragma once
 #include"IScene.h"
@@ -2810,7 +2810,7 @@ public:
 
 
 ---
-.\src\Scenes\MainScene.cpp
+.\Scenes\MainScene.cpp
 ---
 #include "MainScene.h"
 #include "SceneManager.h"
@@ -3013,7 +3013,7 @@ void MainScene::on_input() {
 }
 
 ---
-.\src\Scenes\MainScene.h
+.\Scenes\MainScene.h
 ---
 #pragma once
 #include "Enemy.h"
@@ -3050,7 +3050,7 @@ private:
 
 
 ---
-.\src\Scenes\SceneType.h
+.\Scenes\SceneType.h
 ---
 #pragma once
 
@@ -3062,7 +3062,7 @@ enum class SceneType
 };
 
 ---
-.\src\Utils\clock.h
+.\Utils\clock.h
 ---
 #pragma once
 
@@ -3159,7 +3159,7 @@ private:
 };
 
 ---
-.\src\Utils\includes.h
+.\Utils\includes.h
 ---
 #pragma once
 #include <chrono>
@@ -3174,7 +3174,7 @@ private:
 
 
 ---
-.\src\Utils\json.hpp
+.\Utils\json.hpp
 ---
 //     __ _____ _____ _____
 //  __|  |   __|     |   | |  JSON for Modern C++

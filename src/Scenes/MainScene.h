@@ -27,6 +27,6 @@ private:
 
   Player *player = nullptr;
 
-  DanmakuPool* enemy_bullets = nullptr; 
+  std::unique_ptr<DanmakuPool> enemy_bullets; 
   uint16_t test_prefab_id; // 存一下我们要发射的预制体 ID
 };

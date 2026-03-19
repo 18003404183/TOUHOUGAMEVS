@@ -27,8 +27,9 @@ private:
 	~SceneManager() = default;
 	IScene* current_scene;
 
-	MainScene* main_scene = new MainScene();
-	EndScene* end_scene = new EndScene();
+	std::unique_ptr<MainScene> main_scene = std::make_unique<MainScene>();
+	std::unique_ptr<EndScene> end_scene = std::make_unique<EndScene>();
+
 
 	static SceneManager* scene_manager;
 
