@@ -5,6 +5,7 @@
 #include "Image.h"
 #include "Collider.h"
 #include "Animation.h"
+#include "ColliderManager.h"
 class Enemy :
     public IEntity,
     public IUpdateable,
@@ -14,7 +15,12 @@ public:
 	Enemy(){
 		this->entity_type = EntityType::Enemy;
 	};
-	virtual ~Enemy() override = default;
+	virtual ~Enemy() override{
+		if(this->collider){
+			ColliderManager::get_instance()->destory_collider(this->collider);
+			this->collider = nullptr;
+		}
+	};
 
 	Collider* collider;
 
@@ -38,9 +44,6 @@ public:
 	void set_image(Image& image);
 	Image& get_image();
 
-	void set_shape(Shape* shape);
-	const Shape* get_shape() const;
-
 	void on_collision();
 
 	bool get_is_collision() const;
@@ -54,7 +57,6 @@ private:
 	bool is_alive;
 	float hp;
 	Image image;
-	Shape* shape;
 	bool is_collision = false;
 	Animation enemy_animation;
 };

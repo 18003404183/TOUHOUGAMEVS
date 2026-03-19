@@ -54,7 +54,6 @@ Enemy* EnemyBuilder::create()
 	enemy->setAlive(this->is_alive);
 	enemy->set_position(this->position);
 	enemy->set_velocity(this->velocity);
-	enemy->set_shape(this->shape);
 	enemy->set_image(this->image);
 	Animation animation(ResourcesManager::getInstance()->get_atlas("resources\\7.png"),0.1);
 	enemy->set_animation(animation);

@@ -6,12 +6,18 @@
 #include"Animation.h"
 #include"GameContext.h"
 #include"Collider.h"
+#include"ColliderManager.h"
 
 class Player : public IEntity, public IRenderable, public IUpdateable
 {
 public:
 	Player() = default;
-	~Player() = default;
+	~Player(){
+		if(this->collider){
+			ColliderManager::get_instance()->destory_collider(this->collider);
+			this->collider = nullptr;
+		}
+	}
 
 	Player(glm::vec2 pos,glm::vec2 v,int hp,const Image& image,Collider* collider):collider(collider){
 		this->position = pos;

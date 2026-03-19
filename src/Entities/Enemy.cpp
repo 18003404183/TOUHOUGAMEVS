@@ -70,13 +70,6 @@ void Enemy::setAlive(bool alive)
 	this->is_alive = alive;
 }
 
-void Enemy::set_shape(Shape* shape){
-	this->shape = shape;
-}
-
-const Shape* Enemy::get_shape() const{
-	return this->shape;
-}
 
 void Enemy::on_collision(){
 	std::cout<<"enemy on collision"<<std::endl;

@@ -16,10 +16,8 @@ public:
 
 
     static ColliderManager* get_instance(){
-        if(collider_manager == nullptr){
-            collider_manager = new ColliderManager;
-        }
-        return collider_manager;
+        static ColliderManager instance;
+        return &instance;
     }
 
     // Collider& create_collider(){
@@ -36,10 +34,13 @@ public:
         return collider;
     }
 
-    void destory_collider(Collider& collider){
-        for(auto i = collider_list.begin();i!=collider_list.end();i++){
-            if((*i).get() == &collider){
-                collider_list.erase(i);
+    void destory_collider(Collider* collider){
+        if(!collider) return;
+
+        for(auto i = 0;i<collider_list.size();i++){
+            if(collider_list[i].get() == collider){
+                std::swap(collider_list[i],collider_list.back());
+                collider_list.pop_back();
                 return;
             }
         }
