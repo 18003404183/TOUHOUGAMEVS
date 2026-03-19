@@ -29,4 +29,9 @@ private:
 
   std::unique_ptr<DanmakuPool> enemy_bullets; 
   uint16_t test_prefab_id; // 存一下我们要发射的预制体 ID
+
+  // ImGui 调试用的变量
+  bool show_debug_hitbox = false;    // 碰撞盒开关
+  int debug_emit_count = 12;         // 一圈发射多少颗子弹
+  float debug_emit_speed = 150.0f;   // 子弹初速度
 };

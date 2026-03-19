@@ -99,6 +99,8 @@ public:
     void render(SDLRender& renderer);
     void check_player_hit(Player* player);
 
+    void clear_pool();
+
     int count;
 
 private:

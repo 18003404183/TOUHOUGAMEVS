@@ -114,3 +114,21 @@ void SDLRender::draw_text(std::string text, int x, int y){
     (void)text; (void)x; (void)y;
     std::cerr << "[SDLRender] draw_text not implemented (requires SDL_ttf)" << std::endl;
 }
+
+void SDLRender::draw_circle_outline(const glm::vec2 pos, float radius, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    SDL_SetRenderDrawColor(this->renderer,r,g,b,a);
+
+    const int NUM_SEGMENTS = 32;
+    SDL_FPoint points[NUM_SEGMENTS+1];
+
+    for(int i = 0; i<NUM_SEGMENTS+1;i++){
+        float theta = ((i/(float)NUM_SEGMENTS)*2*3.1415926f);
+
+        points[i].x = pos.x + (cos(theta)*radius);
+        points[i].y = pos.y + (sin(theta)*radius);
+    }
+
+    SDL_RenderDrawLinesF(this->renderer,points,NUM_SEGMENTS+1);
+
+}

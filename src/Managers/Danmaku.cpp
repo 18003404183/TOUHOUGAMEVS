@@ -172,3 +172,10 @@ void DanmakuPool::check_player_hit(Player* player) {
         }
     }
 }
+
+void DanmakuPool::clear_pool()
+{
+    for(auto a : this->pool){
+        a.active = false;
+    }
+}

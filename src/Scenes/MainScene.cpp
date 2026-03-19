@@ -150,10 +150,28 @@ void MainScene::on_update(float deltatime) {
         a->update(deltatime);
     }
     this->clock.update(deltatime);
-    ImGui::Begin("danmaku count");
-    ImGui::Text("danmaku: %d",this->enemy_bullets->count);
-    ImGui::End();
+    ImGui::Begin("Engine Control Panel");
+    
+    if (ImGui::CollapsingHeader("Danmaku Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Text("Active Enemy Bullets: %d / 10000", this->enemy_bullets->count);
+        // 进度条直观显示弹幕池压力
+        ImGui::ProgressBar((float)this->enemy_bullets->count / 10000.0f);
+    }
 
+    if (ImGui::CollapsingHeader("Debug Tools", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Checkbox("Show Hitboxes (Debug Draw)", &show_debug_hitbox);
+        if (ImGui::Button("Clear All Bullets")) {
+            this->enemy_bullets.get()->clear_pool();
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Emitter Tweaker (Press Z)", ImGuiTreeNodeFlags_DefaultOpen)) {
+        // 实时拖动滑块，改变按 Z 发射的子弹数量和速度！
+        ImGui::SliderInt("Emit Count", &debug_emit_count, 1, 100);
+        ImGui::SliderFloat("Emit Speed", &debug_emit_speed, 10.0f, 500.0f);
+    }
+    
+    ImGui::End();
     //IInput::update();
 
     ColliderManager::get_instance()->check_and_resolve_collisions();
@@ -174,8 +192,27 @@ void MainScene::on_render(SDLRender &renderer) {
     if (this->enemy_bullets) {
         this->enemy_bullets->render(renderer);
     }
+    // 👇 2. 如果开启了调试模式，绘制所有的碰撞盒！
+    if (this->show_debug_hitbox) {
+        // 画玩家的核心判定点 (绿圈)
+        if (this->player && this->player->is_alive()) {
+            renderer.draw_circle_outline(this->player->get_position(), 2.0f, 0, 255, 0); // 半径2
+        }
+
+        // 画敌人的碰撞框 (蓝圈)
+        for (auto& entity : this->entities) {
+            Enemy* e = dynamic_cast<Enemy*>(entity.get());
+            if (e && e->isAlive()) {
+                // 你在 EnemyBuilder 里给了圆圈半径 500 (这可能太大了，你后续可能要调小)
+                renderer.draw_circle_outline(e->get_position(), 500.0f, 0, 0, 255); 
+            }
+        }
+
+
+    }
 }
 
+static int cooldown = 0;
 void MainScene::on_input() {
     if (IInput::get_key(KeyType::ENTER)->get_keydown())
         SceneManager::getInstance()->switchScene(SceneType::EndMenu);
@@ -190,11 +227,18 @@ void MainScene::on_input() {
         this->player->set_position(this->player->get_position() + glm::vec2{0, -5});
 
     if (IInput::get_key(KeyType::Z)->get_state()) {
-        for (int i = 0; i < 50; i++) {
-            float angle = i * (360.0f / 12.0f) * (3.14159f / 180.0f);
-            
-            this->enemy_bullets->spawn(this->test_prefab_id, {400, 300}, 150.0f, angle);
+        // 控制一下发射频率，不然一按 60 帧每帧都发射就卡爆了
+        if (cooldown <= 0) {
+            for (int i = 0; i < debug_emit_count; i++) {
+                float angle = i * (360.0f / debug_emit_count) * (3.14159f / 180.0f);
+                // 使用我们在 ImGui 里调的初速度 debug_emit_speed
+                this->enemy_bullets->spawn(this->test_prefab_id, {400, 300}, debug_emit_speed, angle);
+            }
+            cooldown = 5; // 5帧发射一次
         }
+    
+    cooldown--;
+    }else {
+        cooldown = 0;
     }
-
 }

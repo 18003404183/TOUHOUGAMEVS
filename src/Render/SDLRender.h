@@ -35,6 +35,8 @@ public:
 
 	virtual void draw_text(std::string text, int x, int y);
 
+	virtual void draw_circle_outline(const glm::vec2 pos,float radius,uint8_t r,uint8_t g,uint8_t b,uint8_t a = 255);
+
 	SDL_Renderer* get_renderer(){
 		return this->renderer;
 	}
