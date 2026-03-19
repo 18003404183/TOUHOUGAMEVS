@@ -13,25 +13,26 @@ Collider::Collider(Shape *shape, int layer, std::function<void(Collider* other)>
 
 Collider::Collider(Shape *shape, int layer,IEntity* owner)
 {
-    assert(this->shape != nullptr && "Collider initialization failed: Shape cannot be null!");
+    assert(shape != nullptr && "Collider initialization failed: Shape cannot be null!");
     this->layer = layer;
     this->owner = owner;
-    this->shape = shape->clone();
+    this->shape = shape;
 }
 
 Collider::Collider(const Collider &other)
 {
     this->layer = other.layer;
 
-    this->shape = shape->clone();
+    this->shape = other.shape->clone();
 
 }
 
-Collider Collider::operator=(const Collider &other)
+Collider& Collider::operator=(const Collider &other)
 {
     this->layer = other.layer;
+    delete this->shape;
     this->shape = other.shape->clone();
-    return Collider(shape->clone(),this->layer,nullptr);
+    return *this;
 }
 
 void Collider::set_layer(int layer)
@@ -55,7 +56,7 @@ void Collider::set_shape(Shape *shape)
     if(!shape) return;
     if(this->shape == shape) return;
     delete this->shape;
-    this->shape = shape->clone();
+    this->shape = shape;
 }
 
 int Collider::get_layer()

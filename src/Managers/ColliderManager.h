@@ -29,7 +29,7 @@ public:
     //     return collider;
     // }
 
-    Collider* create_collider(Shape *shape, int layer,IEntity* owner){
+    Collider* create_collider(Shape* shape, int layer,IEntity* owner){
         auto new_collider = std::make_unique<Collider>(shape,layer,owner);
         auto collider = new_collider.get();
         collider_list.push_back(std::move(new_collider));

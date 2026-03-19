@@ -20,11 +20,11 @@ bool Game::init_game()
 	ResourcesManager::getInstance();
 	//EasyxWindow easyx_window;
 	//easyx_window.init();
-	SDLWindows* windows = new SDLWindows;
-	windows->init(MAIN_WINDOW_WIDTH,MAIN_WINDOW_HEIGHT);
+	window = std::make_unique<SDLWindows>();
+	window->init(MAIN_WINDOW_WIDTH,MAIN_WINDOW_HEIGHT);
 	
 	this->renderer=SDLRender();
-	renderer.init(windows->get_sdl_window());
+	renderer.init(window->get_sdl_window());
 	
 	ResourcesManager::getInstance()->set_renderer(&renderer);
 	this->load_resources();
@@ -41,7 +41,7 @@ bool Game::init_game()
     ImGui::StyleColorsDark();                             
 
     // 绑定 SDL 窗口和渲染器后端
-    ImGui_ImplSDL2_InitForSDLRenderer(windows->get_sdl_window(), renderer.get_renderer());
+    ImGui_ImplSDL2_InitForSDLRenderer(window->get_sdl_window(), renderer.get_renderer());
     ImGui_ImplSDLRenderer2_Init(renderer.get_renderer());
 
 	return true;

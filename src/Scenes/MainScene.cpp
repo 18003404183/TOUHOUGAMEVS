@@ -196,11 +196,4 @@ void MainScene::on_input() {
         }
     }
 
-    if (IInput::get_key(KeyType::C)->get_keydown()) {
-        static int test_val = 408; 
-        Event e = { EventType::PlayerDead, &test_val };
-        
-        std::cout << "[Input] 玩家按下了 C 键，准备发布事件..." << std::endl;
-        EventManager::get_instance()->publish(e);
-}
 }

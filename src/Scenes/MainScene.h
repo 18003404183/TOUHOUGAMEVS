@@ -10,7 +10,7 @@
 #include "ColliderManager.h"
 #include "Danmaku.h"
 #include "EventManager.h"
-
+#include <sol/sol.hpp>
 class MainScene : public IScene {
 public:
   MainScene();

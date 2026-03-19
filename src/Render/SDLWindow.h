@@ -9,7 +9,13 @@ class SDLWindows
 {
 public:
     SDLWindows() = default;
-    ~SDLWindows() = default;
+    ~SDLWindows(){
+
+        if(this->window != nullptr){
+            SDL_DestroyWindow(this->window);
+            this->window = nullptr;
+        }
+    };
 
     virtual bool init(int w,int h);
 

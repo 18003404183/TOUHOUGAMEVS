@@ -1,3 +1,177 @@
+.\CMakePresets.json
+---
+{
+    "version": 3,
+    "configurePresets": [
+        {
+            "hidden": true,
+            "name": "Qt",
+            "cacheVariables": {
+                "CMAKE_PREFIX_PATH": "$env{QTDIR}"
+            },
+            "vendor": {
+                "qt-project.org/Qt": {
+                    "checksum": "wVa86FgEkvdCTVp1/nxvrkaemJc="
+                }
+            }
+        },
+        {
+            "name": "使用工具链文件配置预设",
+            "displayName": "使用工具链文件配置预设",
+            "description": "设置 Ninja 生成器、版本和安装目录",
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug",
+                "CMAKE_TOOLCHAIN_FILE": "",
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}"
+            }
+        },
+        {
+            "name": "GCC 15.2.0 x86_64-w64-mingw32",
+            "displayName": "GCC 15.2.0 x86_64-w64-mingw32",
+            "description": "正在使用编译器: C = D:\\w64devkit\\bin\\gcc.exe, CXX = D:\\w64devkit\\bin\\g++.exe",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "D:/w64devkit/bin/gcc.exe",
+                "CMAKE_CXX_COMPILER": "D:/w64devkit/bin/g++.exe",
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "Visual Studio Community 2022 Release - amd64",
+            "displayName": "Visual Studio Community 2022 Release - amd64",
+            "description": "将编译器用于 Visual Studio 17 2022 (x64 体系结构)",
+            "generator": "Visual Studio 17 2022",
+            "toolset": "host=x64",
+            "architecture": "x64",
+            "binaryDir": "${sourceDir}/out/build/${presetName}",
+            "cacheVariables": {
+                "CMAKE_INSTALL_PREFIX": "${sourceDir}/out/install/${presetName}",
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe"
+            }
+        }
+    ],
+    "vendor": {
+        "qt-project.org/Presets": {
+            "checksum": "67SmY24ZeVbebyKD0fGfIzb/bGI="
+        }
+    },
+    "buildPresets": [
+        {
+            "name": "Visual Studio Community 2022 Release - amd64-debug",
+            "displayName": "Visual Studio Community 2022 Release - amd64 - Debug",
+            "configurePreset": "Visual Studio Community 2022 Release - amd64",
+            "configuration": "Debug"
+        }
+    ]
+}
+
+---
+.\CMakeSettings.json
+---
+﻿{
+  "configurations": [
+    {
+      "name": "x64-Debug",
+      "generator": "Ninja",
+      "configurationType": "Debug",
+      "inheritEnvironments": [ "msvc_x64_x64" ],
+      "buildRoot": "${projectDir}\\out\\build\\${name}",
+      "installRoot": "${projectDir}\\out\\install\\${name}",
+      "cmakeCommandArgs": "",
+      "buildCommandArgs": "",
+      "ctestCommandArgs": ""
+    }
+  ]
+}
+
+---
+.\CMakeUserPresets.json
+---
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "Qt-Debug",
+      "inherits": "Qt-Default",
+      "binaryDir": "${sourceDir}/out/build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "-DQT_QML_DEBUG"
+      },
+      "environment": {
+        "QML_DEBUG_ARGS": "-qmljsdebugger=file:{0b2a40ef-2a27-4b4e-bfa8-6806d03b20be},block"
+      }
+    },
+    {
+      "name": "Qt-Release",
+      "inherits": "Qt-Default",
+      "binaryDir": "${sourceDir}/out/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "hidden": true,
+      "name": "Qt-Default",
+      "inherits": "6.8.1_msvc2022_64",
+      "vendor": {
+        "qt-project.org/Default": {
+          "checksum": "6Sup4at06hpiF2WRz3oTwiO3cdQ="
+        }
+      }
+    },
+    {
+      "hidden": true,
+      "name": "6.8.1_msvc2022_64",
+      "inherits": "Qt",
+      "environment": {
+        "QTDIR": "D:/QT/6.8.1/msvc2022_64"
+      },
+      "architecture": {
+        "strategy": "external",
+        "value": "x64"
+      },
+      "generator": "Ninja",
+      "vendor": {
+        "qt-project.org/Version": {
+          "checksum": "D4vUtIiuNEEfay7RUlhVAGFh3Uw="
+        }
+      }
+    }
+  ],
+  "vendor": {
+    "qt-project.org/Presets": {
+      "checksum": "hcic9R3Y1PHckdwwCQFvj1cIWGE="
+    }
+  }
+}
+
+---
+.\resources\level1.json
+---
+{
+  "level_name": "Stage 1: 幻境的边缘",
+  "waves": [
+    {
+      "wave_id": 1,
+      "spawn_time": 1.0, 
+      "enemies": [
+        { "type": "small", "x": 200, "y": 200, "hp": 10 },
+        { "type": "common", "x": 300, "y": 0, "hp": 20 },
+        { "type": "large", "x": 100, "y": 0, "hp": 30 },
+        { "type": "small", "x": 500, "y": 200, "hp": 10 },
+        { "type": "common", "x": 600, "y": 300, "hp": 20 },
+        { "type": "large", "x": 700, "y": 400, "hp": 30 }
+      ]
+    }
+  ]
+}
+
+---
 .\src\main.cpp
 ---
 #include"Core/Game.h"
@@ -1146,7 +1320,6 @@ void DanmakuPool::check_player_hit(Player* player) {
                 player->set_alive(false);
                 d.active = false;
                 std::cout << "[Core] Player hit by Danmaku!" << std::endl;
-                // 后续可以触发事件系统
             }
         }
     }
@@ -2874,11 +3047,9 @@ void MainScene::on_enter() {
                 else if (type_str == "common") type = EnemyType::common;
                 else if (type_str == "large") type = EnemyType::large;
 
-                // 使用你的工厂生成基础敌人
                 enemybuilder.create_enemy(type);
                 Enemy* e = enemybuilder.create();
 
-                // 🌟 核心点：用 JSON 里的数据覆盖默认数据！
                 float x = enemy_data["x"].get<float>();
                 float y = enemy_data["y"].get<float>();
                 int hp = enemy_data["hp"].get<int>();
@@ -2887,7 +3058,7 @@ void MainScene::on_enter() {
                 e->setHp(hp);
 
                 // 挂载到场景中
-                this->entities.push_back(std::make_unique<IEntity>(e));
+                this->entities.push_back(std::unique_ptr<IEntity>(e));//不能够使用make_unique来创建 因为IEntity是虚基类 无法实例化 可以先创建裸指针 然后再用unique_ptr接管
                 this->renderables.push_back(e);
                 this->updateables.push_back(e);
             }
@@ -2994,13 +3165,6 @@ void MainScene::on_input() {
         }
     }
 
-    if (IInput::get_key(KeyType::C)->get_keydown()) {
-        static int test_val = 408; 
-        Event e = { EventType::PlayerDead, &test_val };
-        
-        std::cout << "[Input] 玩家按下了 C 键，准备发布事件..." << std::endl;
-        EventManager::get_instance()->publish(e);
-}
 }
 
 ---
@@ -3018,7 +3182,7 @@ void MainScene::on_input() {
 #include "ColliderManager.h"
 #include "Danmaku.h"
 #include "EventManager.h"
-
+#include <sol/sol.hpp>
 class MainScene : public IScene {
 public:
   MainScene();

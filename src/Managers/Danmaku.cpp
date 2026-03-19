@@ -168,7 +168,6 @@ void DanmakuPool::check_player_hit(Player* player) {
                 player->set_alive(false);
                 d.active = false;
                 std::cout << "[Core] Player hit by Danmaku!" << std::endl;
-                // 后续可以触发事件系统
             }
         }
     }

@@ -62,7 +62,7 @@ public:
     Collider(Shape* shape,int layer,std::function<void(Collider* other)> func,IEntity* entity);
     Collider(Shape* shape,int layer,IEntity* entity);
     Collider(const Collider& other);
-    Collider operator=(const Collider& other);
+    Collider& operator=(const Collider& other);
     void set_layer(int layer);
     void set_on_collid(std::function<void(Collider* other)> func);
     void run_on_collid(Collider* collider);

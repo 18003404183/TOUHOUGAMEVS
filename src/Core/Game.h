@@ -24,4 +24,5 @@ public:
 
 private:
   SDLRender renderer;
+  std::unique_ptr<SDLWindows> window;
 };
