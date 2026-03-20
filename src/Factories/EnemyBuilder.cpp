@@ -10,7 +10,7 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		this->hp = 10;
 		this->is_alive = true;
 		this->position = { 200,200 };
-		this->velocity = { 0,0 };
+		this->velocity = { 10,0 };
 		// this->shape = new CircleShape(500);
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\2.png");	
 		Image image(t,this->position,{1,1},0,255);
@@ -60,8 +60,13 @@ Enemy* EnemyBuilder::create()
 	enemy->collider = collider;
 	enemy->collider->set_owner(enemy);
 	enemy->collider->set_on_collid([e = enemy](Collider* other){
-		e->setAlive(false);
-		std::cout<<"wwv"<<std::endl;
+		if(other->get_owner()->get_entity_type() == EntityType::Player){
+			Player* p = static_cast<Player*>(other->get_owner());
+			if(p->is_alive()){
+				e->setAlive(false);
+				std::cout<<"wwv"<<std::endl;
+			}
+		}
 	});
 	return enemy;
 
