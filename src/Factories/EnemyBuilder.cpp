@@ -10,12 +10,12 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		this->hp = 10;
 		this->is_alive = true;
 		this->position = { 200,200 };
-		this->velocity = { 10,0 };
+		this->velocity = { 0,0 };
 		// this->shape = new CircleShape(500);
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\2.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;
-		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(30),1,nullptr);
 	}
 	else if (enemytype == EnemyType::common) {
 		std::cout << "Creating common enemy" << std::endl;
@@ -28,7 +28,7 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\3.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;
-		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(30),1,nullptr);
 	}
 	else if (enemytype == EnemyType::large) {
 		std::cout << "Creating large enemy" << std::endl;
@@ -41,7 +41,7 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\4.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;
-		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(30),1,nullptr);
 
 	}
 }

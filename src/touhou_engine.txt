@@ -612,12 +612,12 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		this->hp = 10;
 		this->is_alive = true;
 		this->position = { 200,200 };
-		this->velocity = { 10,0 };
+		this->velocity = { 0,0 };
 		// this->shape = new CircleShape(500);
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\2.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;
-		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(30),1,nullptr);
 	}
 	else if (enemytype == EnemyType::common) {
 		std::cout << "Creating common enemy" << std::endl;
@@ -630,7 +630,7 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\3.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;
-		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(30),1,nullptr);
 	}
 	else if (enemytype == EnemyType::large) {
 		std::cout << "Creating large enemy" << std::endl;
@@ -643,7 +643,7 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\4.png");	
 		Image image(t,this->position,{1,1},0,255);
 		this->image = image;
-		this->collider = ColliderManager::get_instance()->create_collider(new Circle(500),1,nullptr);
+		this->collider = ColliderManager::get_instance()->create_collider(new Circle(30),1,nullptr);
 
 	}
 }
@@ -1095,7 +1095,6 @@ void DanmakuPool::update(float dt) {
         d.vel.y = std::sin(d.current_angle) * d.current_speed;
         d.pos += d.vel * dt;
 
-        // 3. 屏幕边界剔除 (根据你设置的 800x600，稍微留点缓冲区)
         if (d.pos.x < 0-100 || d.pos.x > MAIN_WINDOW_WIDTH+100 || d.pos.y < 0-100 || d.pos.y > MAIN_WINDOW_HEIGHT+100) {
             this->count--;
             d.active = false;
@@ -1147,10 +1146,31 @@ void DanmakuPool::check_player_hit(Player* player) {
                 player->set_alive(false);
                 d.active = false;
                 std::cout << "[Core] Player hit by Danmaku!" << std::endl;
+                this->count --;
             }
         }
     }
 }
+
+void DanmakuPool::clear_pool()
+{
+    for(auto& a : this->pool){
+        if(!a.active) continue;
+        this->count--;
+        a.active = false;
+    }
+}
+
+std::vector<DanmakuData> &DanmakuPool::get_raw_pool()
+{
+    return pool;
+}
+
+DanmakuPrefab DanmakuPool::get_prefab(int id)
+{
+    return this->prefabs[id];
+}
+
 
 ---
 .\Managers\Danmaku.h
@@ -1255,6 +1275,11 @@ public:
     void update(float delta);
     void render(SDLRender& renderer);
     void check_player_hit(Player* player);
+
+    void clear_pool();
+
+    std::vector<DanmakuData>& get_raw_pool();
+    DanmakuPrefab get_prefab(int id);
 
     int count;
 
@@ -2123,10 +2148,14 @@ void SDLRender::draw_texture(
     dst.w = finalW;
     dst.h = finalH;
     //{image.get_pos().x,image.get_pos().y,(image.get_wh().x*image.get_scale().x),(image.get_wh().y*image.get_scale().y)};
-    SDL_FPoint center;
-    center.x = pos.x;
-    center.y = pos.y;
 
+    // 中心决定了如何旋转 一般旋转中心为图片中心
+    // sdl的 center是按dst.x 与 dst.y 为原点的
+    SDL_FPoint center;
+    //center.x = pos.x;
+    //center.y = pos.y;
+    center.x = finalW/2.0f;
+    center.y = finalH/2.0f;
 
     SDL_RenderCopyExF(
         this->renderer,
@@ -2159,9 +2188,10 @@ void SDLRender::draw_texture(Texture *texture, const glm::vec2 &pos, const glm::
     dst.h = finalH;
     //{image.get_pos().x,image.get_pos().y,(image.get_wh().x*image.get_scale().x),(image.get_wh().y*image.get_scale().y)};
     SDL_FPoint center;
-    center.x = pos.x;
-    center.y = pos.y;
-
+    //center.x = pos.x;
+    //center.y = pos.y;
+    center.x = finalW/2.0f;
+    center.y = finalH/2.0f;
 
     SDL_RenderCopyExF(
         this->renderer,
@@ -2178,6 +2208,24 @@ void SDLRender::draw_text(std::string text, int x, int y){
     // Minimal placeholder: text rendering not implemented (requires SDL_ttf)
     (void)text; (void)x; (void)y;
     std::cerr << "[SDLRender] draw_text not implemented (requires SDL_ttf)" << std::endl;
+}
+
+void SDLRender::draw_circle_outline(const glm::vec2 pos, float radius, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+{
+    SDL_SetRenderDrawColor(this->renderer,r,g,b,a);
+
+    const int NUM_SEGMENTS = 32;
+    SDL_FPoint points[NUM_SEGMENTS+1];
+
+    for(int i = 0; i<NUM_SEGMENTS+1;i++){
+        float theta = ((i/(float)NUM_SEGMENTS)*2*3.1415926f);
+
+        points[i].x = pos.x + (cos(theta)*radius);
+        points[i].y = pos.y + (sin(theta)*radius);
+    }
+
+    SDL_RenderDrawLinesF(this->renderer,points,NUM_SEGMENTS+1);
+
 }
 
 
@@ -2220,6 +2268,8 @@ public:
         unsigned char alpha);
 
 	virtual void draw_text(std::string text, int x, int y);
+
+	virtual void draw_circle_outline(const glm::vec2 pos,float radius,uint8_t r,uint8_t g,uint8_t b,uint8_t a = 255);
 
 	SDL_Renderer* get_renderer(){
 		return this->renderer;
@@ -2851,7 +2901,7 @@ void MainScene::on_enter() {
     //平滑转弯 90 度，耗时 1.0 秒
     traj.commands.push_back({DanmakuCmdType::SMOOTH_TURN, 360.0f, 1.0f});
     // 猛烈加速，每秒加 400 速度，持续 2.0 秒
-    //traj.commands.push_back({DanmakuCmdType::ACCELERATE, 400.0f, 2.0f});
+    traj.commands.push_back({DanmakuCmdType::ACCELERATE, 400.0f, 2.0f});
     
     // 注册轨迹并拿到 ID
     uint16_t traj_id = this->enemy_bullets->register_trajectory(traj);
@@ -2965,10 +3015,28 @@ void MainScene::on_update(float deltatime) {
         a->update(deltatime);
     }
     this->clock.update(deltatime);
-    ImGui::Begin("danmaku count");
-    ImGui::Text("danmaku: %d",this->enemy_bullets->count);
-    ImGui::End();
+    ImGui::Begin("Engine Control Panel");
+    
+    if (ImGui::CollapsingHeader("Danmaku Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Text("Active Enemy Bullets: %d / 10000", this->enemy_bullets->count);
+        // 进度条直观显示弹幕池压力
+        ImGui::ProgressBar((float)this->enemy_bullets->count / 10000.0f);
+    }
 
+    if (ImGui::CollapsingHeader("Debug Tools", ImGuiTreeNodeFlags_DefaultOpen)) {
+        ImGui::Checkbox("Show Hitboxes (Debug Draw)", &show_debug_hitbox);
+        if (ImGui::Button("Clear All Bullets")) {
+            this->enemy_bullets.get()->clear_pool();
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Emitter Tweaker (Press Z)", ImGuiTreeNodeFlags_DefaultOpen)) {
+        // 实时拖动滑块，改变按 Z 发射的子弹数量和速度！
+        ImGui::SliderInt("Emit Count", &debug_emit_count, 1, 100);
+        ImGui::SliderFloat("Emit Speed", &debug_emit_speed, 10.0f, 500.0f);
+    }
+    
+    ImGui::End();
     //IInput::update();
 
     ColliderManager::get_instance()->check_and_resolve_collisions();
@@ -2989,8 +3057,33 @@ void MainScene::on_render(SDLRender &renderer) {
     if (this->enemy_bullets) {
         this->enemy_bullets->render(renderer);
     }
+    // 👇 2. 如果开启了调试模式，绘制所有的碰撞盒！
+    if (this->show_debug_hitbox) {
+        // 画玩家的核心判定点 (绿圈)
+        if (this->player && this->player->is_alive()) {
+            renderer.draw_circle_outline(this->player->get_position(), 10.0f, 0, 255, 0); // 半径2
+        }
+
+        // 画敌人的碰撞框 (蓝圈)
+        for (auto& entity : this->entities) {
+            Enemy* e = dynamic_cast<Enemy*>(entity.get());
+            if (e && e->isAlive()) {
+                // 你在 EnemyBuilder 里给了圆圈半径 500 (这可能太大了，你后续可能要调小)
+                renderer.draw_circle_outline(e->get_position(), 30.0f, 0, 0, 255); 
+            }
+        }
+
+        for (auto& d : this->enemy_bullets->get_raw_pool()) {
+            if (!d.active) continue;
+            float r = this->enemy_bullets->get_prefab(d.prefab_id).base_radius;
+            renderer.draw_circle_outline(d.pos, r, 255, 0, 0); 
+        }
+
+
+    }
 }
 
+static int cooldown = 0;
 void MainScene::on_input() {
     if (IInput::get_key(KeyType::ENTER)->get_keydown())
         SceneManager::getInstance()->switchScene(SceneType::EndMenu);
@@ -3005,13 +3098,20 @@ void MainScene::on_input() {
         this->player->set_position(this->player->get_position() + glm::vec2{0, -5});
 
     if (IInput::get_key(KeyType::Z)->get_state()) {
-        for (int i = 0; i < 50; i++) {
-            float angle = i * (360.0f / 12.0f) * (3.14159f / 180.0f);
-            
-            this->enemy_bullets->spawn(this->test_prefab_id, {400, 300}, 150.0f, angle);
+        // 控制一下发射频率，不然一按 60 帧每帧都发射就卡爆了
+        if (cooldown <= 0) {
+            for (int i = 0; i < debug_emit_count; i++) {
+                float angle = i * (360.0f / debug_emit_count) * (3.14159f / 180.0f);
+                // 使用我们在 ImGui 里调的初速度 debug_emit_speed
+                this->enemy_bullets->spawn(this->test_prefab_id, {400, 300}, debug_emit_speed, angle);
+            }
+            cooldown = 5; // 5帧发射一次
         }
+    
+    cooldown--;
+    }else {
+        cooldown = 0;
     }
-
 }
 
 ---
@@ -3048,6 +3148,11 @@ private:
 
   std::unique_ptr<DanmakuPool> enemy_bullets; 
   uint16_t test_prefab_id; // 存一下我们要发射的预制体 ID
+
+  // ImGui 调试用的变量
+  bool show_debug_hitbox = false;    // 碰撞盒开关
+  int debug_emit_count = 12;         // 一圈发射多少颗子弹
+  float debug_emit_speed = 150.0f;   // 子弹初速度
 };
 
 

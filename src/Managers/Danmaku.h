@@ -97,9 +97,11 @@ public:
     //各种执行阶段
     void update(float delta);
     void render(SDLRender& renderer);
-    void check_player_hit(Player* player);
 
     void clear_pool();
+
+    std::vector<DanmakuData>& get_raw_pool();
+    DanmakuPrefab get_prefab(int id);
 
     int count;
 

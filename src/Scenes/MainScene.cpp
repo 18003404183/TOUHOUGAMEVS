@@ -36,7 +36,7 @@ void MainScene::on_enter() {
     //平滑转弯 90 度，耗时 1.0 秒
     traj.commands.push_back({DanmakuCmdType::SMOOTH_TURN, 360.0f, 1.0f});
     // 猛烈加速，每秒加 400 速度，持续 2.0 秒
-    //traj.commands.push_back({DanmakuCmdType::ACCELERATE, 400.0f, 2.0f});
+    traj.commands.push_back({DanmakuCmdType::ACCELERATE, 400.0f, 2.0f});
     
     // 注册轨迹并拿到 ID
     uint16_t traj_id = this->enemy_bullets->register_trajectory(traj);
@@ -111,7 +111,7 @@ void MainScene::on_enter() {
     });
 
     Texture *v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
-    glm::vec2 pos(205, 205);
+    glm::vec2 pos(500,500);
     glm::vec2 scale(1, 1);
 
     Image player_image = Image(v, pos, scale, 0, 255);
@@ -132,6 +132,11 @@ void MainScene::on_enter() {
     player->set_collider(player_collider);
     player->get_collider()->set_on_collid([p = this->player](Collider* other){
         p->set_alive(false);
+        Event e;
+        int* a = new int(0); 
+        e.data = a;
+        e.type = EventType::PlayerDead;
+        EventManager::get_instance()->publish(e);
         std::cout << "Player Dead!" << std::endl; 
     });
 
@@ -179,7 +184,6 @@ void MainScene::on_update(float deltatime) {
 
     if (this->enemy_bullets) {
         this->enemy_bullets->update(deltatime);
-        this->enemy_bullets->check_player_hit(this->player);
     }
 
 }
@@ -196,7 +200,7 @@ void MainScene::on_render(SDLRender &renderer) {
     if (this->show_debug_hitbox) {
         // 画玩家的核心判定点 (绿圈)
         if (this->player && this->player->is_alive()) {
-            renderer.draw_circle_outline(this->player->get_position(), 2.0f, 0, 255, 0); // 半径2
+            renderer.draw_circle_outline(this->player->get_position(), 10.0f, 0, 255, 0); // 半径2
         }
 
         // 画敌人的碰撞框 (蓝圈)
@@ -204,8 +208,14 @@ void MainScene::on_render(SDLRender &renderer) {
             Enemy* e = dynamic_cast<Enemy*>(entity.get());
             if (e && e->isAlive()) {
                 // 你在 EnemyBuilder 里给了圆圈半径 500 (这可能太大了，你后续可能要调小)
-                renderer.draw_circle_outline(e->get_position(), 500.0f, 0, 0, 255); 
+                renderer.draw_circle_outline(e->get_position(), 30.0f, 0, 0, 255); 
             }
+        }
+
+        for (auto& d : this->enemy_bullets->get_raw_pool()) {
+            if (!d.active) continue;
+            float r = this->enemy_bullets->get_prefab(d.prefab_id).base_radius;
+            renderer.draw_circle_outline(d.pos, r, 255, 0, 0); 
         }
 
 

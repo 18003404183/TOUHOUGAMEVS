@@ -116,7 +116,6 @@ void DanmakuPool::update(float dt) {
         d.vel.y = std::sin(d.current_angle) * d.current_speed;
         d.pos += d.vel * dt;
 
-        // 3. 屏幕边界剔除 (根据你设置的 800x600，稍微留点缓冲区)
         if (d.pos.x < 0-100 || d.pos.x > MAIN_WINDOW_WIDTH+100 || d.pos.y < 0-100 || d.pos.y > MAIN_WINDOW_HEIGHT+100) {
             this->count--;
             d.active = false;
@@ -147,35 +146,21 @@ void DanmakuPool::render(SDLRender& renderer) {
     }
 }
 
-void DanmakuPool::check_player_hit(Player* player) {
-    if (!player || !player->is_alive()) return;
-
-    glm::vec2 p_pos = player->get_position();
-    float p_radius = 2.0f; // 核心判定点
-
-    for (auto& d : pool) {
-        if (!d.active) continue;
-
-        const auto& prefab = prefabs[d.prefab_id];
-        
-        if (prefab.shape_type == DanmakuShape::Circle) {
-            float dx = d.pos.x - p_pos.x;
-            float dy = d.pos.y - p_pos.y;
-            float dist_sq = dx * dx + dy * dy;
-            float hit_r = prefab.base_radius + p_radius;
-
-            if (dist_sq <= hit_r * hit_r) {
-                player->set_alive(false);
-                d.active = false;
-                std::cout << "[Core] Player hit by Danmaku!" << std::endl;
-            }
-        }
+void DanmakuPool::clear_pool()
+{
+    for(auto& a : this->pool){
+        if(!a.active) continue;
+        this->count--;
+        a.active = false;
     }
 }
 
-void DanmakuPool::clear_pool()
+std::vector<DanmakuData> &DanmakuPool::get_raw_pool()
 {
-    for(auto a : this->pool){
-        a.active = false;
-    }
+    return pool;
+}
+
+DanmakuPrefab DanmakuPool::get_prefab(int id)
+{
+    return this->prefabs[id];
 }

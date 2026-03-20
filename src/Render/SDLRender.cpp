@@ -58,10 +58,14 @@ void SDLRender::draw_texture(
     dst.w = finalW;
     dst.h = finalH;
     //{image.get_pos().x,image.get_pos().y,(image.get_wh().x*image.get_scale().x),(image.get_wh().y*image.get_scale().y)};
-    SDL_FPoint center;
-    center.x = pos.x;
-    center.y = pos.y;
 
+    // 中心决定了如何旋转 一般旋转中心为图片中心
+    // sdl的 center是按dst.x 与 dst.y 为原点的
+    SDL_FPoint center;
+    //center.x = pos.x;
+    //center.y = pos.y;
+    center.x = finalW/2.0f;
+    center.y = finalH/2.0f;
 
     SDL_RenderCopyExF(
         this->renderer,
@@ -94,9 +98,10 @@ void SDLRender::draw_texture(Texture *texture, const glm::vec2 &pos, const glm::
     dst.h = finalH;
     //{image.get_pos().x,image.get_pos().y,(image.get_wh().x*image.get_scale().x),(image.get_wh().y*image.get_scale().y)};
     SDL_FPoint center;
-    center.x = pos.x;
-    center.y = pos.y;
-
+    //center.x = pos.x;
+    //center.y = pos.y;
+    center.x = finalW/2.0f;
+    center.y = finalH/2.0f;
 
     SDL_RenderCopyExF(
         this->renderer,
