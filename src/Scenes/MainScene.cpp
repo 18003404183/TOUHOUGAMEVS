@@ -53,6 +53,37 @@ void MainScene::on_enter() {
     // 注册预制体并保存 ID 到成员变量，方便按键时调用
     this->test_prefab_id = this->enemy_bullets->register_prefab(dp);
     // ==========================================
+        Texture *v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
+    glm::vec2 pos(500,500);
+    glm::vec2 scale(1, 1);
+
+    Image player_image = Image(v, pos, scale, 0, 255);
+    Atlas *player_atlas = ResourcesManager::getInstance()->get_atlas("resources\\6.png");
+
+    Context::Instances()->set_player_context(pos, {0, 0}, true, true, 100);
+    PlayerContext pc = Context::Instances()->get_player_context();
+    this->player = new Player(pos,{0,0},100);
+
+    player->setImage(player_image);
+    Animation animation(player_atlas, 0.1);
+
+    Collider* player_collider = ColliderManager::get_instance()->create_collider(new Circle(10),0,player);
+
+    this->renderables.push_back(player);
+    this->updateables.push_back(player);
+    this->player->set_animation(animation);
+    player->set_collider(player_collider);
+    player->get_collider()->set_on_collid([p = this->player](Collider* other){
+        p->set_alive(false);
+        Event e;
+        int* a = new int(0); 
+        e.data = a;
+        e.type = EventType::PlayerDead;
+        EventManager::get_instance()->publish(e);
+        std::cout << "Player Dead!" << std::endl; 
+    });
+
+    this->entities.push_back(std::unique_ptr<IEntity>(this->player));
 
     std::ifstream file("resources\\level1.json");
     if(!file.is_open()){
@@ -86,6 +117,35 @@ void MainScene::on_enter() {
 
                 e->set_position({x, y});
                 e->setHp(hp);
+e->set_bullet_pool(this->enemy_bullets.get());
+
+                // 👇 2. 组装“三向自机狙”散弹武器！
+                // 定义扩散角度：15 度 (记得转成弧度)
+                float spread_angle = 15.0f * (3.14159f / 180.0f);
+
+                // 枪管 A：正中心 (绝对锁定玩家，逼迫玩家走位)
+                e->add_emitter(std::make_unique<Emitter>(
+                    EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
+                    AimMode::TargetAlways, this->player->get_position_ptr(),
+                    this->test_prefab_id, 300.0f, 0.0f, 0.0f,
+                    1.5f, -1
+                ));
+
+                // 枪管 B：左侧封位 (在锁定角度的基础上，向左偏 15 度)
+                e->add_emitter(std::make_unique<Emitter>(
+                    EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
+                    AimMode::TargetAlways, this->player->get_position_ptr(),
+                    this->test_prefab_id, 300.0f, -spread_angle, 0.0f,
+                    1.5f, -1
+                ));
+
+                // 枪管 C：右侧封位 (在锁定角度的基础上，向右偏 15 度)
+                e->add_emitter(std::make_unique<Emitter>(
+                    EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
+                    AimMode::TargetAlways, this->player->get_position_ptr(),
+                    this->test_prefab_id, 300.0f, spread_angle, 0.0f,
+                    1.5f, -1
+                ));
 
                 // 挂载到场景中
                 this->entities.push_back(std::unique_ptr<IEntity>(e));//不能够使用make_unique来创建 因为IEntity是虚基类 无法实例化 可以先创建裸指针 然后再用unique_ptr接管
@@ -110,37 +170,7 @@ void MainScene::on_enter() {
         std::cout << "Timer tick. this:" << this << std::endl; 
     });
 
-    Texture *v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
-    glm::vec2 pos(500,500);
-    glm::vec2 scale(1, 1);
 
-    Image player_image = Image(v, pos, scale, 0, 255);
-    Atlas *player_atlas = ResourcesManager::getInstance()->get_atlas("resources\\6.png");
-
-    Context::Instances()->set_player_context(pos, {0, 0}, true, true, 100);
-    PlayerContext pc = Context::Instances()->get_player_context();
-    this->player = new Player(pos,{0,0},100);
-
-    player->setImage(player_image);
-    Animation animation(player_atlas, 0.1);
-
-    Collider* player_collider = ColliderManager::get_instance()->create_collider(new Circle(10),0,player);
-
-    this->renderables.push_back(player);
-    this->updateables.push_back(player);
-    this->player->set_animation(animation);
-    player->set_collider(player_collider);
-    player->get_collider()->set_on_collid([p = this->player](Collider* other){
-        p->set_alive(false);
-        Event e;
-        int* a = new int(0); 
-        e.data = a;
-        e.type = EventType::PlayerDead;
-        EventManager::get_instance()->publish(e);
-        std::cout << "Player Dead!" << std::endl; 
-    });
-
-    this->entities.push_back(std::unique_ptr<IEntity>(this->player));
 }
 
 void MainScene::on_exit() { 
@@ -252,3 +282,5 @@ void MainScene::on_input() {
         cooldown = 0;
     }
 }
+
+// 接下来准备写发射器逻辑 负责支持按照一些预制轨迹 在指定时间空间 生成弹幕(拥有一个update(float delta)来控制弹幕释放的时机) 并且支持将弹幕的释放逻辑外接给lua 支持绝对位置与绑定者的相对位置两种位置方式

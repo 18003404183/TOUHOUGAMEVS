@@ -22,6 +22,7 @@ public:
 	virtual EntityType get_entity_type() const {return this->entity_type;};
 	virtual ~IEntity() = default;
 	virtual glm::vec2 get_position() const = 0;
+	virtual glm::vec2* get_position_ptr(){ return &this->position; }
 	virtual void set_position(const glm::vec2& newPosition) = 0;
 	virtual glm::vec2 get_velocity() const = 0;
 	virtual void set_velocity(const glm::vec2& newVelocity) = 0;

@@ -612,7 +612,7 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 		this->hp = 10;
 		this->is_alive = true;
 		this->position = { 200,200 };
-		this->velocity = { 0,0 };
+		this->velocity = { 10,0 };
 		// this->shape = new CircleShape(500);
 		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\2.png");	
 		Image image(t,this->position,{1,1},0,255);
@@ -662,8 +662,13 @@ Enemy* EnemyBuilder::create()
 	enemy->collider = collider;
 	enemy->collider->set_owner(enemy);
 	enemy->collider->set_on_collid([e = enemy](Collider* other){
-		e->setAlive(false);
-		std::cout<<"wwv"<<std::endl;
+		if(other->get_owner()->get_entity_type() == EntityType::Player){
+			Player* p = static_cast<Player*>(other->get_owner());
+			if(p->is_alive()){
+				e->setAlive(false);
+				std::cout<<"wwv"<<std::endl;
+			}
+		}
 	});
 	return enemy;
 
@@ -1125,33 +1130,6 @@ void DanmakuPool::render(SDLRender& renderer) {
     }
 }
 
-void DanmakuPool::check_player_hit(Player* player) {
-    if (!player || !player->is_alive()) return;
-
-    glm::vec2 p_pos = player->get_position();
-    float p_radius = 2.0f; // 核心判定点
-
-    for (auto& d : pool) {
-        if (!d.active) continue;
-
-        const auto& prefab = prefabs[d.prefab_id];
-        
-        if (prefab.shape_type == DanmakuShape::Circle) {
-            float dx = d.pos.x - p_pos.x;
-            float dy = d.pos.y - p_pos.y;
-            float dist_sq = dx * dx + dy * dy;
-            float hit_r = prefab.base_radius + p_radius;
-
-            if (dist_sq <= hit_r * hit_r) {
-                player->set_alive(false);
-                d.active = false;
-                std::cout << "[Core] Player hit by Danmaku!" << std::endl;
-                this->count --;
-            }
-        }
-    }
-}
-
 void DanmakuPool::clear_pool()
 {
     for(auto& a : this->pool){
@@ -1274,7 +1252,6 @@ public:
     //各种执行阶段
     void update(float delta);
     void render(SDLRender& renderer);
-    void check_player_hit(Player* player);
 
     void clear_pool();
 
@@ -2976,7 +2953,7 @@ void MainScene::on_enter() {
     });
 
     Texture *v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
-    glm::vec2 pos(205, 205);
+    glm::vec2 pos(500,500);
     glm::vec2 scale(1, 1);
 
     Image player_image = Image(v, pos, scale, 0, 255);
@@ -2997,6 +2974,11 @@ void MainScene::on_enter() {
     player->set_collider(player_collider);
     player->get_collider()->set_on_collid([p = this->player](Collider* other){
         p->set_alive(false);
+        Event e;
+        int* a = new int(0); 
+        e.data = a;
+        e.type = EventType::PlayerDead;
+        EventManager::get_instance()->publish(e);
         std::cout << "Player Dead!" << std::endl; 
     });
 
@@ -3044,7 +3026,6 @@ void MainScene::on_update(float deltatime) {
 
     if (this->enemy_bullets) {
         this->enemy_bullets->update(deltatime);
-        this->enemy_bullets->check_player_hit(this->player);
     }
 
 }

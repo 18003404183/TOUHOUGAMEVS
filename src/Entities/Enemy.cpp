@@ -6,6 +6,11 @@ void Enemy::update(float deltaTime)
 	this->position += this->velocity;
 	this->enemy_animation.update(deltaTime);
 	std::cout << "Enemy::update called with deltaTime: " << deltaTime << std::endl;
+	if(this->enemy_danmaku_pool){
+		for(auto& emitter : this->emitters){
+			emitter.get()->update(deltaTime,this->enemy_danmaku_pool);
+		}
+	}
 }
 
 void Enemy::render(SDLRender& renderer) const
@@ -29,6 +34,7 @@ glm::vec2 Enemy::get_position() const
 {
 	return this->position;
 }
+
 
 void Enemy::set_position(const glm::vec2& newPosition)
 {
@@ -91,3 +97,13 @@ void Enemy::set_is_collision(bool collision){
 	this->is_collision = collision;
 }
 
+void Enemy::add_emitter(std::unique_ptr<Emitter> emitter)
+{
+	this->emitters.push_back(std::move(emitter));
+}
+
+void Enemy::set_bullet_pool(DanmakuPool* pool)
+{
+	if(pool)
+		this->enemy_danmaku_pool = pool;
+}

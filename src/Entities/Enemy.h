@@ -6,6 +6,9 @@
 #include "Collider.h"
 #include "Animation.h"
 #include "ColliderManager.h"
+#include "Emitter.h"
+#include "Danmaku.h"
+
 class Enemy :
     public IEntity,
     public IUpdateable,
@@ -49,6 +52,9 @@ public:
 	bool get_is_collision() const;
 	void set_is_collision(bool collision);
 
+	void add_emitter(std::unique_ptr<Emitter> emitter);
+	void set_bullet_pool(DanmakuPool* pool);
+
 	void set_animation(const Animation& animation){
 		this->enemy_animation = animation;
 	}
@@ -59,5 +65,8 @@ private:
 	Image image;
 	bool is_collision = false;
 	Animation enemy_animation;
+
+	std::vector<std::unique_ptr<Emitter>> emitters;
+	DanmakuPool* enemy_danmaku_pool = nullptr;
 };
 
