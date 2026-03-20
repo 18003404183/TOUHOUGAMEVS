@@ -3,7 +3,6 @@
 #include"includes.h"
 #include"SDL_render.h"
 #include"ResourcesManager.h"
-#include"Player.h"
 
 // 目前的思路是将弹幕作为一个单独的系统 采用纯粹的数据形式来存储弹幕 弹幕的渲染和更新交由弹幕管理系统完成
 // 弹幕的渲染: 1.在resourcemanager单独开一条弹幕贴图的vector 不使用unorder_map 因为每次循环都要查询 需要考虑开销
@@ -103,6 +102,7 @@ public:
     std::vector<DanmakuData>& get_raw_pool();
     DanmakuPrefab get_prefab(int id);
 
+    void destroy_bullet(DanmakuData& danmaku);
     int count;
 
 private:

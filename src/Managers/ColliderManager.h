@@ -5,6 +5,8 @@
 #include"unordered_map"
 #include<vector>
 #include<memory>
+#include"Danmaku.h"
+
 
 struct CollisionEvent{
     Collider* collider_object1;
@@ -48,7 +50,6 @@ public:
 
     void check_and_resolve_collisions(){
         // 清除事件列表
-        this->collision_events.clear();       
         // 循环判断是否碰撞 将每个碰撞体向下转型成type标志的类型 接着调用碰撞算法库里面的函数 将所有检测到的碰撞产生一个碰撞事件并且存入队列
         for(size_t i = 0; i < this->collider_list.size(); ++i){
             for(size_t j = i + 1; j < this->collider_list.size(); ++j){
@@ -63,10 +64,17 @@ public:
         }
         //对于队列里的每一个碰撞体 确认存在碰撞函数后执行碰撞回调函数
         for(auto i : this->collision_events){
-            i.collider_object1->run_on_collid(i.collider_object2);
-            i.collider_object2->run_on_collid(i.collider_object1);
+            if(i.collider_object1){
+                i.collider_object1->run_on_collid(i.collider_object2);
+            }
+            if(i.collider_object2){
+                i.collider_object2->run_on_collid(i.collider_object1);
+            }
         }
+        this->collision_events.clear();       
     }
+
+    void check_pool_collisions(DanmakuPool* pool, int target_layer);
 
     ~ColliderManager(){
         this->collider_list.clear();

@@ -117,7 +117,7 @@ void MainScene::on_enter() {
 
                 e->set_position({x, y});
                 e->setHp(hp);
-e->set_bullet_pool(this->enemy_bullets.get());
+                e->set_bullet_pool(this->enemy_bullets.get());
 
                 // 👇 2. 组装“三向自机狙”散弹武器！
                 // 定义扩散角度：15 度 (记得转成弧度)
@@ -208,13 +208,14 @@ void MainScene::on_update(float deltatime) {
     
     ImGui::End();
     //IInput::update();
-
-    ColliderManager::get_instance()->check_and_resolve_collisions();
-
-
     if (this->enemy_bullets) {
         this->enemy_bullets->update(deltatime);
     }
+    // 检测碰撞
+
+    ColliderManager::get_instance()->check_pool_collisions(this->enemy_bullets.get(),this->player->get_collider()->get_layer());
+    ColliderManager::get_instance()->check_and_resolve_collisions();
+
 
 }
 

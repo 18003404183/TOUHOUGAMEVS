@@ -60,14 +60,10 @@ Enemy* EnemyBuilder::create()
 	enemy->collider = collider;
 	enemy->collider->set_owner(enemy);
 	enemy->collider->set_on_collid([e = enemy](Collider* other){
-		if(other->get_owner()->get_entity_type() == EntityType::Player){
-			Player* p = static_cast<Player*>(other->get_owner());
-			if(p->is_alive()){
-				e->setAlive(false);
-				std::cout<<"wwv"<<std::endl;
-			}
+			e->setAlive(false);
+			std::cout<<"wwv"<<std::endl;
 		}
-	});
+	);
 	return enemy;
 
 }
