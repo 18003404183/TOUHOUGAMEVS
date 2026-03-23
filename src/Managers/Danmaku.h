@@ -87,8 +87,8 @@ public:
     DanmakuPool operator=(const DanmakuPool& other) = delete;
 
     //用于注册
-    uint16_t register_prefab(const DanmakuPrefab& prefab);
-    uint16_t register_trajectory(const TrajectoryTemplate& traj);
+    static uint16_t register_prefab(const DanmakuPrefab& prefab);
+    static uint16_t register_trajectory(const TrajectoryTemplate& traj);
 
     // 用于生成子弹
     void spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_speed, float initial_angle);
@@ -100,15 +100,15 @@ public:
     void clear_pool();
 
     std::vector<DanmakuData>& get_raw_pool();
-    DanmakuPrefab get_prefab(int id);
+    static DanmakuPrefab get_prefab(int id);
 
     void destroy_bullet(DanmakuData& danmaku);
     int count;
 
 private:
     std::vector<DanmakuData> pool;
-    std::vector<DanmakuPrefab> prefabs;
-    std::vector<TrajectoryTemplate> trajectories;
+    static std::vector<DanmakuPrefab> prefabs;
+    static std::vector<TrajectoryTemplate> trajectories;
 
 
 };

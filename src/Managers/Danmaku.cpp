@@ -2,6 +2,9 @@
 #include "Config.h"
 #include <cmath>
 
+std::vector<DanmakuPrefab> DanmakuPool::prefabs;
+std::vector<TrajectoryTemplate> DanmakuPool::trajectories;
+
 DanmakuPool::DanmakuPool(size_t pool_size) {
     // 一次性分配连续物理内存，杜绝 new/delete
     this->count = 0;
@@ -162,7 +165,7 @@ std::vector<DanmakuData> &DanmakuPool::get_raw_pool()
 
 DanmakuPrefab DanmakuPool::get_prefab(int id)
 {
-    return this->prefabs[id];
+    return prefabs[id];
 }
 
 void DanmakuPool::destroy_bullet(DanmakuData &danmaku)

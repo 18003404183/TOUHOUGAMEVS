@@ -39,7 +39,7 @@ void MainScene::on_enter() {
     traj.commands.push_back({DanmakuCmdType::ACCELERATE, 400.0f, 2.0f});
     
     // 注册轨迹并拿到 ID
-    uint16_t traj_id = this->enemy_bullets->register_trajectory(traj);
+    uint16_t traj_id = DanmakuPool::register_trajectory(traj);
 
     // 4. 组装预制体 (Prefab)
     DanmakuPrefab dp;
@@ -51,9 +51,9 @@ void MainScene::on_enter() {
     dp.default_traj_id = traj_id; // 绑定刚才写的酷炫轨迹！
 
     // 注册预制体并保存 ID 到成员变量，方便按键时调用
-    this->test_prefab_id = this->enemy_bullets->register_prefab(dp);
+    this->test_prefab_id = DanmakuPool::register_prefab(dp);
     // ==========================================
-        Texture *v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
+    Texture *v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
     glm::vec2 pos(500,500);
     glm::vec2 scale(1, 1);
 
@@ -82,7 +82,21 @@ void MainScene::on_enter() {
         EventManager::get_instance()->publish(e);
         std::cout << "Player Dead!" << std::endl; 
     });
-
+    player->set_bullet_pool(std::make_unique<DanmakuPool>(10000));
+    this->player->add_emitter(std::make_unique<Emitter>(
+        EmitterSpace::Relative, this->player->get_position_ptr(), glm::vec2{-10, -5},
+        AimMode::Fixed, nullptr,
+        this->test_prefab_id,1200.0f, -3.14159f / 2.0f, 0.0f,
+        0.066f, -1 
+    ));
+    
+    this->player->add_emitter(std::make_unique<Emitter>(
+        EmitterSpace::Relative, this->player->get_position_ptr(), glm::vec2{10, -5},
+        AimMode::Fixed, nullptr,
+        this->test_prefab_id, 1200.0f, -3.14159f / 2.0f, 0.0f,
+        0.066f, -1 
+    ));
+    
     this->entities.push_back(std::unique_ptr<IEntity>(this->player));
 
     std::ifstream file("resources\\level1.json");
@@ -119,8 +133,6 @@ void MainScene::on_enter() {
                 e->setHp(hp);
                 e->set_bullet_pool(this->enemy_bullets.get());
 
-                // 👇 2. 组装“三向自机狙”散弹武器！
-                // 定义扩散角度：15 度 (记得转成弧度)
                 float spread_angle = 15.0f * (3.14159f / 180.0f);
 
                 // 枪管 A：正中心 (绝对锁定玩家，逼迫玩家走位)
@@ -234,11 +246,9 @@ void MainScene::on_render(SDLRender &renderer) {
             renderer.draw_circle_outline(this->player->get_position(), 10.0f, 0, 255, 0); // 半径2
         }
 
-        // 画敌人的碰撞框 (蓝圈)
         for (auto& entity : this->entities) {
             Enemy* e = dynamic_cast<Enemy*>(entity.get());
             if (e && e->isAlive()) {
-                // 你在 EnemyBuilder 里给了圆圈半径 500 (这可能太大了，你后续可能要调小)
                 renderer.draw_circle_outline(e->get_position(), 30.0f, 0, 0, 255); 
             }
         }
@@ -258,30 +268,11 @@ void MainScene::on_input() {
     if (IInput::get_key(KeyType::ENTER)->get_keydown())
         SceneManager::getInstance()->switchScene(SceneType::EndMenu);
     
-    if (IInput::get_key(KeyType::RIGHT)->get_state()) // 改为 get_state() 支持长按平滑移动
-        this->player->set_position(this->player->get_position() + glm::vec2{5, 0});
-    if (IInput::get_key(KeyType::LEFT)->get_state())
-        this->player->set_position(this->player->get_position() + glm::vec2{-5, 0});
-    if (IInput::get_key(KeyType::DOWN)->get_state())
-        this->player->set_position(this->player->get_position() + glm::vec2{0, 5});
-    if (IInput::get_key(KeyType::UP)->get_state())
-        this->player->set_position(this->player->get_position() + glm::vec2{0, -5});
-
-    if (IInput::get_key(KeyType::Z)->get_state()) {
-        // 控制一下发射频率，不然一按 60 帧每帧都发射就卡爆了
-        if (cooldown <= 0) {
-            for (int i = 0; i < debug_emit_count; i++) {
-                float angle = i * (360.0f / debug_emit_count) * (3.14159f / 180.0f);
-                // 使用我们在 ImGui 里调的初速度 debug_emit_speed
-                this->enemy_bullets->spawn(this->test_prefab_id, {400, 300}, debug_emit_speed, angle);
-            }
-            cooldown = 5; // 5帧发射一次
-        }
-    
-    cooldown--;
-    }else {
-        cooldown = 0;
+    if (this->player && this->player->isActive()) {
+        this->player->handle_input();
     }
+
+
 }
 
 // 接下来准备写发射器逻辑 负责支持按照一些预制轨迹 在指定时间空间 生成弹幕(拥有一个update(float delta)来控制弹幕释放的时机) 并且支持将弹幕的释放逻辑外接给lua 支持绝对位置与绑定者的相对位置两种位置方式

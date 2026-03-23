@@ -175,4 +175,15 @@ public:
             is_finished_flag = true;
         }
     }
+
+    // 动态控制发射器的开关 (用于绑定玩家按键)
+    void set_active(bool active) {
+        if (active) {
+            // 如果要求激活，且当前闹钟处于非激活状态，则恢复
+            if (!clock.available()) clock.resume();
+        } else {
+            // 如果要求停止，且当前闹钟正在运行，则暂停
+            if (clock.available()) clock.pause();
+        }
+    }
 };

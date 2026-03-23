@@ -7,6 +7,9 @@
 #include"GameContext.h"
 #include"Collider.h"
 #include"ColliderManager.h"
+#include"Emitter.h"
+#include"Danmaku.h"
+#include"IInput.h"
 
 class Player : public IEntity, public IRenderable, public IUpdateable
 {
@@ -73,13 +76,23 @@ public:
 	//virtual const Shape* get_shape() const;
 	//virtual void set_shape(Shape* shape);
 	void set_collider(Collider* collider);
+	void handle_input();
+	bool get_low_speed();
+	void add_emitter(std::unique_ptr<Emitter> emitter);
+	void set_bullet_pool(std::unique_ptr<DanmakuPool> player_bu);
 	Collider* get_collider();
 private:
 	bool alive;
 	int hp;
 	Image player_image;
 	Animation player_animation;
+	bool is_low_speed = false;
+
+	int shoot_cooldown = 0;
+
 	//Shape* shape;
 	Collider* collider;
+	std::unique_ptr<DanmakuPool> player_bullet;
+	std::vector<std::unique_ptr<Emitter>> emitters;
 };
 
