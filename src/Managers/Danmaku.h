@@ -45,6 +45,7 @@ struct DanmakuPrefab{
     uint16_t default_traj_id;// 默认绑定的轨迹模板 ID
 };
 
+// 考虑到内存对齐 将大数据放在前面(需要的内存越大的数据种类 越难放到内存对齐所需要的位置 导致小内存的数据需要空开许多内存才能对齐 导致浪费)
 struct DanmakuData{
     glm::vec2 pos;
     glm::vec2 vel;

@@ -398,6 +398,9 @@ public:
 
 void Enemy::update(float deltaTime)
 {
+	if(!this->isActive()||!this->is_alive){
+		return;
+	}
 	this->position += this->velocity;
 	this->enemy_animation.update(deltaTime);
 	std::cout << "Enemy::update called with deltaTime: " << deltaTime << std::endl;
@@ -410,6 +413,9 @@ void Enemy::update(float deltaTime)
 
 void Enemy::render(SDLRender& renderer) const
 {
+	if(!(this->active&&this->is_alive)){
+		return;
+	}
 	std::cout << "Enemy::render called" << std::endl;
 	//this->image.render(renderer,this->position);
 	this->enemy_animation.render(renderer,this->position);
@@ -631,6 +637,7 @@ void Player::update(float deltaTime)
 		for(auto& emitter : this->emitters){
 			emitter.get()->update(deltaTime,this->player_bullet.get());
 		}
+		this->player_bullet.get()->update(deltaTime);
 	}
 	//this->player_image.set_pos(position);
 }
@@ -644,6 +651,9 @@ void Player::render(SDLRender& renderer) const
         renderer.draw_circle_outline(this->position, 6.0f, 255, 0, 0, 255);
         renderer.draw_circle_outline(this->position, 4.0f, 255, 255, 255, 255);
     }
+	if(this->player_bullet){
+		this->player_bullet.get()->render(renderer);
+	}
 }
 
 bool Player::isActive() const
@@ -755,6 +765,7 @@ bool Player::get_low_speed()
 
 void Player::add_emitter(std::unique_ptr<Emitter> emitter)
 {
+	emitter.get()->set_active(false);
 	this->emitters.push_back(std::move(emitter));
 }
 
@@ -766,6 +777,14 @@ void Player::set_bullet_pool(std::unique_ptr<DanmakuPool> player_bu)
 Collider *Player::get_collider()
 {
     return this->collider;
+}
+
+DanmakuPool *Player::get_danmaku_pool()
+{
+	if(this->player_bullet){
+		return player_bullet.get();
+	}
+    return nullptr;
 }
 
 
@@ -855,6 +874,8 @@ public:
 	void add_emitter(std::unique_ptr<Emitter> emitter);
 	void set_bullet_pool(std::unique_ptr<DanmakuPool> player_bu);
 	Collider* get_collider();
+	DanmakuPool* get_danmaku_pool();
+
 private:
 	bool alive;
 	int hp;
@@ -866,7 +887,7 @@ private:
 
 	//Shape* shape;
 	Collider* collider;
-	std::unique_ptr<DanmakuPool> player_bullet;
+	std::unique_ptr<DanmakuPool> player_bullet;//考虑不适用执政 使用正常赋值+移动语义 但属性可能为空 最后选择使用指针
 	std::vector<std::unique_ptr<Emitter>> emitters;
 };
 
@@ -949,9 +970,16 @@ Enemy* EnemyBuilder::create()
 	enemy->collider = collider;
 	enemy->collider->set_owner(enemy);
 	enemy->collider->set_on_collid([e = enemy](Collider* other){
+		e->takeDamage(10);
+		if(e->getHp() <= 0 && e->isAlive()){
 			e->setAlive(false);
-			std::cout<<"wwv"<<std::endl;
-		}
+			
+			Event ev;
+			ev.type = EventType::EnemyDsetroyed;
+			ev.data = e;
+			EventManager::get_instance()->publish(ev);
+		}		
+	}
 	);
 	return enemy;
 
@@ -964,7 +992,7 @@ Enemy* EnemyBuilder::create()
 #pragma once
 #include"EnemyType.h"
 #include"Enemy.h"
-
+#include "EventManager.h"
 
 class EnemyBuilder
 {
@@ -1536,6 +1564,7 @@ struct DanmakuPrefab{
     uint16_t default_traj_id;// 默认绑定的轨迹模板 ID
 };
 
+// 考虑到内存对齐 将大数据放在前面(需要的内存越大的数据种类 越难放到内存对齐所需要的位置 导致小内存的数据需要空开许多内存才能对齐 导致浪费)
 struct DanmakuData{
     glm::vec2 pos;
     glm::vec2 vel;
@@ -3269,12 +3298,12 @@ void MainScene::on_enter() {
     ));
     
     this->player->add_emitter(std::make_unique<Emitter>(
-        EmitterSpace::Relative, this->player->get_position_ptr(), glm::vec2{-10, -5},
+        EmitterSpace::Relative, this->player->get_position_ptr(), glm::vec2{10, -5},
         AimMode::Fixed, nullptr,
         this->test_prefab_id, 1200.0f, -3.14159f / 2.0f, 0.0f,
         0.066f, -1 
     ));
-
+    
     this->entities.push_back(std::unique_ptr<IEntity>(this->player));
 
     std::ifstream file("resources\\level1.json");
@@ -3404,6 +3433,9 @@ void MainScene::on_update(float deltatime) {
     // 检测碰撞
 
     ColliderManager::get_instance()->check_pool_collisions(this->enemy_bullets.get(),this->player->get_collider()->get_layer());
+    if(this->player && this->player->get_danmaku_pool()){
+        ColliderManager::get_instance()->check_pool_collisions(this->player->get_danmaku_pool(),1);
+    }
     ColliderManager::get_instance()->check_and_resolve_collisions();
 
 
@@ -3450,24 +3482,16 @@ void MainScene::on_input() {
         this->player->handle_input();
     }
 
-    if (IInput::get_key(KeyType::Z)->get_state()) {
-        // 控制一下发射频率，不然一按 60 帧每帧都发射就卡爆了
-        if (cooldown <= 0) {
-            for (int i = 0; i < debug_emit_count; i++) {
-                float angle = i * (360.0f / debug_emit_count) * (3.14159f / 180.0f);
-                // 使用我们在 ImGui 里调的初速度 debug_emit_speed
-                this->enemy_bullets->spawn(this->test_prefab_id, {400, 300}, debug_emit_speed, angle);
-            }
-            cooldown = 5; // 5帧发射一次
-        }
-    
-    cooldown--;
-    }else {
-        cooldown = 0;
-    }
+
 }
 
-// 接下来准备写发射器逻辑 负责支持按照一些预制轨迹 在指定时间空间 生成弹幕(拥有一个update(float delta)来控制弹幕释放的时机) 并且支持将弹幕的释放逻辑外接给lua 支持绝对位置与绑定者的相对位置两种位置方式
+// 接下来准备写发射器逻辑 负责支持按照一些预制轨迹 在指定时间空间 生成弹幕(拥有一个update(float delta)来控制弹幕释放的时机) 并且支持将弹幕的释放逻辑外接给lua 支持绝对位置与绑定者的相对位置两种位置方式 - 3.20
+// 准备实现一个场景 用来将整个流程过一遍 确保能够跑通
+// 分为一下几个目标
+// 1. 找到美术资源 搭建场景 至少需要 背景ui 弹幕与人物与字体的贴图 滚动背景的贴图 (其他的细节控件贴图日后再说)
+// 2. 将整个关卡的流程改为尽可能外部数据驱动 比如哪个贴图放哪里 敌人如何生成 在哪生成 轨迹如何 发射什么样的子弹 boss何时出场 boss的舞台演出 交给外部的lua 与 json
+// 3.搭建场景流程 舞台演出逻辑 比如什么时候刷什么敌人 打多少个敌人之后出boss boss有几个符卡 如何设计 这一步依赖于第二步
+// 4.继续完善一些底层的功能 比如敌人死后生成p点 玩家随着p点越多 火力等级越高(weapon) 分数统计 玩家释放符卡等 - 3.25
 
 ---
 .\Scenes\MainScene.h
