@@ -226,6 +226,9 @@ void MainScene::on_update(float deltatime) {
     // 检测碰撞
 
     ColliderManager::get_instance()->check_pool_collisions(this->enemy_bullets.get(),this->player->get_collider()->get_layer());
+    if(this->player && this->player->get_danmaku_pool()){
+        ColliderManager::get_instance()->check_pool_collisions(this->player->get_danmaku_pool(),1);
+    }
     ColliderManager::get_instance()->check_and_resolve_collisions();
 
 

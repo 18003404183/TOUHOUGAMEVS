@@ -60,9 +60,16 @@ Enemy* EnemyBuilder::create()
 	enemy->collider = collider;
 	enemy->collider->set_owner(enemy);
 	enemy->collider->set_on_collid([e = enemy](Collider* other){
+		e->takeDamage(10);
+		if(e->getHp() <= 0 && e->isAlive()){
 			e->setAlive(false);
-			std::cout<<"wwv"<<std::endl;
-		}
+			
+			Event ev;
+			ev.type = EventType::EnemyDsetroyed;
+			ev.data = e;
+			EventManager::get_instance()->publish(ev);
+		}		
+	}
 	);
 	return enemy;
 

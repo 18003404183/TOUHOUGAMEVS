@@ -150,3 +150,11 @@ Collider *Player::get_collider()
 {
     return this->collider;
 }
+
+DanmakuPool *Player::get_danmaku_pool()
+{
+	if(this->player_bullet){
+		return player_bullet.get();
+	}
+    return nullptr;
+}

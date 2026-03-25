@@ -1,7 +1,7 @@
 #pragma once
 #include"EnemyType.h"
 #include"Enemy.h"
-
+#include "EventManager.h"
 
 class EnemyBuilder
 {

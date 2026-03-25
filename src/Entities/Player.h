@@ -81,6 +81,8 @@ public:
 	void add_emitter(std::unique_ptr<Emitter> emitter);
 	void set_bullet_pool(std::unique_ptr<DanmakuPool> player_bu);
 	Collider* get_collider();
+	DanmakuPool* get_danmaku_pool();
+
 private:
 	bool alive;
 	int hp;
@@ -92,7 +94,7 @@ private:
 
 	//Shape* shape;
 	Collider* collider;
-	std::unique_ptr<DanmakuPool> player_bullet;
+	std::unique_ptr<DanmakuPool> player_bullet;//考虑不适用执政 使用正常赋值+移动语义 但属性可能为空 最后选择使用指针
 	std::vector<std::unique_ptr<Emitter>> emitters;
 };
 
