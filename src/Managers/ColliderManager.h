@@ -6,6 +6,7 @@
 #include<vector>
 #include<memory>
 #include"Danmaku.h"
+#include"Quadtree.h"
 
 
 struct CollisionEvent{

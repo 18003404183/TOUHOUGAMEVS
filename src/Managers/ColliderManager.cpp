@@ -7,6 +7,18 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
     if (!pool) return;
     auto& raw_pool = pool->get_raw_pool();
 
+    static Quadtree<int> bullet_tree({1250.0f, 700.0f}, {1300.0f, 800.0f},0);
+    bullet_tree.clear(); // 清空上一帧的数据
+
+    for (int i = 0; i < raw_pool.size(); ++i) {
+        if (!raw_pool[i].active) continue;
+        
+        // 获取子弹的粗略碰撞半径（这里以圆弹为例，如果是矩形取最大半宽）
+        const auto& temp_hit_box = std::get_if<CircleHitbox>(&pool->get_prefab(raw_pool[i].prefab_id).hitbox); // 注意：如果换了 variant，需要根据实际类型获取个粗略范围
+        float r = temp_hit_box->radius;
+        bullet_tree.insert(i,AABB{{raw_pool[i].pos.x, raw_pool[i].pos.y}, {r, r}});
+    }
+
     for (auto& col_ptr : this->collider_list) {
         Collider* target_col = col_ptr.get();
         IEntity* owner = target_col->get_owner();
@@ -18,8 +30,14 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
                 float target_radius = static_cast<Circle*>(shape)->get_r();
                 glm::vec2 target_pos = owner->get_position();
 
-                for (auto& bullet : raw_pool) {
-                    if (!bullet.active) continue;
+                AABB query_range{{target_pos.x, target_pos.y}, {target_radius + 2.0f, target_radius + 2.0f}};
+
+                static std::vector<int> result_list;
+                result_list.clear();
+                bullet_tree.query(result_list,query_range);
+
+                for (auto& bullet_potential : result_list) {
+                    DanmakuData& bullet = raw_pool[bullet_potential];
                     const auto& prefab = pool->get_prefab(bullet.prefab_id);
                     
                     bool is_hit = std::visit([&](const auto& box) -> bool{
