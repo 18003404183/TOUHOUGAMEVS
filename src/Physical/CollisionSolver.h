@@ -30,11 +30,11 @@ public:
     }
 
     static bool CheckCircleRect(){
-
+        return false;
     }
 
     static bool CheckRectRect(){
-
+        return false;
     }
 
 

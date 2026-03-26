@@ -44,12 +44,12 @@ void MainScene::on_enter() {
     // 4. 组装预制体 (Prefab)
     DanmakuPrefab dp;
     dp.texture_id = tex_id; 
-    dp.base_size = {16.0f, 16.0f}; // 强制渲染大小为 16x16，你可以根据实际图片修改
-    dp.base_scale = {1.0f, 1.0f};
-    dp.shape_type = DanmakuShape::Circle;
-    dp.base_radius = 5.0f; // 碰撞判定半径
-    dp.default_traj_id = traj_id; // 绑定刚才写的酷炫轨迹！
-
+    dp.base_size = {40.0f, 22.0f}; // 强制渲染大小为 16x16，你可以根据实际图片修改
+    dp.base_scale = {2.0f, 1.0f};
+    //dp.shape_type = DanmakuShape::Circle;
+    //dp.base_radius = 5.0f; // 碰撞判定半径
+    dp.default_traj_id = traj_id;
+    dp.hitbox = CircleHitbox{5.0f};
     // 注册预制体并保存 ID 到成员变量，方便按键时调用
     this->test_prefab_id = DanmakuPool::register_prefab(dp);
     // ==========================================
@@ -258,8 +258,10 @@ void MainScene::on_render(SDLRender &renderer) {
 
         for (auto& d : this->enemy_bullets->get_raw_pool()) {
             if (!d.active) continue;
-            float r = this->enemy_bullets->get_prefab(d.prefab_id).base_radius;
-            renderer.draw_circle_outline(d.pos, r, 255, 0, 0); 
+            if(const auto& pre = std::get_if<CircleHitbox>(&enemy_bullets.get()->get_prefab(d.prefab_id).hitbox)){
+                renderer.draw_circle_outline(d.pos,pre->radius, 254, 0, 0); 
+            }
+            
         }
 
 
@@ -285,3 +287,5 @@ void MainScene::on_input() {
 // 2. 将整个关卡的流程改为尽可能外部数据驱动 比如哪个贴图放哪里 敌人如何生成 在哪生成 轨迹如何 发射什么样的子弹 boss何时出场 boss的舞台演出 交给外部的lua 与 json
 // 3.搭建场景流程 舞台演出逻辑 比如什么时候刷什么敌人 打多少个敌人之后出boss boss有几个符卡 如何设计 这一步依赖于第二步
 // 4.继续完善一些底层的功能 比如敌人死后生成p点 玩家随着p点越多 火力等级越高(weapon) 分数统计 玩家释放符卡等 - 3.25
+
+// 准备重构弹幕碰撞 然后实现四×树来进行优化

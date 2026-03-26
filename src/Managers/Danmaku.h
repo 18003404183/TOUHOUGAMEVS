@@ -3,6 +3,7 @@
 #include"includes.h"
 #include"SDL_render.h"
 #include"ResourcesManager.h"
+#include<variant>
 
 // 目前的思路是将弹幕作为一个单独的系统 采用纯粹的数据形式来存储弹幕 弹幕的渲染和更新交由弹幕管理系统完成
 // 弹幕的渲染: 1.在resourcemanager单独开一条弹幕贴图的vector 不使用unorder_map 因为每次循环都要查询 需要考虑开销
@@ -19,6 +20,20 @@
 // 弹幕管理系统提供接口创建以上三种类型 对于弹幕的处理依赖于内部对象池 外部只需要输入构建弹幕需要的参数便可
 // 
 
+// 各种碰撞体的结构体
+struct CircleHitbox{
+    float radius;
+};
+
+struct RectHitbox{
+    float half_w;
+    float half_h;
+};
+
+struct LaserHitbox{
+    float length;
+    float half_w;
+};
 
 // 碰撞体类型
 enum class DanmakuShape : uint8_t{
@@ -40,9 +55,11 @@ struct DanmakuPrefab{
     uint16_t texture_id;//存在资源管理器中的弹幕贴图队列中
     glm::vec2 base_size;     // 贴图原始大小
     glm::vec2 base_scale;    // 默认缩放
-    DanmakuShape shape_type; // 碰撞形状
-    float base_radius;       // 基础碰撞判定半径
+    //DanmakuShape shape_type; // 碰撞形状
+    //float base_radius;       // 基础碰撞判定半径 // 考虑到兼顾内存安全,类型安全和可扩展性 不使用union 使用variant来记录不同形状的数据 至于性能 以后再说(union效率更高)
     uint16_t default_traj_id;// 默认绑定的轨迹模板 ID
+
+    std::variant<CircleHitbox,RectHitbox,LaserHitbox> hitbox;
 };
 
 // 考虑到内存对齐 将大数据放在前面(需要的内存越大的数据种类 越难放到内存对齐所需要的位置 导致小内存的数据需要空开许多内存才能对齐 导致浪费)
@@ -50,7 +67,7 @@ struct DanmakuData{
     glm::vec2 pos;
     glm::vec2 vel;
     float current_speed;
-    float current_angle;
+    float current_angle;//这里需要考虑一个问题 初始时候的弹幕朝向该如何表示(比如同样的弹幕贴图 可能朝上是0度 朝下是0度)
 
     uint16_t prefab_id;//预制菜id
     uint16_t trajectory_id;//轨迹id
