@@ -17,7 +17,7 @@ set(LIB_PATH "${CMAKE_CURRENT_SOURCE_DIR}/3rd_party")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/bin")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib")
-
+set(CMAKE_WARN_DEPRECATED OFF CACHE BOOL "" FORCE)
 set(SDL2IMAGE_SAMPLES OFF CACHE BOOL "" FORCE)
 set(SDL2IMAGE_TESTS OFF CACHE BOOL "" FORCE)
 set(SDL2IMAGE_INSTALL OFF CACHE BOOL "" FORCE)
@@ -96,3 +96,11 @@ add_custom_command(TARGET main POST_BUILD
         "${CMAKE_CURRENT_SOURCE_DIR}/resources"
         "$<TARGET_FILE_DIR:main>/resources"
 )
+
+if(MSVC)
+    # 屏蔽 C4828 警告
+    add_compile_options(/wd4828)
+
+    # 可选：强制 MSVC 将所有源文件和执行字符集视为 UTF-8
+    # add_compile_options(/utf-8) 
+endif()
