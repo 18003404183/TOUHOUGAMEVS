@@ -9,64 +9,65 @@
 #include "Emitter.h"
 #include "Danmaku.h"
 
-class Enemy :
-    public IEntity,
-    public IUpdateable,
-	public IRenderable
+class Enemy : public IEntity, public IUpdateable, public IRenderable
 {
 public:
-	Enemy(){
-		this->entity_type = EntityType::Enemy;
-	};
-	virtual ~Enemy() override{
-		if(this->collider){
-			ColliderManager::get_instance()->destory_collider(this->collider);
-			this->collider = nullptr;
-		}
-	};
+    Enemy()
+    {
+        entity_type_ = EntityType::Enemy;
+    }
 
-	Collider* collider;
+    virtual ~Enemy() override
+    {
+        if (collider_)
+        {
+            ColliderManager::get_instance()->destroy_collider(collider_);
+            collider_ = nullptr;
+        }
+    }
 
-	void update(float deltaTime) override;
-	void render(SDLRender& renderer) const override;
+    Collider* collider_ = nullptr;
 
-	virtual bool isActive() const;
-	virtual void setActive(bool active);
+    void update(float delta_time) override;
+    void render(SDLRender& renderer) const override;
 
-	virtual glm::vec2 get_position() const;
-	virtual void set_position(const glm::vec2& newPosition);
-	virtual glm::vec2 get_velocity() const;
-	virtual void set_velocity(const glm::vec2& newVelocity);
-	virtual float setHp(int hp);
-	virtual float getHp() const;
-	virtual void takeDamage(float damage);
+    virtual bool is_active() const override;
+    virtual void set_active(bool active);
 
-	virtual bool isAlive() const;
-	virtual void setAlive(bool alive);
+    virtual glm::vec2 get_position() const override;
+    virtual void set_position(const glm::vec2& new_position) override;
+    virtual glm::vec2 get_velocity() const override;
+    virtual void set_velocity(const glm::vec2& new_velocity) override;
+    virtual float set_hp(int hp);
+    virtual float get_hp() const;
+    virtual void take_damage(float damage);
 
-	void set_image(Image& image);
-	Image& get_image();
+    virtual bool is_alive() const;
+    virtual void set_alive(bool alive);
 
-	void on_collision();
+    void set_image(const Image& image);
+    Image& get_image();
 
-	bool get_is_collision() const;
-	void set_is_collision(bool collision);
+    void on_collision();
 
-	void add_emitter(std::unique_ptr<Emitter> emitter);
-	void set_bullet_pool(DanmakuPool* pool);
+    bool get_is_collision() const;
+    void set_is_collision(bool collision);
 
-	void set_animation(const Animation& animation){
-		this->enemy_animation = animation;
-	}
+    void add_emitter(std::unique_ptr<Emitter> emitter);
+    void set_bullet_pool(DanmakuPool* pool);
+
+    void set_animation(const Animation& animation)
+    {
+        enemy_animation_ = animation;
+    }
 
 private:
-	bool is_alive;
-	float hp;
-	Image image;
-	bool is_collision = false;
-	Animation enemy_animation;
+    bool is_alive_ = true;
+    float hp_ = 100.0f;
+    Image image_;
+    bool is_collision_ = false;
+    Animation enemy_animation_;
 
-	std::vector<std::unique_ptr<Emitter>> emitters;
-	DanmakuPool* enemy_danmaku_pool = nullptr;
+    std::vector<std::unique_ptr<Emitter>> emitters_;
+    DanmakuPool* enemy_danmaku_pool_ = nullptr;
 };
-

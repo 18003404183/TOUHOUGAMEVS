@@ -1,3 +1,3 @@
-#include"GameContext.h"
+#include "GameContext.h"
 
-Context* Context::context = nullptr;
+Context* Context::context_ = nullptr;

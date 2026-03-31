@@ -1,115 +1,115 @@
 #include "Enemy.h"
 
 
-void Enemy::update(float deltaTime)
+void Enemy::update(float delta_time)
 {
-	if(!this->isActive()||!this->is_alive){
+	if(!this->is_active() || !this->is_alive_){
 		return;
 	}
-	this->position += this->velocity;
-	this->enemy_animation.update(deltaTime);
-	std::cout << "Enemy::update called with deltaTime: " << deltaTime << std::endl;
-	if(this->enemy_danmaku_pool){
-		for(auto& emitter : this->emitters){
-			emitter.get()->update(deltaTime,this->enemy_danmaku_pool);
+	this->position_ += this->velocity_;
+	this->enemy_animation_.update(delta_time);
+	std::cout << "Enemy::update called with delta_time: " << delta_time << std::endl;
+	if(this->enemy_danmaku_pool_){
+		for(auto& emitter : this->emitters_){
+			emitter.get()->update(delta_time, this->enemy_danmaku_pool_);
 		}
 	}
 }
 
 void Enemy::render(SDLRender& renderer) const
 {
-	if(!(this->active&&this->is_alive)){
+	if(!(this->active_ && this->is_alive_)){
 		return;
 	}
 	std::cout << "Enemy::render called" << std::endl;
-	//this->image.render(renderer,this->position);
-	this->enemy_animation.render(renderer,this->position);
+	//this->image_.render(renderer, this->position_);
+	this->enemy_animation_.render(renderer, this->position_);
 }
 
-bool Enemy::isActive() const
+bool Enemy::is_active() const
 {
-	return this->active;
+	return this->active_;
 }
 
-void Enemy::setActive(bool active)
+void Enemy::set_active(bool active)
 {
-	this->active = active;
+	this->active_ = active;
 }
 
 glm::vec2 Enemy::get_position() const
 {
-	return this->position;
+	return this->position_;
 }
 
 
-void Enemy::set_position(const glm::vec2& newPosition)
+void Enemy::set_position(const glm::vec2& new_position)
 {
-	this->position = newPosition;
+	this->position_ = new_position;
 }
 
 glm::vec2 Enemy::get_velocity() const
 {
-	return this->velocity;
+	return this->velocity_;
 }
 
-void Enemy::set_velocity(const glm::vec2& newVelocity)
+void Enemy::set_velocity(const glm::vec2& new_velocity)
 {
-	this->velocity = newVelocity;
+	this->velocity_ = new_velocity;
 }
 
-float Enemy::setHp(int hp)
+float Enemy::set_hp(int hp)
 {
-	return this->hp = hp;
+	return this->hp_ = hp;
 }
 
-float Enemy::getHp() const
+float Enemy::get_hp() const
 {
-	return this->hp;
+	return this->hp_;
 }
 
-void Enemy::takeDamage(float damage)
+void Enemy::take_damage(float damage)
 {
-	this->hp -= damage;
+	this->hp_ -= damage;
 }
 
-bool Enemy::isAlive() const
+bool Enemy::is_alive() const
 {
-	return this->is_alive;
+	return this->is_alive_;
 }
 
-void Enemy::setAlive(bool alive)
+void Enemy::set_alive(bool alive)
 {
-	this->is_alive = alive;
+	this->is_alive_ = alive;
 }
 
 
 void Enemy::on_collision(){
-	std::cout<<"enemy on collision"<<std::endl;
+	std::cout << "enemy on collision" << std::endl;
 }
 
-void Enemy::set_image(Image& image){
-	this->image = image;
+void Enemy::set_image(const Image& image){
+	this->image_ = image;
 }
 
 Image& Enemy::get_image(){
-	return this->image;
+	return this->image_;
 }
 
 bool Enemy::get_is_collision() const{
-	return this->is_collision;
+	return this->is_collision_;
 }
 
 void Enemy::set_is_collision(bool collision){
-	this->is_collision = collision;
+	this->is_collision_ = collision;
 }
 
 void Enemy::add_emitter(std::unique_ptr<Emitter> emitter)
 {
-	this->emitters.push_back(std::move(emitter));
+	this->emitters_.push_back(std::move(emitter));
 }
 
 void Enemy::set_bullet_pool(DanmakuPool* pool)
 {
 	if(pool)
-		this->enemy_danmaku_pool = pool;
+		this->enemy_danmaku_pool_ = pool;
 }

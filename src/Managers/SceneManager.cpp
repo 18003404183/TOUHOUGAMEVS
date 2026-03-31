@@ -1,55 +1,55 @@
 #include "SceneManager.h"
 
-SceneManager* SceneManager::scene_manager = nullptr;
+SceneManager* SceneManager::scene_manager_ = nullptr;
 
-SceneManager* SceneManager::getInstance() {
-	if (scene_manager == nullptr) {
-		scene_manager = new SceneManager();
+SceneManager* SceneManager::get_instance() {
+	if (scene_manager_ == nullptr) {
+		scene_manager_ = new SceneManager();
 	}
-	return scene_manager;
+	return scene_manager_;
 }
 
-void SceneManager::loadScene(SceneType scenetype)
+void SceneManager::load_scene(SceneType scene_type)
 {
-	if (scenetype == SceneType::MainMenu)
+	if (scene_type == SceneType::MainMenu)
 	{
-		this->current_scene = this->main_scene.get();
-		current_scene->on_enter();
+		this->current_scene_ = this->main_scene_.get();
+		current_scene_->on_enter();
 	}
 }
 
-void SceneManager::unloadScene()
+void SceneManager::unload_scene()
 {
-	current_scene->on_exit();
-	this->current_scene = nullptr;
+	current_scene_->on_exit();
+	this->current_scene_ = nullptr;
 }
 
-void SceneManager::switchScene(SceneType scenetype)
+void SceneManager::switch_scene(SceneType scene_type)
 {
-	current_scene->on_exit();
-	if (scenetype == SceneType::MainMenu) {
-		this->current_scene = this->main_scene.get();
+	current_scene_->on_exit();
+	if (scene_type == SceneType::MainMenu) {
+		this->current_scene_ = this->main_scene_.get();
 	}
-	if (scenetype == SceneType::EndMenu) {
-		this->current_scene = this->end_scene.get();
+	if (scene_type == SceneType::EndMenu) {
+		this->current_scene_ = this->end_scene_.get();
 	}
-	this->current_scene->on_enter();
+	this->current_scene_->on_enter();
 }
 
-void SceneManager::on_update(float deltatime)
+void SceneManager::on_update(float delta_time)
 {
-	this->current_scene->on_update(deltatime);
+	this->current_scene_->on_update(delta_time);
 
 }
 
 void SceneManager::on_input() {
-	this->current_scene->on_input();
+	this->current_scene_->on_input();
 }
 
 void SceneManager::on_render(SDLRender& renderer) {
-	this->current_scene->on_render(renderer);
+	this->current_scene_->on_render(renderer);
 }
 
 bool SceneManager::current_scene_null(){
-	return !current_scene;
+	return !current_scene_;
 }

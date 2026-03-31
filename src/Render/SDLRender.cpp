@@ -4,16 +4,16 @@
 
 void SDLRender::init(SDL_Window* window){
     if(window == nullptr) return;
-    this->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);//开启垂直同步来保持平滑
+    this->renderer_ = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);//开启垂直同步来保持平滑
 }
 
 void SDLRender::clear(){
-    SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, 255); // 设置黑色
-    SDL_RenderClear(this->renderer); // 清理
+    SDL_SetRenderDrawColor(this->renderer_, 0, 0, 0, 255); // 设置黑色
+    SDL_RenderClear(this->renderer_); // 清理
 }
 
 void SDLRender::present() {
-    SDL_RenderPresent(this->renderer); // 显示
+    SDL_RenderPresent(this->renderer_); // 显示
 }
 
 
@@ -26,7 +26,7 @@ void SDLRender::present() {
 void SDLRender::draw_texture(Texture* image, int x, int y){
     if (!image || !image->is_valid()) return;
     SDL_Texture* tex = image->native();
-    if (!tex || !this->renderer) return;
+    if (!tex || !this->renderer_) return;
 
     SDL_Rect dst;
     dst.x = x;
@@ -34,7 +34,7 @@ void SDLRender::draw_texture(Texture* image, int x, int y){
     dst.w = image->width();
     dst.h = image->height();
 
-    SDL_RenderCopy(this->renderer, tex, nullptr, &dst);
+    SDL_RenderCopy(this->renderer_, tex, nullptr, &dst);
 }
 
 void SDLRender::draw_texture(
@@ -68,7 +68,7 @@ void SDLRender::draw_texture(
     center.y = finalH/2.0f;
 
     SDL_RenderCopyExF(
-        this->renderer,
+        this->renderer_,
         texture->get_data(),
         NULL,
         &dst,
@@ -104,7 +104,7 @@ void SDLRender::draw_texture(Texture *texture, const glm::vec2 &pos, const glm::
     center.y = finalH/2.0f;
 
     SDL_RenderCopyExF(
-        this->renderer,
+        this->renderer_,
         texture->get_data(),
         &cell,
         &dst,
@@ -114,15 +114,15 @@ void SDLRender::draw_texture(Texture *texture, const glm::vec2 &pos, const glm::
     );
 }
 
-void SDLRender::draw_text(std::string text, int x, int y){
+void SDLRender::draw_text(const std::string& text, int x, int y){
     // Minimal placeholder: text rendering not implemented (requires SDL_ttf)
     (void)text; (void)x; (void)y;
     std::cerr << "[SDLRender] draw_text not implemented (requires SDL_ttf)" << std::endl;
 }
 
-void SDLRender::draw_circle_outline(const glm::vec2 pos, float radius, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+void SDLRender::draw_circle_outline(const glm::vec2& pos, float radius, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    SDL_SetRenderDrawColor(this->renderer,r,g,b,a);
+    SDL_SetRenderDrawColor(this->renderer_, r, g, b, a);
 
     const int NUM_SEGMENTS = 32;
     SDL_FPoint points[NUM_SEGMENTS+1];
@@ -134,6 +134,6 @@ void SDLRender::draw_circle_outline(const glm::vec2 pos, float radius, uint8_t r
         points[i].y = pos.y + (sin(theta)*radius);
     }
 
-    SDL_RenderDrawLinesF(this->renderer,points,NUM_SEGMENTS+1);
+    SDL_RenderDrawLinesF(this->renderer_, points, NUM_SEGMENTS+1);
 
 }

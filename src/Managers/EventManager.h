@@ -1,40 +1,45 @@
-# pragma once
+#pragma once
 
-#include<unordered_map>
-#include<functional>
-#include"Event.h"
-#include<vector>
+#include <unordered_map>
+#include <functional>
+#include "Event.h"
+#include <vector>
 
 using EventCallback = std::function<void(const Event&)>;
 
-class EventManager{
+class EventManager
+{
 public:
-    static EventManager* get_instance(){
-        if(!eventmanager){
-            eventmanager = new EventManager;
+    static EventManager* get_instance()
+    {
+        if (!event_manager_)
+        {
+            event_manager_ = new EventManager;
         }
-        return eventmanager;
+        return event_manager_;
     }
 
-    void subscribe(EventType type,EventCallback callback){
-        linsteners[type].push_back(std::move(callback));
+    void subscribe(EventType type, EventCallback callback)
+    {
+        listeners_[type].push_back(std::move(callback));
     }
-    
-    void publish(const Event& event){
-        auto it = linsteners.find(event.type);
-        if(it != linsteners.end()){
-            for(auto& callback : it->second){
+
+    void publish(const Event& event)
+    {
+        auto it = listeners_.find(event.type);
+        if (it != listeners_.end())
+        {
+            for (auto& callback : it->second)
+            {
                 callback(event);
             }
         }
     }
 
 private:
-    
     EventManager() = default;
 
-    static EventManager* eventmanager;
+    static EventManager* event_manager_;
 
-    std::unordered_map<EventType,std::vector<EventCallback>> linsteners;
-
+    std::unordered_map<EventType, std::vector<EventCallback>> listeners_;
 };

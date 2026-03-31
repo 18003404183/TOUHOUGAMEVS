@@ -1202,16 +1202,27 @@ public:
 #include"Danmaku.h"
 #include"IEntity.h"
 
+// 碰撞检测代码量经过双重分发估计会大量增长 所以之后考虑重构 通过更加彻底的模板元编程
 void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer) {
     if (!pool) return;
     auto& raw_pool = pool->get_raw_pool();
 
-    // 1. 遍历管家自己管理的所有碰撞体！根本不用去碰 Entity 列表！
+    static Quadtree<int> bullet_tree({1250.0f, 700.0f}, {1300.0f, 800.0f},0);
+    bullet_tree.clear(); // 清空上一帧的数据
+
+    for (int i = 0; i < raw_pool.size(); ++i) {
+        if (!raw_pool[i].active) continue;
+        
+        // 获取子弹的粗略碰撞半径（这里以圆弹为例，如果是矩形取最大半宽）
+        const auto& temp_hit_box = std::get_if<CircleHitbox>(&pool->get_prefab(raw_pool[i].prefab_id).hitbox); // 注意：如果换了 variant，需要根据实际类型获取个粗略范围
+        float r = temp_hit_box->radius;
+        bullet_tree.insert(i,AABB{{raw_pool[i].pos.x, raw_pool[i].pos.y}, {r, r}});
+    }
+
     for (auto& col_ptr : this->collider_list) {
         Collider* target_col = col_ptr.get();
         IEntity* owner = target_col->get_owner();
 
-        // 🎯 核心过滤：只检测符合目标层级的碰撞体，并且它的主人必须还活着
         if (target_col->get_layer() == target_layer && owner && owner->isActive()) {
             
             Shape* shape = target_col->get_shape();
@@ -1219,19 +1230,40 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
                 float target_radius = static_cast<Circle*>(shape)->get_r();
                 glm::vec2 target_pos = owner->get_position();
 
-                // 2. 遍历弹幕池 (DOD 极速平推)
-                for (auto& bullet : raw_pool) {
-                    if (!bullet.active) continue;
+                AABB query_range{{target_pos.x, target_pos.y}, {target_radius + 2.0f, target_radius + 2.0f}};
 
-                    float bullet_radius = pool->get_prefab(bullet.prefab_id).base_radius;
+                static std::vector<int> result_list;
+                result_list.clear();
+                bullet_tree.query(result_list,query_range);
 
-                    if (CollisionSolution::CheckCircleCircle(bullet.pos, target_pos, bullet_radius, target_radius)) {
-                        
+                for (auto& bullet_potential : result_list) {
+                    DanmakuData& bullet = raw_pool[bullet_potential];
+                    const auto& prefab = pool->get_prefab(bullet.prefab_id);
+                    
+                    bool is_hit = std::visit([&](const auto& box) -> bool{
+                        using BoxType = std::decay_t<decltype(box)>;//底层通过编译器查表
+                        // 编译器if is_same_v底层是通过模板匹配来实现的 模板会优先匹配两个相同的类型 如果类型相同 匹配相同类型的模板 返回1 不同 则匹配不同类型的模板 返回0
+                        if constexpr (std::is_same_v<BoxType,CircleHitbox>){
+                            return CollisionSolution::CheckCircleCircle(
+                                target_pos,bullet.pos,
+                                target_radius,box.radius
+                            );
+                        }
+                        else if constexpr (std::is_same_v<BoxType,RectHitbox>){
+                            return CollisionSolution::CheckCircleRect();
+                        }
+                        else if constexpr (std::is_same_v<BoxType,LaserHitbox>){
+                            return CollisionSolution::CheckCircleRect();
+                        }
+                    },prefab.hitbox);
+
+                    if(is_hit){
                         pool->destroy_bullet(bullet);
-                        
-                        // 产生单边事件：只通知被撞的碰撞体，另一个传 nullptr 代表子弹
-                        this->collision_events.push_back({target_col, nullptr});
+                        this->collision_events.push_back({target_col,nullptr});
                     }
+                    //这里编译器会把prefab.hitbox传给box(函数参数) visit会检查prefab.hitbox到底是哪种类型 并且传给auto& box(自动类型推导导致的)
+                    //编译期进行推断和处理 为对应类型生成对应代码 然后调表去执行
+                    // virant在编译后 会在自己储存区域的前端存储一个数字 用于区分是哪种类型
                 }
             }
         }
@@ -1249,6 +1281,7 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
 #include<vector>
 #include<memory>
 #include"Danmaku.h"
+#include"Quadtree.h"
 
 
 struct CollisionEvent{
@@ -1522,6 +1555,7 @@ void DanmakuPool::destroy_bullet(DanmakuData &danmaku)
 #include"includes.h"
 #include"SDL_render.h"
 #include"ResourcesManager.h"
+#include<variant>
 
 // 目前的思路是将弹幕作为一个单独的系统 采用纯粹的数据形式来存储弹幕 弹幕的渲染和更新交由弹幕管理系统完成
 // 弹幕的渲染: 1.在resourcemanager单独开一条弹幕贴图的vector 不使用unorder_map 因为每次循环都要查询 需要考虑开销
@@ -1538,6 +1572,20 @@ void DanmakuPool::destroy_bullet(DanmakuData &danmaku)
 // 弹幕管理系统提供接口创建以上三种类型 对于弹幕的处理依赖于内部对象池 外部只需要输入构建弹幕需要的参数便可
 // 
 
+// 各种碰撞体的结构体
+struct CircleHitbox{
+    float radius;
+};
+
+struct RectHitbox{
+    float half_w;
+    float half_h;
+};
+
+struct LaserHitbox{
+    float length;
+    float half_w;
+};
 
 // 碰撞体类型
 enum class DanmakuShape : uint8_t{
@@ -1559,9 +1607,11 @@ struct DanmakuPrefab{
     uint16_t texture_id;//存在资源管理器中的弹幕贴图队列中
     glm::vec2 base_size;     // 贴图原始大小
     glm::vec2 base_scale;    // 默认缩放
-    DanmakuShape shape_type; // 碰撞形状
-    float base_radius;       // 基础碰撞判定半径
+    //DanmakuShape shape_type; // 碰撞形状
+    //float base_radius;       // 基础碰撞判定半径 // 考虑到兼顾内存安全,类型安全和可扩展性 不使用union 使用variant来记录不同形状的数据 至于性能 以后再说(union效率更高)
     uint16_t default_traj_id;// 默认绑定的轨迹模板 ID
+
+    std::variant<CircleHitbox,RectHitbox,LaserHitbox> hitbox;
 };
 
 // 考虑到内存对齐 将大数据放在前面(需要的内存越大的数据种类 越难放到内存对齐所需要的位置 导致小内存的数据需要空开许多内存才能对齐 导致浪费)
@@ -1569,7 +1619,7 @@ struct DanmakuData{
     glm::vec2 pos;
     glm::vec2 vel;
     float current_speed;
-    float current_angle;
+    float current_angle;//这里需要考虑一个问题 初始时候的弹幕朝向该如何表示(比如同样的弹幕贴图 可能朝上是0度 朝下是0度)
 
     uint16_t prefab_id;//预制菜id
     uint16_t trajectory_id;//轨迹id
@@ -2077,6 +2127,31 @@ private:
 
 
 ---
+.\Physical\AABB.h
+---
+#pragma once
+
+#include<glm.hpp>
+
+struct AABB
+{
+    glm::vec2 pos;
+    glm::vec2 half_wh;
+
+    bool intersects(const AABB& other) const {
+        // 考虑性能更高
+        if(std::abs(pos.x - other.pos.x) > half_wh.x + other.half_wh.x){
+            return false;
+        }
+        if(std::abs(pos.y - other.pos.y) > half_wh.y + other.half_wh.y){
+            return false;
+        }
+        return true;
+    }
+};
+
+
+---
 .\Physical\Collider.cpp
 ---
 #include"Collider.h"
@@ -2288,11 +2363,11 @@ public:
     }
 
     static bool CheckCircleRect(){
-
+        return false;
     }
 
     static bool CheckRectRect(){
-
+        return false;
     }
 
 
@@ -2301,6 +2376,122 @@ public:
 };
 
 
+
+---
+.\Physical\Quadtree.h
+---
+#pragma once
+
+#include<vector>
+#include<memory>
+#include"AABB.h"
+
+// 维护一个vector 存储所有Item 包含了一个泛型数据 和 这个数据的AABB盒 这个盒不同于碰撞箱 是用于区分对象在哪个区域用的
+// 每个四叉树都有四个孩子结点 通过unique_ptr来存储 
+// 每个四叉树都有用于表示自己是否是叶子节点的标识
+// 如果自己塞满了就创造叶子结点
+// 记录自己的深度 当深度大于等于最大深度的时候 不能够创建新新子树() 只能硬塞到当前结点
+// 每个叶子结点都要查看自己是否可以包含当前AABB盒 所有可以包含的都存一份
+// 实现以下接口
+// 1. 初始化一个最初的四叉树
+// 2. void insert(const T& , const AABB&);
+// 3. std::vector<T> query(const AABB& box); //这里考虑到NRVO优化后要比外部直接注入vector时间开销要小一些 更灵活 
+// 重新考虑后决定使用 void query(Vector<T>& result,AABB& box); 因为频繁构造vector会产生内存碎片 直接写好一个 每次清理复用可以增加内存重用度
+// 4. void clear() 用于清空当前树 每一帧都需要清空并且重新构造四叉树
+struct Item;
+
+template <class T>
+class Quadtree{
+public:
+    Quadtree(glm::vec2 pos,glm::vec2 half_wh,int deepth){
+        this->bounds.half_wh = half_wh;
+        this->bounds.pos = pos; 
+        this->deepth = deepth;
+        items.reserve(MAX_ITEMS);
+        this->is_leaf = true;
+    }
+
+    void insert(const T& data,const AABB& box){
+        if(!bounds.intersects(box)) return;
+
+        //当前结点还能装得下 且是叶子结点
+        if((this->items.size() < MAX_ITEMS && this->is_leaf)){
+            this->items.push_back(Item{box,data});
+            return;
+        }
+
+        // 如果当前结点装不下 或者刚执行完加入后正好填满 但是还没有到最大深度
+        if(this->items.size() >=MAX_ITEMS && this->deepth < MAX_DEEPTH && is_leaf){
+            this->split();
+            for(auto& item : items){
+                for(int i = 0;i<4;i++){
+                    children[i]->insert(item.data,item.bounds);
+                }
+            }
+            items.clear();
+        }
+        //如果不是叶子结点 就直接发给叶子节点
+        if(!is_leaf){
+            for(int j = 0;j < 4;j++){
+                children[j]->insert(data,box);
+            }
+        }else{ // 是叶子结点 并且不能再分 最大深度已经够了 并且最大存储量也够了 
+            this->items.push_back(Item{box,data});
+        }
+    }
+
+    void query(std::vector<T>& result,const AABB& box){
+        if(!this->bounds.intersects(box)) return;
+        for(const auto& item : items){
+            if(box.intersects(item.bounds)) result.push_back(item.data);
+        }
+        if(is_leaf) return;
+        for(int i = 0; i < 4;i++){
+            children[i]->query(result,box);
+        }
+    }
+
+    void clear(){
+        this->items.clear();
+        if(!this->is_leaf){
+            for(int i = 0; i < 4;i++){
+                children[i]->clear();
+            }
+        }
+        this->is_leaf = true;
+    }
+
+
+private:
+    struct Item
+    {
+        AABB bounds;
+        T data;
+    };
+    
+    static const int MAX_ITEMS = 8;
+    static const int MAX_DEEPTH = 6;
+
+    AABB bounds;
+    int deepth;
+    std::vector<Item> items;
+    std::unique_ptr<Quadtree> children[4];   
+
+    bool is_leaf;
+
+    void split(){
+        if(this->deepth == MAX_DEEPTH) return;
+        if(this->children[0]) return;
+        float h_w = this->bounds.half_wh.x/2;
+        float h_h = this->bounds.half_wh.y/2;
+        this->children[0] = std::make_unique<Quadtree>(glm::vec2{this->bounds.pos.x - h_w,this->bounds.pos.y - h_h},glm::vec2{h_w,h_h},deepth + 1); //左上
+        this->children[1] = std::make_unique<Quadtree>(glm::vec2{this->bounds.pos.x - h_w,this->bounds.pos.y + h_h},glm::vec2{h_w,h_h},deepth + 1); //左下
+        this->children[2] = std::make_unique<Quadtree>(glm::vec2{this->bounds.pos.x + h_w,this->bounds.pos.y - h_h},glm::vec2{h_w,h_h},deepth + 1); //右上
+        this->children[3] = std::make_unique<Quadtree>(glm::vec2{this->bounds.pos.x + h_w,this->bounds.pos.y + h_h},glm::vec2{h_w,h_h},deepth + 1); //右下
+
+        this->is_leaf = false;
+    }
+};
 
 ---
 .\Render\Camera.cpp
@@ -3251,12 +3442,12 @@ void MainScene::on_enter() {
     // 4. 组装预制体 (Prefab)
     DanmakuPrefab dp;
     dp.texture_id = tex_id; 
-    dp.base_size = {16.0f, 16.0f}; // 强制渲染大小为 16x16，你可以根据实际图片修改
-    dp.base_scale = {1.0f, 1.0f};
-    dp.shape_type = DanmakuShape::Circle;
-    dp.base_radius = 5.0f; // 碰撞判定半径
-    dp.default_traj_id = traj_id; // 绑定刚才写的酷炫轨迹！
-
+    dp.base_size = {40.0f, 22.0f}; // 强制渲染大小为 16x16，你可以根据实际图片修改
+    dp.base_scale = {2.0f, 1.0f};
+    //dp.shape_type = DanmakuShape::Circle;
+    //dp.base_radius = 5.0f; // 碰撞判定半径
+    dp.default_traj_id = traj_id;
+    dp.hitbox = CircleHitbox{5.0f};
     // 注册预制体并保存 ID 到成员变量，方便按键时调用
     this->test_prefab_id = DanmakuPool::register_prefab(dp);
     // ==========================================
@@ -3465,8 +3656,10 @@ void MainScene::on_render(SDLRender &renderer) {
 
         for (auto& d : this->enemy_bullets->get_raw_pool()) {
             if (!d.active) continue;
-            float r = this->enemy_bullets->get_prefab(d.prefab_id).base_radius;
-            renderer.draw_circle_outline(d.pos, r, 255, 0, 0); 
+            if(const auto& pre = std::get_if<CircleHitbox>(&enemy_bullets.get()->get_prefab(d.prefab_id).hitbox)){
+                renderer.draw_circle_outline(d.pos,pre->radius, 254, 0, 0); 
+            }
+            
         }
 
 
@@ -3492,6 +3685,8 @@ void MainScene::on_input() {
 // 2. 将整个关卡的流程改为尽可能外部数据驱动 比如哪个贴图放哪里 敌人如何生成 在哪生成 轨迹如何 发射什么样的子弹 boss何时出场 boss的舞台演出 交给外部的lua 与 json
 // 3.搭建场景流程 舞台演出逻辑 比如什么时候刷什么敌人 打多少个敌人之后出boss boss有几个符卡 如何设计 这一步依赖于第二步
 // 4.继续完善一些底层的功能 比如敌人死后生成p点 玩家随着p点越多 火力等级越高(weapon) 分数统计 玩家释放符卡等 - 3.25
+
+// 准备重构弹幕碰撞 然后实现四×树来进行优化
 
 ---
 .\Scenes\MainScene.h

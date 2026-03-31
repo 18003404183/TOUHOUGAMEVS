@@ -2,32 +2,32 @@
 #include "Config.h"
 #include <cmath>
 
-std::vector<DanmakuPrefab> DanmakuPool::prefabs;
-std::vector<TrajectoryTemplate> DanmakuPool::trajectories;
+std::vector<DanmakuPrefab> DanmakuPool::prefabs_;
+std::vector<TrajectoryTemplate> DanmakuPool::trajectories_;
 
 DanmakuPool::DanmakuPool(size_t pool_size) {
     // 一次性分配连续物理内存，杜绝 new/delete
     this->count = 0;
-    pool.resize(pool_size);
-    for (auto& d : pool) {
+    pool_.resize(pool_size);
+    for (auto& d : pool_) {
         d.active = false;
     }
 }
 
 uint16_t DanmakuPool::register_prefab(const DanmakuPrefab& prefab) {
-    prefabs.push_back(prefab);
-    return static_cast<uint16_t>(prefabs.size() - 1);
+    prefabs_.push_back(prefab);
+    return static_cast<uint16_t>(prefabs_.size() - 1);
 }
 
 uint16_t DanmakuPool::register_trajectory(const TrajectoryTemplate& traj) {
-    trajectories.push_back(traj);
-    return static_cast<uint16_t>(trajectories.size() - 1);
+    trajectories_.push_back(traj);
+    return static_cast<uint16_t>(trajectories_.size() - 1);
 }
 
 void DanmakuPool::spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_speed, float initial_angle) {
-    if (prefab_id >= prefabs.size()) return;
+    if (prefab_id >= prefabs_.size()) return;
 
-    for (auto& d : pool) {
+    for (auto& d : pool_) {
         if (!d.active) {
 
             this->count++;
@@ -38,7 +38,7 @@ void DanmakuPool::spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_s
             d.current_angle = initial_angle;
             
             // 绑定轨迹模板并重置状态机
-            d.trajectory_id = prefabs[prefab_id].default_traj_id;
+            d.trajectory_id = prefabs_[prefab_id].default_traj_id;
             d.current_cmd_index = 0;
             d.cmd_timer = 0.0f;
             
@@ -50,21 +50,21 @@ void DanmakuPool::spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_s
     }
 }
 
-void DanmakuPool::update(float dt) {
+void DanmakuPool::update(float delta) {
     std::cout << this->count << "\n";
-    for (auto& d : pool) {
+    for (auto& d : pool_) {
         if (!d.active) continue;
 
         // 1. 指令流状态机解析
-        if (d.trajectory_id < trajectories.size()) {
-            const auto& traj = trajectories[d.trajectory_id];
+        if (d.trajectory_id < trajectories_.size()) {
+            const auto& traj = trajectories_[d.trajectory_id];
             
             if (d.current_cmd_index < traj.commands.size()) {
                 const auto& cmd = traj.commands[d.current_cmd_index];
                 
                 switch (cmd.type) {
                     case DanmakuCmdType::WAIT:
-                        d.cmd_timer += dt;
+                        d.cmd_timer += delta;
                         if (d.cmd_timer >= cmd.param1) {
                             d.current_cmd_index++; // 时间到，执行下一条
                             d.cmd_timer = 0.0f;
@@ -79,8 +79,8 @@ void DanmakuPool::update(float dt) {
                         d.current_cmd_index++;
                         break;
                     case DanmakuCmdType::ACCELERATE:
-                        d.current_speed += cmd.param1 * dt;
-                        d.cmd_timer += dt;
+                        d.current_speed += cmd.param1 * delta;
+                        d.cmd_timer += delta;
                         if (d.cmd_timer >= cmd.param2) { // param2 设为加速持续时间
                             d.current_cmd_index++;
                             d.cmd_timer = 0.0f;
@@ -95,10 +95,10 @@ void DanmakuPool::update(float dt) {
                         float angular_speed = (cmd.param1 * (3.14159265f / 180.0f)) / cmd.param2;
                         
                         // 推进角度
-                        d.current_angle += angular_speed * dt;
+                        d.current_angle += angular_speed * delta;
                         
                         // 累加时间
-                        d.cmd_timer += dt;
+                        d.cmd_timer += delta;
                         
                         // 检查这个动作是否做完了
                         if (d.cmd_timer >= cmd.param2) {
@@ -117,7 +117,7 @@ void DanmakuPool::update(float dt) {
         // 2. 物理运动推演
         d.vel.x = std::cos(d.current_angle) * d.current_speed;
         d.vel.y = std::sin(d.current_angle) * d.current_speed;
-        d.pos += d.vel * dt;
+        d.pos += d.vel * delta;
 
         if (d.pos.x < 0-100 || d.pos.x > MAIN_WINDOW_WIDTH+100 || d.pos.y < 0-100 || d.pos.y > MAIN_WINDOW_HEIGHT+100) {
             this->count--;
@@ -127,12 +127,12 @@ void DanmakuPool::update(float dt) {
 }
 
 void DanmakuPool::render(SDLRender& renderer) {
-    auto res_mgr = ResourcesManager::getInstance();
+    auto res_mgr = ResourcesManager::get_instance();
 
-    for (const auto& d : pool) {
+    for (const auto& d : pool_) {
         if (!d.active) continue;
 
-        const auto& prefab = prefabs[d.prefab_id];
+        const auto& prefab = prefabs_[d.prefab_id];
         Texture* tex = res_mgr->get_danmaku_texture(prefab.texture_id);
 
         // 如果需要子弹朝向运动方向，可以直接传入 d.current_angle (转换成角度)
@@ -151,7 +151,7 @@ void DanmakuPool::render(SDLRender& renderer) {
 
 void DanmakuPool::clear_pool()
 {
-    for(auto& a : this->pool){
+    for(auto& a : this->pool_){
         if(!a.active) continue;
         this->count--;
         a.active = false;
@@ -160,12 +160,12 @@ void DanmakuPool::clear_pool()
 
 std::vector<DanmakuData> &DanmakuPool::get_raw_pool()
 {
-    return pool;
+    return pool_;
 }
 
 DanmakuPrefab DanmakuPool::get_prefab(int id)
 {
-    return prefabs[id];
+    return prefabs_[id];
 }
 
 void DanmakuPool::destroy_bullet(DanmakuData &danmaku)

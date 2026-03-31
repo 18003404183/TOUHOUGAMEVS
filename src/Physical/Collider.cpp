@@ -1,85 +1,81 @@
-#include"Collider.h"
+#include "Collider.h"
 
-
-Collider::Collider(Shape *shape, int layer, std::function<void(Collider* other)> func,IEntity* owner)
-{
-    assert(this->shape != nullptr && "Collider initialization failed: Shape cannot be null!");
-    this->shape = shape;
-    this->layer = layer;
-    this->on_collid = func;
-    this->owner = owner;
-
-}
-
-Collider::Collider(Shape *shape, int layer,IEntity* owner)
+Collider::Collider(Shape* shape, int layer, std::function<void(Collider* other)> func, IEntity* owner)
 {
     assert(shape != nullptr && "Collider initialization failed: Shape cannot be null!");
-    this->layer = layer;
-    this->owner = owner;
-    this->shape = shape;
+    shape_ = shape;
+    layer_ = layer;
+    on_collide_ = func;
+    owner_ = owner;
 }
 
-Collider::Collider(const Collider &other)
+Collider::Collider(Shape* shape, int layer, IEntity* owner)
 {
-    this->layer = other.layer;
-
-    this->shape = other.shape->clone();
-
+    assert(shape != nullptr && "Collider initialization failed: Shape cannot be null!");
+    layer_ = layer;
+    owner_ = owner;
+    shape_ = shape;
 }
 
-Collider& Collider::operator=(const Collider &other)
+Collider::Collider(const Collider& other)
 {
-    this->layer = other.layer;
-    delete this->shape;
-    this->shape = other.shape->clone();
+    layer_ = other.layer_;
+    shape_ = other.shape_->clone();
+}
+
+Collider& Collider::operator=(const Collider& other)
+{
+    layer_ = other.layer_;
+    delete shape_;
+    shape_ = other.shape_->clone();
     return *this;
 }
 
 void Collider::set_layer(int layer)
 {
-    this->layer = layer;
+    layer_ = layer;
 }
 
-void Collider::set_on_collid(std::function<void(Collider* other)> func)
+void Collider::set_on_collide(std::function<void(Collider* other)> func)
 {
-    this->on_collid = std::move(func);
+    on_collide_ = std::move(func);
 }
 
-void Collider::run_on_collid(Collider *collider)
+void Collider::run_on_collide(Collider* collider)
 {
-    if(!this->on_collid) return;
-    this->on_collid(collider);
+    if (!on_collide_) return;
+    on_collide_(collider);
 }
 
-void Collider::set_shape(Shape *shape)
+void Collider::set_shape(Shape* shape)
 {
-    if(!shape) return;
-    if(this->shape == shape) return;
-    delete this->shape;
-    this->shape = shape;
+    if (!shape) return;
+    if (shape_ == shape) return;
+    delete shape_;
+    shape_ = shape;
 }
 
-int Collider::get_layer()
+int Collider::get_layer() const
 {
-
-    return this->layer;
+    return layer_;
 }
 
-Shape *Collider::get_shape()
+Shape* Collider::get_shape() const
 {
-    return this->shape;
+    return shape_;
 }
 
-void Collider::set_owner(IEntity* entity){
-    this->owner = entity;
-}
-
-IEntity *Collider::get_owner()
+void Collider::set_owner(IEntity* entity)
 {
-    return this->owner;
+    owner_ = entity;
+}
+
+IEntity* Collider::get_owner() const
+{
+    return owner_;
 }
 
 Collider::~Collider()
 {
-    delete this->shape;
+    delete shape_;
 }

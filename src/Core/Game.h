@@ -14,15 +14,15 @@
 
 class Game {
 public:
-  Game();
-  ~Game();
+    Game();
+    ~Game();
 
-  bool init_game();
-  void load_resources();
-  void start();
-  void end();
+    bool init_game();
+    void load_resources();
+    void start();
+    void end();
 
 private:
-  SDLRender renderer;
-  std::unique_ptr<SDLWindows> window;
+    SDLRender renderer_;
+    std::unique_ptr<SDLWindows> window_;
 };

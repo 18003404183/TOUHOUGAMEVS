@@ -1,17 +1,19 @@
-#include"Core/Game.h"
-int main(int argc,char* argv[]) {
+#include "Core/Game.h"
 
-	SetConsoleOutputCP(65001);
+int main(int argc, char* argv[])
+{
+    SetConsoleOutputCP(65001);
     SetConsoleCP(65001);
-	Game game;
-	if(!game.init_game()){
-		return 0;
-	}
-	
-	//game.load_resources();
-	game.start();
-	game.end();
-    
-	return 0;
+
+    Game game;
+    if (!game.init_game())
+    {
+        return 0;
+    }
+
+    game.start();
+    game.end();
+
+    return 0;
 }
 

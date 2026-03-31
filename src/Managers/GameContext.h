@@ -1,63 +1,63 @@
 #pragma once
-#include"includes.h"
-#include"Collider.h"
-//如果一个字段是全局的 那么字段包含的所有数据也应该是全局的
+#include "includes.h"
+#include "Collider.h"
 
 struct PlayerContext
 {
-    glm::vec2 position{0,0};
-	glm::vec2 velocity{0,0};
-	bool active = true;
-    bool is_alive;
-	int hp;
-    //Collider collider;
-	//Image player_image;
+    glm::vec2 position{0, 0};
+    glm::vec2 velocity{0, 0};
+    bool active = true;
+    bool is_alive = true;
+    int hp = 100;
 };
 
-class Context{
+class Context
+{
 public:
-    static Context* Instances(){
-        if(!context){
-            context = new Context();
+    static Context* instances()
+    {
+        if (!context_)
+        {
+            context_ = new Context();
         }
-        return context;
+        return context_;
     }
 
-    void init(){
-        this->game_frame = 0;
+    void init()
+    {
+        game_frame = 0;
     }
 
     void set_player_context(glm::vec2 position,
-	glm::vec2 velocity,
-	bool active,
-    bool is_alive,
-	int hp){
-        this->pc.position = position;
-        this->pc.active = active;
-        this->pc.hp = hp;
-        this->pc.is_alive = is_alive;
-        this->pc.velocity = velocity;
-        //this->pc.player_image = player_image;
+                            glm::vec2 velocity,
+                            bool active,
+                            bool is_alive,
+                            int hp)
+    {
+        player_context_.position = position;
+        player_context_.active = active;
+        player_context_.hp = hp;
+        player_context_.is_alive = is_alive;
+        player_context_.velocity = velocity;
     }
 
-    void set_player_context(PlayerContext pc){
-        this->pc = pc;
+    void set_player_context(PlayerContext pc)
+    {
+        player_context_ = pc;
     }
 
-    PlayerContext get_player_context(){
-        return pc;
+    PlayerContext get_player_context()
+    {
+        return player_context_;
     }
-    
+
     Context(const Context& context) = delete;
     Context& operator=(const Context& b) = delete;
 
-    int game_frame;
+    int game_frame = 0;
 
 private:
-    PlayerContext pc;
+    PlayerContext player_context_;
     Context() = default;
-    static Context* context; 
+    static Context* context_;
 };
-
-
-

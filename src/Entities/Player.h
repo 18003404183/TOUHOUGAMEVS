@@ -14,87 +14,86 @@
 class Player : public IEntity, public IRenderable, public IUpdateable
 {
 public:
-	Player() = default;
-	~Player(){
-		if(this->collider){
-			ColliderManager::get_instance()->destory_collider(this->collider);
-			this->collider = nullptr;
-		}
-	}
+    Player() = default;
+    ~Player()
+    {
+        if (collider_)
+        {
+            ColliderManager::get_instance()->destroy_collider(collider_);
+            collider_ = nullptr;
+        }
+    }
 
-	Player(glm::vec2 pos,glm::vec2 v,int hp,const Image& image,Collider* collider):collider(collider){
-		this->position = pos;
-		this->velocity = v;
-		this->active = true;
-		this->hp = 100;
-		this->player_image = image;
-		this->entity_type = EntityType::Player;
-		this->collider->set_on_collid([this](Collider* other){
-			this->alive = false;
-			std::cout << "die" << std::endl; 
-		});
-	}
+    Player(glm::vec2 pos, glm::vec2 vel, int hp, const Image& image, Collider* collider)
+        : collider_(collider)
+    {
+        position_ = pos;
+        velocity_ = vel;
+        active_ = true;
+        hp_ = 100;
+        player_image_ = image;
+        entity_type_ = EntityType::Player;
+        collider_->set_on_collide([this](Collider* other)
+        {
+            alive_ = false;
+            std::cout << "die" << std::endl;
+        });
+    }
 
-	Player(glm::vec2 pos,glm::vec2 v,int hp){
-		this->position = pos;
-		this->velocity = v;
-		this->active = true;
-		this->hp = 100;
-		this->entity_type = EntityType::Player;
-	}
+    Player(glm::vec2 pos, glm::vec2 vel, int hp)
+    {
+        position_ = pos;
+        velocity_ = vel;
+        active_ = true;
+        hp_ = 100;
+        entity_type_ = EntityType::Player;
+    }
 
-	Player(PlayerContext pc){
-		this->active = pc.active;
-		this->hp = pc.hp;
-		this->position = pc.position;
-		//this->player_image = pc.player_image;
-		this->velocity = pc.velocity;
-		this->alive = pc.is_alive;
-	}
+    Player(PlayerContext pc)
+    {
+        active_ = pc.active;
+        hp_ = pc.hp;
+        position_ = pc.position;
+        velocity_ = pc.velocity;
+        alive_ = pc.is_alive;
+    }
 
-	Player(const Player& other) = delete;
-	Player& operator=(const Player& other) = delete;
+    Player(const Player& other) = delete;
+    Player& operator=(const Player& other) = delete;
 
+    void update(float delta_time) override;
+    void render(SDLRender& renderer) const override;
 
-	void update(float deltaTime) override;
-	void render(SDLRender& renderer) const override;
+    bool is_active() const override;
 
-	bool isActive() const;
-
-	glm::vec2 get_position() const;
-	void set_position(const glm::vec2& newPosition);
-	glm::vec2 get_velocity() const;
-	void set_velocity(const glm::vec2& newVelocity);
-	void setImage(Image image);
-	bool is_alive() const;
-	void set_alive(bool alive);
-	void set_hp(int hp);
-	int get_hp() const;
-	//virtual void set_atlas(Atlas* atlas);
-	void set_animation(Animation animation);
-	Animation& get_animation();
-	//virtual const Shape* get_shape() const;
-	//virtual void set_shape(Shape* shape);
-	void set_collider(Collider* collider);
-	void handle_input();
-	bool get_low_speed();
-	void add_emitter(std::unique_ptr<Emitter> emitter);
-	void set_bullet_pool(std::unique_ptr<DanmakuPool> player_bu);
-	Collider* get_collider();
-	DanmakuPool* get_danmaku_pool();
+    glm::vec2 get_position() const override;
+    void set_position(const glm::vec2& new_position) override;
+    glm::vec2 get_velocity() const override;
+    void set_velocity(const glm::vec2& new_velocity) override;
+    void set_image(Image image);
+    bool is_alive() const;
+    void set_alive(bool alive);
+    void set_hp(int hp);
+    int get_hp() const;
+    void set_animation(Animation animation);
+    Animation& get_animation();
+    void set_collider(Collider* collider);
+    void handle_input();
+    bool get_low_speed();
+    void add_emitter(std::unique_ptr<Emitter> emitter);
+    void set_bullet_pool(std::unique_ptr<DanmakuPool> player_bullet);
+    Collider* get_collider();
+    DanmakuPool* get_danmaku_pool();
 
 private:
-	bool alive;
-	int hp;
-	Image player_image;
-	Animation player_animation;
-	bool is_low_speed = false;
+    bool alive_ = true;
+    int hp_ = 100;
+    Image player_image_;
+    Animation player_animation_;
+    bool is_low_speed_ = false;
+    int shoot_cooldown_ = 0;
 
-	int shoot_cooldown = 0;
-
-	//Shape* shape;
-	Collider* collider;
-	std::unique_ptr<DanmakuPool> player_bullet;//考虑不适用执政 使用正常赋值+移动语义 但属性可能为空 最后选择使用指针
-	std::vector<std::unique_ptr<Emitter>> emitters;
+    Collider* collider_ = nullptr;
+    std::unique_ptr<DanmakuPool> player_bullet_;
+    std::vector<std::unique_ptr<Emitter>> emitters_;
 };
-

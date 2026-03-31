@@ -59,7 +59,7 @@ struct DanmakuPrefab{
     //float base_radius;       // 基础碰撞判定半径 // 考虑到兼顾内存安全,类型安全和可扩展性 不使用union 使用variant来记录不同形状的数据 至于性能 以后再说(union效率更高)
     uint16_t default_traj_id;// 默认绑定的轨迹模板 ID
 
-    std::variant<CircleHitbox,RectHitbox,LaserHitbox> hitbox;
+    std::variant<CircleHitbox, RectHitbox, LaserHitbox> hitbox;
 };
 
 // 考虑到内存对齐 将大数据放在前面(需要的内存越大的数据种类 越难放到内存对齐所需要的位置 导致小内存的数据需要空开许多内存才能对齐 导致浪费)
@@ -124,9 +124,9 @@ public:
     int count;
 
 private:
-    std::vector<DanmakuData> pool;
-    static std::vector<DanmakuPrefab> prefabs;
-    static std::vector<TrajectoryTemplate> trajectories;
+    std::vector<DanmakuData> pool_;
+    static std::vector<DanmakuPrefab> prefabs_;
+    static std::vector<TrajectoryTemplate> trajectories_;
 
 
 };

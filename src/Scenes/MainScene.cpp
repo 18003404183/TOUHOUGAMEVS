@@ -3,7 +3,7 @@
 #include "Animation.h"
 #include "GameContext.h"
 #include "ResourcesManager.h"
-#include "clock.h"
+#include "Clock.h"
 #include "Danmaku.h"
 #include <fstream> 
 #include "json.hpp"
@@ -22,13 +22,14 @@ MainScene::~MainScene() {
     std::cout << "MainScene Destructor" << std::endl; 
 }
 
-void MainScene::on_enter() {
-    ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
+void MainScene::on_enter()
+{
+    ResourcesManager::get_instance()->load_scene(SceneType::MainMenu);
     ColliderManager::get_instance();
-    
-    this->enemy_bullets = std::make_unique<DanmakuPool>(10000);
 
-    uint16_t tex_id = ResourcesManager::getInstance()->register_danmaku_texture("resources\\8.png");
+    enemy_bullets_ = std::make_unique<DanmakuPool>(10000);
+
+    uint16_t tex_id = ResourcesManager::get_instance()->register_danmaku_texture("resources\\8.png");
     
     TrajectoryTemplate traj;
     //以当前速度飞 0.5 秒
@@ -44,60 +45,61 @@ void MainScene::on_enter() {
     // 4. 组装预制体 (Prefab)
     DanmakuPrefab dp;
     dp.texture_id = tex_id; 
-    dp.base_size = {40.0f, 22.0f}; // 强制渲染大小为 16x16，你可以根据实际图片修改
-    dp.base_scale = {2.0f, 1.0f};
+    dp.base_size = {16,16}; // 强制渲染大小为 16x16，你可以根据实际图片修改
+    dp.base_scale = {1,1};
     //dp.shape_type = DanmakuShape::Circle;
     //dp.base_radius = 5.0f; // 碰撞判定半径
     dp.default_traj_id = traj_id;
     dp.hitbox = CircleHitbox{5.0f};
     // 注册预制体并保存 ID 到成员变量，方便按键时调用
-    this->test_prefab_id = DanmakuPool::register_prefab(dp);
+    this->test_prefab_id_ = DanmakuPool::register_prefab(dp);
     // ==========================================
-    Texture *v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
-    glm::vec2 pos(500,500);
+    Texture* v = ResourcesManager::get_instance()->get_texture("resources\\2.png");
+    glm::vec2 pos(500, 500);
     glm::vec2 scale(1, 1);
 
     Image player_image = Image(v, pos, scale, 0, 255);
-    Atlas *player_atlas = ResourcesManager::getInstance()->get_atlas("resources\\6.png");
+    Atlas* player_atlas = ResourcesManager::get_instance()->get_atlas("resources\\6.png");
 
-    Context::Instances()->set_player_context(pos, {0, 0}, true, true, 100);
-    PlayerContext pc = Context::Instances()->get_player_context();
-    this->player = new Player(pos,{0,0},100);
+    Context::instances()->set_player_context(pos, {0, 0}, true, true, 100);
+    PlayerContext pc = Context::instances()->get_player_context();
+    player_ = new Player(pos, {0, 0}, 100);
 
-    player->setImage(player_image);
+    player_->set_image(player_image);
     Animation animation(player_atlas, 0.1);
 
-    Collider* player_collider = ColliderManager::get_instance()->create_collider(new Circle(10),0,player);
+    Collider* player_collider = ColliderManager::get_instance()->create_collider(new Circle(10), 0, player_);
 
-    this->renderables.push_back(player);
-    this->updateables.push_back(player);
-    this->player->set_animation(animation);
-    player->set_collider(player_collider);
-    player->get_collider()->set_on_collid([p = this->player](Collider* other){
+    renderables_.push_back(player_);
+    updateables_.push_back(player_);
+    player_->set_animation(animation);
+    player_->set_collider(player_collider);
+    player_->get_collider()->set_on_collide([p = player_](Collider* other)
+    {
         p->set_alive(false);
         Event e;
-        int* a = new int(0); 
+        int* a = new int(0);
         e.data = a;
         e.type = EventType::PlayerDead;
         EventManager::get_instance()->publish(e);
-        std::cout << "Player Dead!" << std::endl; 
+        std::cout << "Player Dead!" << std::endl;
     });
-    player->set_bullet_pool(std::make_unique<DanmakuPool>(10000));
-    this->player->add_emitter(std::make_unique<Emitter>(
-        EmitterSpace::Relative, this->player->get_position_ptr(), glm::vec2{-10, -5},
+    player_->set_bullet_pool(std::make_unique<DanmakuPool>(10000));
+    player_->add_emitter(std::make_unique<Emitter>(
+        EmitterSpace::Relative, player_->get_position_ptr(), glm::vec2{-10, -5},
         AimMode::Fixed, nullptr,
-        this->test_prefab_id,1200.0f, -3.14159f / 2.0f, 0.0f,
-        0.066f, -1 
+        test_prefab_id_, 1200.0f, -3.14159f / 2.0f, 0.0f,
+        0.1, -1
     ));
-    
-    this->player->add_emitter(std::make_unique<Emitter>(
-        EmitterSpace::Relative, this->player->get_position_ptr(), glm::vec2{10, -5},
+
+    player_->add_emitter(std::make_unique<Emitter>(
+        EmitterSpace::Relative, player_->get_position_ptr(), glm::vec2{10, -5},
         AimMode::Fixed, nullptr,
-        this->test_prefab_id, 1200.0f, -3.14159f / 2.0f, 0.0f,
-        0.066f, -1 
+        test_prefab_id_, 1200.0f, -3.14159f / 2.0f, 0.0f,
+        0.066f, -1
     ));
-    
-    this->entities.push_back(std::unique_ptr<IEntity>(this->player));
+
+    entities_.push_back(std::unique_ptr<IEntity>(player_));
 
     std::ifstream file("resources\\level1.json");
     if(!file.is_open()){
@@ -130,39 +132,39 @@ void MainScene::on_enter() {
                 int hp = enemy_data["hp"].get<int>();
 
                 e->set_position({x, y});
-                e->setHp(hp);
-                e->set_bullet_pool(this->enemy_bullets.get());
+                e->set_hp(hp);
+                e->set_bullet_pool(enemy_bullets_.get());
 
                 float spread_angle = 15.0f * (3.14159f / 180.0f);
 
                 // 枪管 A：正中心 (绝对锁定玩家，逼迫玩家走位)
                 e->add_emitter(std::make_unique<Emitter>(
                     EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
-                    AimMode::TargetAlways, this->player->get_position_ptr(),
-                    this->test_prefab_id, 300.0f, 0.0f, 0.0f,
+                    AimMode::TargetAlways, player_->get_position_ptr(),
+                    test_prefab_id_, 300.0f, 0.0f, 0.0f,
                     1.5f, -1
                 ));
 
                 // 枪管 B：左侧封位 (在锁定角度的基础上，向左偏 15 度)
                 e->add_emitter(std::make_unique<Emitter>(
                     EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
-                    AimMode::TargetAlways, this->player->get_position_ptr(),
-                    this->test_prefab_id, 300.0f, -spread_angle, 0.0f,
+                    AimMode::TargetAlways, player_->get_position_ptr(),
+                    test_prefab_id_, 300.0f, -spread_angle, 0.0f,
                     1.5f, -1
                 ));
 
                 // 枪管 C：右侧封位 (在锁定角度的基础上，向右偏 15 度)
                 e->add_emitter(std::make_unique<Emitter>(
                     EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
-                    AimMode::TargetAlways, this->player->get_position_ptr(),
-                    this->test_prefab_id, 300.0f, spread_angle, 0.0f,
+                    AimMode::TargetAlways, player_->get_position_ptr(),
+                    test_prefab_id_, 300.0f, spread_angle, 0.0f,
                     1.5f, -1
                 ));
 
                 // 挂载到场景中
-                this->entities.push_back(std::unique_ptr<IEntity>(e));//不能够使用make_unique来创建 因为IEntity是虚基类 无法实例化 可以先创建裸指针 然后再用unique_ptr接管
-                this->renderables.push_back(e);
-                this->updateables.push_back(e);
+                entities_.push_back(std::unique_ptr<IEntity>(e));
+                renderables_.push_back(e);
+                updateables_.push_back(e);
             }
         }
     }
@@ -178,103 +180,122 @@ void MainScene::on_enter() {
         }
     });
 
-    this->clock.set_callback([this]() {
+    this->clock_.set_callback([this]() {
         std::cout << "Timer tick. this:" << this << std::endl; 
     });
 
 
 }
 
-void MainScene::on_exit() { 
+void MainScene::on_exit()
+{
     std::cout << "Exiting MainScene" << std::endl;
-    Context::Instances()->set_player_context(
-        player->get_position(), player->get_velocity(), player->isActive(),
-        player->is_alive(), player->get_hp());
+    Context::instances()->set_player_context(
+        player_->get_position(), player_->get_velocity(), player_->is_active(),
+        player_->is_alive(), player_->get_hp());
 }
 
-void MainScene::on_update(float deltatime) {
-    for (IUpdateable *a : this->updateables) {
-        a->update(deltatime);
+void MainScene::on_update(float delta_time)
+{
+    for (IUpdateable* a : updateables_)
+    {
+        a->update(delta_time);
     }
-    this->clock.update(deltatime);
+    clock_.update(delta_time);
     ImGui::Begin("Engine Control Panel");
-    
-    if (ImGui::CollapsingHeader("Danmaku Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Text("Active Enemy Bullets: %d / 10000", this->enemy_bullets->count);
-        // 进度条直观显示弹幕池压力
-        ImGui::ProgressBar((float)this->enemy_bullets->count / 10000.0f);
+
+    if (ImGui::CollapsingHeader("Danmaku Stats", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Text("Active Enemy Bullets: %d / 10000", enemy_bullets_->count);
+        ImGui::ProgressBar((float)enemy_bullets_->count / 10000.0f);
     }
 
-    if (ImGui::CollapsingHeader("Debug Tools", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Checkbox("Show Hitboxes (Debug Draw)", &show_debug_hitbox);
-        if (ImGui::Button("Clear All Bullets")) {
-            this->enemy_bullets.get()->clear_pool();
+    if (ImGui::CollapsingHeader("Debug Tools", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Checkbox("Show Hitboxes (Debug Draw)", &show_debug_hitbox_);
+        if (ImGui::Button("Clear All Bullets"))
+        {
+            enemy_bullets_->clear_pool();
         }
     }
 
-    if (ImGui::CollapsingHeader("Emitter Tweaker (Press Z)", ImGuiTreeNodeFlags_DefaultOpen)) {
-        // 实时拖动滑块，改变按 Z 发射的子弹数量和速度！
-        ImGui::SliderInt("Emit Count", &debug_emit_count, 1, 100);
-        ImGui::SliderFloat("Emit Speed", &debug_emit_speed, 10.0f, 500.0f);
+    if (ImGui::CollapsingHeader("Emitter Tweaker (Press Z)", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::SliderInt("Emit Count", &debug_emit_count_, 1, 100);
+        ImGui::SliderFloat("Emit Speed", &debug_emit_speed_, 10.0f, 500.0f);
     }
-    
-    ImGui::End();
-    //IInput::update();
-    if (this->enemy_bullets) {
-        this->enemy_bullets->update(deltatime);
-    }
-    // 检测碰撞
 
-    ColliderManager::get_instance()->check_pool_collisions(this->enemy_bullets.get(),this->player->get_collider()->get_layer());
-    if(this->player && this->player->get_danmaku_pool()){
-        ColliderManager::get_instance()->check_pool_collisions(this->player->get_danmaku_pool(),1);
+    ImGui::End();
+
+    if (enemy_bullets_)
+    {
+        enemy_bullets_->update(delta_time);
+    }
+
+    ColliderManager::get_instance()->check_pool_collisions(enemy_bullets_.get(), player_->get_collider()->get_layer());
+    if (player_ && player_->get_danmaku_pool())
+    {
+        ColliderManager::get_instance()->check_pool_collisions(player_->get_danmaku_pool(), 1);
     }
     ColliderManager::get_instance()->check_and_resolve_collisions();
-
-
 }
 
-void MainScene::on_render(SDLRender &renderer) {
-    for (IRenderable *a : this->renderables) {
+void MainScene::on_render(SDLRender& renderer)
+{
+    for (IRenderable* a : renderables_)
+    {
         a->render(renderer);
     }
-    
-    if (this->enemy_bullets) {
-        this->enemy_bullets->render(renderer);
+
+    if (enemy_bullets_)
+    {
+        enemy_bullets_->render(renderer);
     }
-    // 👇 2. 如果开启了调试模式，绘制所有的碰撞盒！
-    if (this->show_debug_hitbox) {
-        // 画玩家的核心判定点 (绿圈)
-        if (this->player && this->player->is_alive()) {
-            renderer.draw_circle_outline(this->player->get_position(), 10.0f, 0, 255, 0); // 半径2
+
+    if (show_debug_hitbox_)
+    {
+        if (player_ && player_->is_alive())
+        {
+            renderer.draw_circle_outline(player_->get_position(), 10.0f, 0, 255, 0);
         }
 
-        for (auto& entity : this->entities) {
+        for (auto& entity : entities_)
+        {
             Enemy* e = dynamic_cast<Enemy*>(entity.get());
-            if (e && e->isAlive()) {
-                renderer.draw_circle_outline(e->get_position(), 30.0f, 0, 0, 255); 
+            if (e && e->is_alive())
+            {
+                renderer.draw_circle_outline(e->get_position(), 30.0f, 0, 0, 255);
             }
         }
 
-        for (auto& d : this->enemy_bullets->get_raw_pool()) {
+        for (auto& d : enemy_bullets_->get_raw_pool())
+        {
             if (!d.active) continue;
-            if(const auto& pre = std::get_if<CircleHitbox>(&enemy_bullets.get()->get_prefab(d.prefab_id).hitbox)){
-                renderer.draw_circle_outline(d.pos,pre->radius, 254, 0, 0); 
+            if (const auto& pre = std::get_if<CircleHitbox>(&enemy_bullets_->get_prefab(d.prefab_id).hitbox))
+            {
+                renderer.draw_circle_outline(d.pos, pre->radius, 254, 0, 0);
             }
-            
         }
-
-
+        for(auto& d : player_->get_danmaku_pool()->get_raw_pool()){
+            if (!d.active) continue;
+            if (const auto& pre = std::get_if<CircleHitbox>(&enemy_bullets_->get_prefab(d.prefab_id).hitbox))
+            {
+                renderer.draw_circle_outline(d.pos, pre->radius, 254, 0, 0);
+            }
+        }
     }
 }
 
 static int cooldown = 0;
-void MainScene::on_input() {
+
+void MainScene::on_input()
+{
     if (IInput::get_key(KeyType::ENTER)->get_keydown())
-        SceneManager::getInstance()->switchScene(SceneType::EndMenu);
-    
-    if (this->player && this->player->isActive()) {
-        this->player->handle_input();
+        SceneManager::get_instance()->switch_scene(SceneType::EndMenu);
+
+    if (player_ && player_->is_active())
+    {
+        player_->handle_input();
     }
 
 

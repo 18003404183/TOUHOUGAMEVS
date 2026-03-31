@@ -1,3 +1,3 @@
 #include"EventManager.h"
 
-EventManager* EventManager::eventmanager = nullptr;
+EventManager* EventManager::event_manager_ = nullptr;

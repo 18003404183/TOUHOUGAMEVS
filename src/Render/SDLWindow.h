@@ -1,26 +1,26 @@
 #pragma once
 
-#include"IWindows.h"
-#include<SDL.h>
-#include<iostream>
-
+#include "IWindows.h"
+#include <SDL.h>
+#include <iostream>
 
 class SDLWindows
 {
 public:
     SDLWindows() = default;
-    ~SDLWindows(){
-
-        if(this->window != nullptr){
-            SDL_DestroyWindow(this->window);
-            this->window = nullptr;
+    ~SDLWindows()
+    {
+        if (window_ != nullptr)
+        {
+            SDL_DestroyWindow(window_);
+            window_ = nullptr;
         }
-    };
+    }
 
-    virtual bool init(int w,int h);
+    virtual bool init(int width, int height);
 
     SDL_Window* get_sdl_window();
 
 private:
-    SDL_Window* window;
+    SDL_Window* window_ = nullptr;
 };

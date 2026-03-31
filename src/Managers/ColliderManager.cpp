@@ -7,7 +7,8 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
     if (!pool) return;
     auto& raw_pool = pool->get_raw_pool();
 
-    static Quadtree<int> bullet_tree({1250.0f, 700.0f}, {1300.0f, 800.0f},0);
+    // 扩大四叉树边界以覆盖整个游戏区域
+    static Quadtree<int> bullet_tree({1250.0f, 700.0f}, {1500.0f, 900.0f}, 0);
     bullet_tree.clear(); // 清空上一帧的数据
 
     for (int i = 0; i < raw_pool.size(); ++i) {
@@ -16,25 +17,27 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
         // 获取子弹的粗略碰撞半径（这里以圆弹为例，如果是矩形取最大半宽）
         const auto& temp_hit_box = std::get_if<CircleHitbox>(&pool->get_prefab(raw_pool[i].prefab_id).hitbox); // 注意：如果换了 variant，需要根据实际类型获取个粗略范围
         float r = temp_hit_box->radius;
-        bullet_tree.insert(i,AABB{{raw_pool[i].pos.x, raw_pool[i].pos.y}, {r, r}});
+        // 修正AABB的half_wh，应该是半径而不是直径
+        bullet_tree.insert(i, AABB{{raw_pool[i].pos.x, raw_pool[i].pos.y}, {r, r}});
     }
 
-    for (auto& col_ptr : this->collider_list) {
+    for (auto& col_ptr : this->collider_list_) {
         Collider* target_col = col_ptr.get();
         IEntity* owner = target_col->get_owner();
 
-        if (target_col->get_layer() == target_layer && owner && owner->isActive()) {
+        if (target_col->get_layer() == target_layer && owner && owner->is_active()) {
             
             Shape* shape = target_col->get_shape();
             if (shape->get_shape() == ShapeType::circle) {
                 float target_radius = static_cast<Circle*>(shape)->get_r();
                 glm::vec2 target_pos = owner->get_position();
 
-                AABB query_range{{target_pos.x, target_pos.y}, {target_radius + 2.0f, target_radius + 2.0f}};
+                // 增加查询范围的缓冲区，确保能检测到附近的子弹
+                AABB query_range{{target_pos.x, target_pos.y}, {target_radius + 20.0f, target_radius + 20.0f}};
 
                 static std::vector<int> result_list;
                 result_list.clear();
-                bullet_tree.query(result_list,query_range);
+                bullet_tree.query(result_list, query_range);
 
                 for (auto& bullet_potential : result_list) {
                     DanmakuData& bullet = raw_pool[bullet_potential];
@@ -43,23 +46,23 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
                     bool is_hit = std::visit([&](const auto& box) -> bool{
                         using BoxType = std::decay_t<decltype(box)>;//底层通过编译器查表
                         // 编译器if is_same_v底层是通过模板匹配来实现的 模板会优先匹配两个相同的类型 如果类型相同 匹配相同类型的模板 返回1 不同 则匹配不同类型的模板 返回0
-                        if constexpr (std::is_same_v<BoxType,CircleHitbox>){
-                            return CollisionSolution::CheckCircleCircle(
-                                target_pos,bullet.pos,
-                                target_radius,box.radius
+                        if constexpr (std::is_same_v<BoxType, CircleHitbox>){
+                            return CollisionSolution::check_circle_circle(
+                                target_pos, bullet.pos,
+                                target_radius, box.radius
                             );
                         }
-                        else if constexpr (std::is_same_v<BoxType,RectHitbox>){
-                            return CollisionSolution::CheckCircleRect();
+                        else if constexpr (std::is_same_v<BoxType, RectHitbox>){
+                            return CollisionSolution::check_circle_rect();
                         }
-                        else if constexpr (std::is_same_v<BoxType,LaserHitbox>){
-                            return CollisionSolution::CheckCircleRect();
+                        else if constexpr (std::is_same_v<BoxType, LaserHitbox>){
+                            return CollisionSolution::check_circle_rect();
                         }
-                    },prefab.hitbox);
+                    }, prefab.hitbox);
 
                     if(is_hit){
                         pool->destroy_bullet(bullet);
-                        this->collision_events.push_back({target_col,nullptr});
+                        this->collision_events_.push_back({target_col, nullptr});
                     }
                     //这里编译器会把prefab.hitbox传给box(函数参数) visit会检查prefab.hitbox到底是哪种类型 并且传给auto& box(自动类型推导导致的)
                     //编译期进行推断和处理 为对应类型生成对应代码 然后调表去执行
