@@ -99,6 +99,7 @@ private:
 
     void split(){
         if(this->deepth == MAX_DEEPTH) return;
+        this->is_leaf = false;
         if(this->children[0]) return;
         float h_w = this->bounds.half_wh.x/2;
         float h_h = this->bounds.half_wh.y/2;

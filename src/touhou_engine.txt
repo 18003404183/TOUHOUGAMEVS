@@ -1,20 +1,22 @@
 .\main.cpp
 ---
-#include"Core/Game.h"
-int main(int argc,char* argv[]) {
+#include "Core/Game.h"
 
-	SetConsoleOutputCP(65001);
+int main(int argc, char* argv[])
+{
+    SetConsoleOutputCP(65001);
     SetConsoleCP(65001);
-	Game game;
-	if(!game.init_game()){
-		return 0;
-	}
-	
-	//game.load_resources();
-	game.start();
-	game.end();
-    
-	return 0;
+
+    Game game;
+    if (!game.init_game())
+    {
+        return 0;
+    }
+
+    game.start();
+    game.end();
+
+    return 0;
 }
 
 
@@ -41,90 +43,85 @@ const int MAIN_WINDOW_HEIGHT = 1400;
 
 Game::Game()
 {
-	std::cout << "Game created" << std::endl;
+    std::cout << "Game created" << std::endl;
 }
 
 Game::~Game()
 {
-	std::cout << "Game destroyed" << std::endl;
-} 
+    std::cout << "Game destroyed" << std::endl;
+}
 
-
- 
 bool Game::init_game()
 {
-	
-	std::cout << "Game initialized" << std::endl;
-	ResourcesManager::getInstance();
-	//EasyxWindow easyx_window;
-	//easyx_window.init();
-	window = std::make_unique<SDLWindows>();
-	window->init(MAIN_WINDOW_WIDTH,MAIN_WINDOW_HEIGHT);
-	
-	this->renderer=SDLRender();
-	renderer.init(window->get_sdl_window());
-	
-	ResourcesManager::getInstance()->set_renderer(&renderer);
-	this->load_resources();
-	SceneManager::getInstance()->loadScene(SceneType::MainMenu);
+    std::cout << "Game initialized" << std::endl;
+    ResourcesManager::get_instance();
+    
+    window_ = std::make_unique<SDLWindows>();
+    window_->init(MAIN_WINDOW_WIDTH, MAIN_WINDOW_HEIGHT);
+    
+    renderer_ = SDLRender();
+    renderer_.init(window_->get_sdl_window());
+    
+    ResourcesManager::get_instance()->set_renderer(&renderer_);
+    load_resources();
+    SceneManager::get_instance()->load_scene(SceneType::MainMenu);
 
-	Context::Instances()->init();
-
+    Context::instances()->init();
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard; 
-    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;     
-    ImGui::StyleColorsDark();                             
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
+    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    ImGui::StyleColorsDark();
 
     // 绑定 SDL 窗口和渲染器后端
-    ImGui_ImplSDL2_InitForSDLRenderer(window->get_sdl_window(), renderer.get_renderer());
-    ImGui_ImplSDLRenderer2_Init(renderer.get_renderer());
+    ImGui_ImplSDL2_InitForSDLRenderer(window_->get_sdl_window(), renderer_.get_renderer());
+    ImGui_ImplSDLRenderer2_Init(renderer_.get_renderer());
 
-	return true;
+    return true;
 }
 
 void Game::load_resources()
 {
-	std::cout << "Resources loaded(Game)" << std::endl;
-	ResourcesManager::getInstance()->loadSceneTotal("1","json");
-	//ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
+    std::cout << "Resources loaded(Game)" << std::endl;
+    ResourcesManager::get_instance()->load_scene_total("1", "json");
 }
 
 void Game::start()
 {
-	std::cout << "Game started" << std::endl;
-	SDL_Event event;
-	bool is_running = true;
-	SceneManager* scene_manager = SceneManager::getInstance();
-	Uint64 frameStart = SDL_GetTicks64();
-	Uint64 frameEnd = SDL_GetTicks64();
-    Uint64 frameTime;
-	while (is_running)
-	{
-		//std::cout << "Game_running" << std::endl;
-	
-		
-		float dt = frameEnd - frameStart;
-		frameStart = frameEnd;
-		
-		while(SDL_PollEvent(&event)){
-			ImGui_ImplSDL2_ProcessEvent(&event);
-			if(event.type == SDL_QUIT){
-				is_running = false;
-			}
+    std::cout << "Game started" << std::endl;
+    SDL_Event event;
+    bool is_running = true;
+    SceneManager* scene_manager = SceneManager::get_instance();
+    uint64_t frame_start = SDL_GetTicks64();
+    uint64_t frame_end = SDL_GetTicks64();
+    uint64_t frame_time;
+    
+    while (is_running)
+    {
+        float delta_time = frame_end - frame_start;
+        frame_start = frame_end;
+        
+        while (SDL_PollEvent(&event))
+        {
+            ImGui_ImplSDL2_ProcessEvent(&event);
+            if (event.type == SDL_QUIT)
+            {
+                is_running = false;
+            }
+        }
 
-		}
+        IInput::update();
 
-		IInput::update();
+        if (!scene_manager->current_scene_null())
+        {
+            scene_manager->on_input();
+        }
 
-		if(!scene_manager->current_scene_null()){
-			//把事件传输给场景处理
-			scene_manager->on_input();
-		}
-		// 开启 ImGui 新的一帧
-		ImGui_ImplSDLRenderer2_NewFrame();
+        // 开启 ImGui 新的一帧
+        ImGui_ImplSDLRenderer2_NewFrame();
         ImGui_ImplSDL2_NewFrame();
         ImGui::NewFrame();
 
@@ -132,36 +129,34 @@ void Game::start()
         ImGui::Begin("Engine Profiler");
         ImGui::Text("FPS: %.1f", ImGui::GetIO().Framerate);
         ImGui::Text("Frame Time: %.3f ms", 1000.0f / ImGui::GetIO().Framerate);
-        ImGui::Text("Game Frame: %d", Context::Instances()->game_frame);
+        ImGui::Text("Game Frame: %d", Context::instances()->game_frame);
         ImGui::End();
-		
-		scene_manager->on_update(1.0/GAME_TPS);
-		this->renderer.clear();
-		scene_manager->on_render(renderer);
+        
+        scene_manager->on_update(1.0 / GAME_TPS);
+        renderer_.clear();
+        scene_manager->on_render(renderer_);
 
-		ImGui::Render();
-        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer.get_renderer());
+        ImGui::Render();
+        ImGui_ImplSDLRenderer2_RenderDrawData(ImGui::GetDrawData(), renderer_.get_renderer());
 
-		this->renderer.present();
+        renderer_.present();
 
-		frameTime = SDL_GetTicks() - frameStart;
-		if (1000/GAME_TPS > frameTime) {
-            SDL_Delay(1000/GAME_TPS - frameTime);
+        frame_time = SDL_GetTicks() - frame_start;
+        if (1000 / GAME_TPS > frame_time)
+        {
+            SDL_Delay(1000 / GAME_TPS - frame_time);
         }
-		frameEnd = SDL_GetTicks64();
-		int frame = Context::Instances()->game_frame++;
-		std::cout<<"current_frame"<<frame<<std::endl;
-	}
-
+        frame_end = SDL_GetTicks64();
+        int frame = Context::instances()->game_frame++;
+        std::cout << "current_frame: " << frame << std::endl;
+    }
 }
 
-void Game::end(){
-	//delete this->renderer;
-	ImGui_ImplSDLRenderer2_Shutdown();
+void Game::end()
+{
+    ImGui_ImplSDLRenderer2_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
-	return;
-
 }
 
 ---
@@ -183,19 +178,18 @@ void Game::end(){
 
 class Game {
 public:
-  Game();
-  ~Game();
+    Game();
+    ~Game();
 
-  bool init_game();
-  void load_resources();
-  void start();
-  void end();
+    bool init_game();
+    void load_resources();
+    void start();
+    void end();
 
 private:
-  SDLRender renderer;
-  std::unique_ptr<SDLWindows> window;
+    SDLRender renderer_;
+    std::unique_ptr<SDLWindows> window_;
 };
-
 
 ---
 .\Entities\Emitter.h
@@ -396,119 +390,118 @@ public:
 #include "Enemy.h"
 
 
-void Enemy::update(float deltaTime)
+void Enemy::update(float delta_time)
 {
-	if(!this->isActive()||!this->is_alive){
+	if(!this->is_active() || !this->is_alive_){
 		return;
 	}
-	this->position += this->velocity;
-	this->enemy_animation.update(deltaTime);
-	std::cout << "Enemy::update called with deltaTime: " << deltaTime << std::endl;
-	if(this->enemy_danmaku_pool){
-		for(auto& emitter : this->emitters){
-			emitter.get()->update(deltaTime,this->enemy_danmaku_pool);
+	this->position_ += this->velocity_;
+	this->enemy_animation_.update(delta_time);
+	std::cout << "Enemy::update called with delta_time: " << delta_time << std::endl;
+	if(this->enemy_danmaku_pool_){
+		for(auto& emitter : this->emitters_){
+			emitter.get()->update(delta_time, this->enemy_danmaku_pool_);
 		}
 	}
 }
 
 void Enemy::render(SDLRender& renderer) const
 {
-	if(!(this->active&&this->is_alive)){
+	if(!(this->active_ && this->is_alive_)){
 		return;
 	}
 	std::cout << "Enemy::render called" << std::endl;
-	//this->image.render(renderer,this->position);
-	this->enemy_animation.render(renderer,this->position);
+	//this->image_.render(renderer, this->position_);
+	this->enemy_animation_.render(renderer, this->position_);
 }
 
-bool Enemy::isActive() const
+bool Enemy::is_active() const
 {
-	return this->active;
+	return this->active_;
 }
 
-void Enemy::setActive(bool active)
+void Enemy::set_active(bool active)
 {
-	this->active = active;
+	this->active_ = active;
 }
 
 glm::vec2 Enemy::get_position() const
 {
-	return this->position;
+	return this->position_;
 }
 
 
-void Enemy::set_position(const glm::vec2& newPosition)
+void Enemy::set_position(const glm::vec2& new_position)
 {
-	this->position = newPosition;
+	this->position_ = new_position;
 }
 
 glm::vec2 Enemy::get_velocity() const
 {
-	return this->velocity;
+	return this->velocity_;
 }
 
-void Enemy::set_velocity(const glm::vec2& newVelocity)
+void Enemy::set_velocity(const glm::vec2& new_velocity)
 {
-	this->velocity = newVelocity;
+	this->velocity_ = new_velocity;
 }
 
-float Enemy::setHp(int hp)
+float Enemy::set_hp(int hp)
 {
-	return this->hp = hp;
+	return this->hp_ = hp;
 }
 
-float Enemy::getHp() const
+float Enemy::get_hp() const
 {
-	return this->hp;
+	return this->hp_;
 }
 
-void Enemy::takeDamage(float damage)
+void Enemy::take_damage(float damage)
 {
-	this->hp -= damage;
+	this->hp_ -= damage;
 }
 
-bool Enemy::isAlive() const
+bool Enemy::is_alive() const
 {
-	return this->is_alive;
+	return this->is_alive_;
 }
 
-void Enemy::setAlive(bool alive)
+void Enemy::set_alive(bool alive)
 {
-	this->is_alive = alive;
+	this->is_alive_ = alive;
 }
 
 
 void Enemy::on_collision(){
-	std::cout<<"enemy on collision"<<std::endl;
+	std::cout << "enemy on collision" << std::endl;
 }
 
-void Enemy::set_image(Image& image){
-	this->image = image;
+void Enemy::set_image(const Image& image){
+	this->image_ = image;
 }
 
 Image& Enemy::get_image(){
-	return this->image;
+	return this->image_;
 }
 
 bool Enemy::get_is_collision() const{
-	return this->is_collision;
+	return this->is_collision_;
 }
 
 void Enemy::set_is_collision(bool collision){
-	this->is_collision = collision;
+	this->is_collision_ = collision;
 }
 
 void Enemy::add_emitter(std::unique_ptr<Emitter> emitter)
 {
-	this->emitters.push_back(std::move(emitter));
+	this->emitters_.push_back(std::move(emitter));
 }
 
 void Enemy::set_bullet_pool(DanmakuPool* pool)
 {
 	if(pool)
-		this->enemy_danmaku_pool = pool;
+		this->enemy_danmaku_pool_ = pool;
 }
-
 
 ---
 .\Entities\Enemy.h
@@ -524,217 +517,213 @@ void Enemy::set_bullet_pool(DanmakuPool* pool)
 #include "Emitter.h"
 #include "Danmaku.h"
 
-class Enemy :
-    public IEntity,
-    public IUpdateable,
-	public IRenderable
+class Enemy : public IEntity, public IUpdateable, public IRenderable
 {
 public:
-	Enemy(){
-		this->entity_type = EntityType::Enemy;
-	};
-	virtual ~Enemy() override{
-		if(this->collider){
-			ColliderManager::get_instance()->destory_collider(this->collider);
-			this->collider = nullptr;
-		}
-	};
+    Enemy()
+    {
+        entity_type_ = EntityType::Enemy;
+    }
 
-	Collider* collider;
+    virtual ~Enemy() override
+    {
+        if (collider_)
+        {
+            ColliderManager::get_instance()->destroy_collider(collider_);
+            collider_ = nullptr;
+        }
+    }
 
-	void update(float deltaTime) override;
-	void render(SDLRender& renderer) const override;
+    Collider* collider_ = nullptr;
 
-	virtual bool isActive() const;
-	virtual void setActive(bool active);
+    void update(float delta_time) override;
+    void render(SDLRender& renderer) const override;
 
-	virtual glm::vec2 get_position() const;
-	virtual void set_position(const glm::vec2& newPosition);
-	virtual glm::vec2 get_velocity() const;
-	virtual void set_velocity(const glm::vec2& newVelocity);
-	virtual float setHp(int hp);
-	virtual float getHp() const;
-	virtual void takeDamage(float damage);
+    virtual bool is_active() const override;
+    virtual void set_active(bool active);
 
-	virtual bool isAlive() const;
-	virtual void setAlive(bool alive);
+    virtual glm::vec2 get_position() const override;
+    virtual void set_position(const glm::vec2& new_position) override;
+    virtual glm::vec2 get_velocity() const override;
+    virtual void set_velocity(const glm::vec2& new_velocity) override;
+    virtual float set_hp(int hp);
+    virtual float get_hp() const;
+    virtual void take_damage(float damage);
 
-	void set_image(Image& image);
-	Image& get_image();
+    virtual bool is_alive() const;
+    virtual void set_alive(bool alive);
 
-	void on_collision();
+    void set_image(const Image& image);
+    Image& get_image();
 
-	bool get_is_collision() const;
-	void set_is_collision(bool collision);
+    void on_collision();
 
-	void add_emitter(std::unique_ptr<Emitter> emitter);
-	void set_bullet_pool(DanmakuPool* pool);
+    bool get_is_collision() const;
+    void set_is_collision(bool collision);
 
-	void set_animation(const Animation& animation){
-		this->enemy_animation = animation;
-	}
+    void add_emitter(std::unique_ptr<Emitter> emitter);
+    void set_bullet_pool(DanmakuPool* pool);
+
+    void set_animation(const Animation& animation)
+    {
+        enemy_animation_ = animation;
+    }
 
 private:
-	bool is_alive;
-	float hp;
-	Image image;
-	bool is_collision = false;
-	Animation enemy_animation;
+    bool is_alive_ = true;
+    float hp_ = 100.0f;
+    Image image_;
+    bool is_collision_ = false;
+    Animation enemy_animation_;
 
-	std::vector<std::unique_ptr<Emitter>> emitters;
-	DanmakuPool* enemy_danmaku_pool = nullptr;
+    std::vector<std::unique_ptr<Emitter>> emitters_;
+    DanmakuPool* enemy_danmaku_pool_ = nullptr;
 };
-
-
 
 ---
 .\Entities\IEntity.h
 ---
 #pragma once
-#include"includes.h"
+#include "includes.h"
 
-enum class EntityType{
-	Player,
-	Enemy,
-	Danmaku
+enum class EntityType
+{
+    Player,
+    Enemy,
+    Danmaku
 };
 
 class IEntity
 {
 protected:
-	glm::vec2 position{0,0};
-	glm::vec2 velocity{0,0};
-	// 实体是否活跃 不活跃的实体不参与任何运算
-	bool active = true;
-	//也许每个entity都应该持有自己的type? 方便运行时类型转换
-	EntityType entity_type;	
+    glm::vec2 position_{0, 0};
+    glm::vec2 velocity_{0, 0};
+    bool active_ = true;
+    EntityType entity_type_;
 
 public:
-	virtual bool isActive() const = 0;
-	virtual EntityType get_entity_type() const {return this->entity_type;};
-	virtual ~IEntity() = default;
-	virtual glm::vec2 get_position() const = 0;
-	virtual glm::vec2* get_position_ptr(){ return &this->position; }
-	virtual void set_position(const glm::vec2& newPosition) = 0;
-	virtual glm::vec2 get_velocity() const = 0;
-	virtual void set_velocity(const glm::vec2& newVelocity) = 0;
-
+    virtual bool is_active() const = 0;
+    virtual EntityType get_entity_type() const { return entity_type_; }
+    virtual ~IEntity() = default;
+    virtual glm::vec2 get_position() const = 0;
+    virtual glm::vec2* get_position_ptr() { return &position_; }
+    virtual void set_position(const glm::vec2& new_position) = 0;
+    virtual glm::vec2 get_velocity() const = 0;
+    virtual void set_velocity(const glm::vec2& new_velocity) = 0;
 };
-
-
 
 ---
 .\Entities\Player.cpp
 ---
 #include "Player.h"
 
-void Player::update(float deltaTime)
+void Player::update(float delta_time)
 {
-	std::cout << "Player::update called with deltaTime: " << deltaTime << std::endl;
-	this->position+=this->velocity*deltaTime;
-	this->player_animation.update(deltaTime);
-	if(this->player_bullet){
-		for(auto& emitter : this->emitters){
-			emitter.get()->update(deltaTime,this->player_bullet.get());
+	std::cout << "Player::update called with delta_time: " << delta_time << std::endl;
+	this->position_ += this->velocity_ * delta_time;
+	this->player_animation_.update(delta_time);
+	if(this->player_bullet_){
+		for(auto& emitter : this->emitters_){
+			emitter.get()->update(delta_time, this->player_bullet_.get());
 		}
-		this->player_bullet.get()->update(deltaTime);
+		this->player_bullet_.get()->update(delta_time);
 	}
-	//this->player_image.set_pos(position);
+	//this->player_image_.set_pos(position_);
 }
 
 void Player::render(SDLRender& renderer) const
 {
-	//this->player_image.render(renderer,this->position);
-	//renderer.draw_texture(this->player_atlas->get_texture(),this->position,{1,1},{200,200},this->player_atlas->get_frame(Context::Instances()->game_frame%(this->player_atlas->get_max_index())),0,255);
-	this->player_animation.render(renderer,this->position);
-	if (this->is_low_speed && this->alive) {
-        renderer.draw_circle_outline(this->position, 6.0f, 255, 0, 0, 255);
-        renderer.draw_circle_outline(this->position, 4.0f, 255, 255, 255, 255);
+	//this->player_image_.render(renderer, this->position_);
+	//renderer.draw_texture(this->player_atlas_->get_texture(), this->position_, {1,1}, {200,200}, this->player_atlas_->get_frame(Context::instances()->game_frame % (this->player_atlas_->get_max_index())), 0, 255);
+	this->player_animation_.render(renderer, this->position_);
+	if (this->is_low_speed_ && this->alive_) {
+        renderer.draw_circle_outline(this->position_, 6.0f, 255, 0, 0, 255);
+        renderer.draw_circle_outline(this->position_, 4.0f, 255, 255, 255, 255);
     }
-	if(this->player_bullet){
-		this->player_bullet.get()->render(renderer);
+	if(this->player_bullet_){
+		this->player_bullet_.get()->render(renderer);
 	}
 }
 
-bool Player::isActive() const
+bool Player::is_active() const
 {
-	return this->active;
+	return this->active_;
 }
 
 glm::vec2 Player::get_position() const
 {
-	return this->position;
+	return this->position_;
 }
 
-void Player::set_position(const glm::vec2& newPosition)
+void Player::set_position(const glm::vec2& new_position)
 {
-	this->position = newPosition;
+	this->position_ = new_position;
 }
 
 glm::vec2 Player::get_velocity() const
 {
-	return this->velocity;
+	return this->velocity_;
 }
 
-void Player::set_velocity(const glm::vec2& newVelocity)
+void Player::set_velocity(const glm::vec2& new_velocity)
 {
-	this->velocity = newVelocity;
+	this->velocity_ = new_velocity;
 }
 
-void Player::setImage(Image image){
-	this->player_image = image;
+void Player::set_image(Image image){
+	this->player_image_ = image;
 }
 
 bool Player::is_alive() const
 {
-    return this->alive;
+    return this->alive_;
 }
 
 void Player::set_alive(bool alive)
 {
-	this->alive = alive;
+	this->alive_ = alive;
 }
 
 void Player::set_hp(int hp)
 {
-	this->hp = hp;
+	this->hp_ = hp;
 }
 
 int Player::get_hp() const
 {
-	return this->hp;
+	return this->hp_;
     return 0;
 }
 
 // void Player::set_atlas(Atlas *atlas)
 // {
-// 	this->player_atlas = atlas;
+// 	this->player_atlas_ = atlas;
 // }
 
 void Player::set_animation(Animation animation)
 {
-	this->player_animation = animation;
+	this->player_animation_ = animation;
 }
 
 Animation& Player::get_animation()
 {
-    return this->player_animation;
+    return this->player_animation_;
 }
 
 void Player::set_collider(Collider* collider)
 {
-	this->collider = collider;
+	this->collider_ = collider;
 }
 
 void Player::handle_input()
 {
-	if (!this->alive || !this->active) return;
+	if (!this->alive_ || !this->active_) return;
 
     // ===== 1. 处理移动与低速模式 (Shift) =====
-    this->is_low_speed = IInput::get_key(KeyType::SHIFT)->get_state();
+    this->is_low_speed_ = IInput::get_key(KeyType::SHIFT)->get_state();
     
-    // 注意：既然你在 update 里乘了 deltaTime，这里的速度应该是“像素/秒”
-    float current_speed = this->is_low_speed ? 250.0f : 550.0f; 
+    // 注意：既然你在 update 里乘了 delta_time，这里的速度应该是"像素/秒"
+    float current_speed = this->is_low_speed_ ? 250.0f : 550.0f; 
 
     glm::vec2 move_dir{0.0f, 0.0f};
     if (IInput::get_key(KeyType::RIGHT)->get_state()) move_dir.x += 1.0f;
@@ -745,13 +734,13 @@ void Player::handle_input()
     // 归一化向量并直接赋值给 velocity
     if (glm::length(move_dir) > 0) {
         move_dir = glm::normalize(move_dir);
-        this->velocity = move_dir * current_speed;
+        this->velocity_ = move_dir * current_speed;
     } else {
-        this->velocity = {0.0f, 0.0f}; // 松开按键时停下
+        this->velocity_ = {0.0f, 0.0f}; // 松开按键时停下
     }
 
 	bool is_shooting = IInput::get_key(KeyType::Z)->get_state();
-    for (auto& emitter : this->emitters) {
+    for (auto& emitter : this->emitters_) {
         emitter->set_active(is_shooting);
     }
 
@@ -760,33 +749,32 @@ void Player::handle_input()
 
 bool Player::get_low_speed()
 {
-    return this->is_low_speed;
+    return this->is_low_speed_;
 }
 
 void Player::add_emitter(std::unique_ptr<Emitter> emitter)
 {
 	emitter.get()->set_active(false);
-	this->emitters.push_back(std::move(emitter));
+	this->emitters_.push_back(std::move(emitter));
 }
 
-void Player::set_bullet_pool(std::unique_ptr<DanmakuPool> player_bu)
+void Player::set_bullet_pool(std::unique_ptr<DanmakuPool> player_bullet)
 {
-	this->player_bullet = std::move(player_bu);
+	this->player_bullet_ = std::move(player_bullet);
 }
 
 Collider *Player::get_collider()
 {
-    return this->collider;
+    return this->collider_;
 }
 
 DanmakuPool *Player::get_danmaku_pool()
 {
-	if(this->player_bullet){
-		return player_bullet.get();
+	if(this->player_bullet_){
+		return player_bullet_.get();
 	}
     return nullptr;
 }
-
 
 ---
 .\Entities\Player.h
@@ -807,91 +795,89 @@ DanmakuPool *Player::get_danmaku_pool()
 class Player : public IEntity, public IRenderable, public IUpdateable
 {
 public:
-	Player() = default;
-	~Player(){
-		if(this->collider){
-			ColliderManager::get_instance()->destory_collider(this->collider);
-			this->collider = nullptr;
-		}
-	}
+    Player() = default;
+    ~Player()
+    {
+        if (collider_)
+        {
+            ColliderManager::get_instance()->destroy_collider(collider_);
+            collider_ = nullptr;
+        }
+    }
 
-	Player(glm::vec2 pos,glm::vec2 v,int hp,const Image& image,Collider* collider):collider(collider){
-		this->position = pos;
-		this->velocity = v;
-		this->active = true;
-		this->hp = 100;
-		this->player_image = image;
-		this->entity_type = EntityType::Player;
-		this->collider->set_on_collid([this](Collider* other){
-			this->alive = false;
-			std::cout << "die" << std::endl; 
-		});
-	}
+    Player(glm::vec2 pos, glm::vec2 vel, int hp, const Image& image, Collider* collider)
+        : collider_(collider)
+    {
+        position_ = pos;
+        velocity_ = vel;
+        active_ = true;
+        hp_ = 100;
+        player_image_ = image;
+        entity_type_ = EntityType::Player;
+        collider_->set_on_collide([this](Collider* other)
+        {
+            alive_ = false;
+            std::cout << "die" << std::endl;
+        });
+    }
 
-	Player(glm::vec2 pos,glm::vec2 v,int hp){
-		this->position = pos;
-		this->velocity = v;
-		this->active = true;
-		this->hp = 100;
-		this->entity_type = EntityType::Player;
-	}
+    Player(glm::vec2 pos, glm::vec2 vel, int hp)
+    {
+        position_ = pos;
+        velocity_ = vel;
+        active_ = true;
+        hp_ = 100;
+        entity_type_ = EntityType::Player;
+    }
 
-	Player(PlayerContext pc){
-		this->active = pc.active;
-		this->hp = pc.hp;
-		this->position = pc.position;
-		//this->player_image = pc.player_image;
-		this->velocity = pc.velocity;
-		this->alive = pc.is_alive;
-	}
+    Player(PlayerContext pc)
+    {
+        active_ = pc.active;
+        hp_ = pc.hp;
+        position_ = pc.position;
+        velocity_ = pc.velocity;
+        alive_ = pc.is_alive;
+    }
 
-	Player(const Player& other) = delete;
-	Player& operator=(const Player& other) = delete;
+    Player(const Player& other) = delete;
+    Player& operator=(const Player& other) = delete;
 
+    void update(float delta_time) override;
+    void render(SDLRender& renderer) const override;
 
-	void update(float deltaTime) override;
-	void render(SDLRender& renderer) const override;
+    bool is_active() const override;
 
-	bool isActive() const;
-
-	glm::vec2 get_position() const;
-	void set_position(const glm::vec2& newPosition);
-	glm::vec2 get_velocity() const;
-	void set_velocity(const glm::vec2& newVelocity);
-	void setImage(Image image);
-	bool is_alive() const;
-	void set_alive(bool alive);
-	void set_hp(int hp);
-	int get_hp() const;
-	//virtual void set_atlas(Atlas* atlas);
-	void set_animation(Animation animation);
-	Animation& get_animation();
-	//virtual const Shape* get_shape() const;
-	//virtual void set_shape(Shape* shape);
-	void set_collider(Collider* collider);
-	void handle_input();
-	bool get_low_speed();
-	void add_emitter(std::unique_ptr<Emitter> emitter);
-	void set_bullet_pool(std::unique_ptr<DanmakuPool> player_bu);
-	Collider* get_collider();
-	DanmakuPool* get_danmaku_pool();
+    glm::vec2 get_position() const override;
+    void set_position(const glm::vec2& new_position) override;
+    glm::vec2 get_velocity() const override;
+    void set_velocity(const glm::vec2& new_velocity) override;
+    void set_image(Image image);
+    bool is_alive() const;
+    void set_alive(bool alive);
+    void set_hp(int hp);
+    int get_hp() const;
+    void set_animation(Animation animation);
+    Animation& get_animation();
+    void set_collider(Collider* collider);
+    void handle_input();
+    bool get_low_speed();
+    void add_emitter(std::unique_ptr<Emitter> emitter);
+    void set_bullet_pool(std::unique_ptr<DanmakuPool> player_bullet);
+    Collider* get_collider();
+    DanmakuPool* get_danmaku_pool();
 
 private:
-	bool alive;
-	int hp;
-	Image player_image;
-	Animation player_animation;
-	bool is_low_speed = false;
+    bool alive_ = true;
+    int hp_ = 100;
+    Image player_image_;
+    Animation player_animation_;
+    bool is_low_speed_ = false;
+    int shoot_cooldown_ = 0;
 
-	int shoot_cooldown = 0;
-
-	//Shape* shape;
-	Collider* collider;
-	std::unique_ptr<DanmakuPool> player_bullet;//考虑不适用执政 使用正常赋值+移动语义 但属性可能为空 最后选择使用指针
-	std::vector<std::unique_ptr<Emitter>> emitters;
+    Collider* collider_ = nullptr;
+    std::unique_ptr<DanmakuPool> player_bullet_;
+    std::vector<std::unique_ptr<Emitter>> emitters_;
 };
-
-
 
 ---
 .\Entities\Type\EnemyType.h
@@ -912,46 +898,46 @@ enum class EnemyType
 #include"ResourcesManager.h"
 #include"ColliderManager.h"
 
-void EnemyBuilder::create_enemy(EnemyType enemytype)
+void EnemyBuilder::create_enemy(EnemyType enemy_type)
 {
-	if (enemytype == EnemyType::small) {
+	if (enemy_type == EnemyType::small) {
 		std::cout << "Creating small enemy" << std::endl;
-		this->active = true;
-		this->hp = 10;
-		this->is_alive = true;
-		this->position = { 200,200 };
-		this->velocity = { 10,0 };
-		// this->shape = new CircleShape(500);
-		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\2.png");	
-		Image image(t,this->position,{1,1},0,255);
-		this->image = image;
-		this->collider = ColliderManager::get_instance()->create_collider(new Circle(30),1,nullptr);
+		this->active_ = true;
+		this->hp_ = 10;
+		this->is_alive_ = true;
+		this->position_ = { 200,200 };
+		this->velocity_ = { 10,0 };
+		// this->shape_ = new CircleShape(500);
+		Texture* t = ResourcesManager::get_instance()->get_texture("resources\\2.png");	
+		Image image(t, this->position_, {1,1}, 0, 255);
+		this->image_ = image;
+		this->collider_ = ColliderManager::get_instance()->create_collider(new Circle(30), 1, nullptr);
 	}
-	else if (enemytype == EnemyType::common) {
+	else if (enemy_type == EnemyType::common) {
 		std::cout << "Creating common enemy" << std::endl;
-		this->active = true;
-		this->hp = 20; 
-		this->is_alive = true;
-		this->position = { 300,0 };
-		this->velocity = { 0,0 };
-		// this->shape = new CircleShape(1000);
-		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\3.png");	
-		Image image(t,this->position,{1,1},0,255);
-		this->image = image;
-		this->collider = ColliderManager::get_instance()->create_collider(new Circle(30),1,nullptr);
+		this->active_ = true;
+		this->hp_ = 20; 
+		this->is_alive_ = true;
+		this->position_ = { 300,0 };
+		this->velocity_ = { 0,0 };
+		// this->shape_ = new CircleShape(1000);
+		Texture* t = ResourcesManager::get_instance()->get_texture("resources\\3.png");	
+		Image image(t, this->position_, {1,1}, 0, 255);
+		this->image_ = image;
+		this->collider_ = ColliderManager::get_instance()->create_collider(new Circle(30), 1, nullptr);
 	}
-	else if (enemytype == EnemyType::large) {
+	else if (enemy_type == EnemyType::large) {
 		std::cout << "Creating large enemy" << std::endl;
-		this->active = true;
-		this->hp = 30;
-		this->is_alive = true;
-		this->position = { 100,0 };
-		this->velocity = { 0,0 };
-		// this->shape = new CircleShape(1500);
-		Texture* t = ResourcesManager::getInstance()->get_texture("resources\\4.png");	
-		Image image(t,this->position,{1,1},0,255);
-		this->image = image;
-		this->collider = ColliderManager::get_instance()->create_collider(new Circle(30),1,nullptr);
+		this->active_ = true;
+		this->hp_ = 30;
+		this->is_alive_ = true;
+		this->position_ = { 100,0 };
+		this->velocity_ = { 0,0 };
+		// this->shape_ = new CircleShape(1500);
+		Texture* t = ResourcesManager::get_instance()->get_texture("resources\\4.png");	
+		Image image(t, this->position_, {1,1}, 0, 255);
+		this->image_ = image;
+		this->collider_ = ColliderManager::get_instance()->create_collider(new Circle(30), 1, nullptr);
 
 	}
 }
@@ -959,20 +945,20 @@ void EnemyBuilder::create_enemy(EnemyType enemytype)
 Enemy* EnemyBuilder::create()
 {
 	Enemy* enemy = new Enemy;
-	enemy->setActive(this->active);
-	enemy->setHp(this->hp);
-	enemy->setAlive(this->is_alive);
-	enemy->set_position(this->position);
-	enemy->set_velocity(this->velocity);
-	enemy->set_image(this->image);
-	Animation animation(ResourcesManager::getInstance()->get_atlas("resources\\7.png"),0.1);
+	enemy->set_active(this->active_);
+	enemy->set_hp(this->hp_);
+	enemy->set_alive(this->is_alive_);
+	enemy->set_position(this->position_);
+	enemy->set_velocity(this->velocity_);
+	enemy->set_image(this->image_);
+	Animation animation(ResourcesManager::get_instance()->get_atlas("resources\\7.png"), 0.1);
 	enemy->set_animation(animation);
-	enemy->collider = collider;
-	enemy->collider->set_owner(enemy);
-	enemy->collider->set_on_collid([e = enemy](Collider* other){
-		e->takeDamage(10);
-		if(e->getHp() <= 0 && e->isAlive()){
-			e->setAlive(false);
+	enemy->collider_ = collider_;
+	enemy->collider_->set_owner(enemy);
+	enemy->collider_->set_on_collide([e = enemy](Collider* other){
+		e->take_damage(10);
+		if(e->get_hp() <= 0 && e->is_alive()){
+			e->set_alive(false);
 			
 			Event ev;
 			ev.type = EventType::EnemyDsetroyed;
@@ -985,36 +971,31 @@ Enemy* EnemyBuilder::create()
 
 }
 
-
 ---
 .\Factories\EnemyBuilder.h
 ---
 #pragma once
-#include"EnemyType.h"
-#include"Enemy.h"
+#include "EnemyType.h"
+#include "Enemy.h"
 #include "EventManager.h"
 
 class EnemyBuilder
 {
 public:
-	void create_enemy(EnemyType enemytype);
-	Enemy* create();
+    void create_enemy(EnemyType enemy_type);
+    Enemy* create();
 
 private:
-	float hp;
-	bool is_alive;
-	glm::vec2 position;
-	glm::vec2 velocity;
-	bool active;
+    float hp_ = 100.0f;
+    bool is_alive_ = true;
+    glm::vec2 position_{0, 0};
+    glm::vec2 velocity_{0, 0};
+    bool active_ = true;
 
-	Collider* collider;
-
-	Shape* shape;
-	Image image;
-	
+    Collider* collider_ = nullptr;
+    Shape* shape_ = nullptr;
+    Image image_;
 };
-
-
 
 ---
 .\Input\IInput.cpp
@@ -1207,7 +1188,10 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
     if (!pool) return;
     auto& raw_pool = pool->get_raw_pool();
 
-    static Quadtree<int> bullet_tree({1250.0f, 700.0f}, {1300.0f, 800.0f},0);
+    // 扩大四叉树边界以覆盖整个游戏区域
+    // 注意：pos是中心点，half_wh是半宽高
+    // 游戏区域应该是 1280x720 或类似的分辨率
+    static Quadtree<int> bullet_tree({640.0f, 360.0f}, {640.0f, 360.0f}, 0);
     bullet_tree.clear(); // 清空上一帧的数据
 
     for (int i = 0; i < raw_pool.size(); ++i) {
@@ -1215,26 +1199,31 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
         
         // 获取子弹的粗略碰撞半径（这里以圆弹为例，如果是矩形取最大半宽）
         const auto& temp_hit_box = std::get_if<CircleHitbox>(&pool->get_prefab(raw_pool[i].prefab_id).hitbox); // 注意：如果换了 variant，需要根据实际类型获取个粗略范围
+        if (!temp_hit_box) continue; // 安全检查
         float r = temp_hit_box->radius;
-        bullet_tree.insert(i,AABB{{raw_pool[i].pos.x, raw_pool[i].pos.y}, {r, r}});
+        // 修正AABB的half_wh，应该是半径而不是直径
+        // 增加额外的缓冲区以提高检测灵敏度
+        bullet_tree.insert(i, AABB{{raw_pool[i].pos.x, raw_pool[i].pos.y}, {r + 5.0f, r + 5.0f}});
     }
 
-    for (auto& col_ptr : this->collider_list) {
+    for (auto& col_ptr : this->collider_list_) {
         Collider* target_col = col_ptr.get();
         IEntity* owner = target_col->get_owner();
 
-        if (target_col->get_layer() == target_layer && owner && owner->isActive()) {
+        if (target_col->get_layer() == target_layer && owner && owner->is_active()) {
             
             Shape* shape = target_col->get_shape();
             if (shape->get_shape() == ShapeType::circle) {
                 float target_radius = static_cast<Circle*>(shape)->get_r();
                 glm::vec2 target_pos = owner->get_position();
 
-                AABB query_range{{target_pos.x, target_pos.y}, {target_radius + 2.0f, target_radius + 2.0f}};
+                // 增加查询范围的缓冲区，确保能检测到附近的子弹
+                // 使用更大的缓冲区以提高检测灵敏度
+                AABB query_range{{target_pos.x, target_pos.y}, {target_radius + 30.0f, target_radius + 30.0f}};
 
                 static std::vector<int> result_list;
                 result_list.clear();
-                bullet_tree.query(result_list,query_range);
+                bullet_tree.query(result_list, query_range);
 
                 for (auto& bullet_potential : result_list) {
                     DanmakuData& bullet = raw_pool[bullet_potential];
@@ -1243,23 +1232,23 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
                     bool is_hit = std::visit([&](const auto& box) -> bool{
                         using BoxType = std::decay_t<decltype(box)>;//底层通过编译器查表
                         // 编译器if is_same_v底层是通过模板匹配来实现的 模板会优先匹配两个相同的类型 如果类型相同 匹配相同类型的模板 返回1 不同 则匹配不同类型的模板 返回0
-                        if constexpr (std::is_same_v<BoxType,CircleHitbox>){
-                            return CollisionSolution::CheckCircleCircle(
-                                target_pos,bullet.pos,
-                                target_radius,box.radius
+                        if constexpr (std::is_same_v<BoxType, CircleHitbox>){
+                            return CollisionSolution::check_circle_circle(
+                                target_pos, bullet.pos,
+                                target_radius, box.radius
                             );
                         }
-                        else if constexpr (std::is_same_v<BoxType,RectHitbox>){
-                            return CollisionSolution::CheckCircleRect();
+                        else if constexpr (std::is_same_v<BoxType, RectHitbox>){
+                            return CollisionSolution::check_circle_rect();
                         }
-                        else if constexpr (std::is_same_v<BoxType,LaserHitbox>){
-                            return CollisionSolution::CheckCircleRect();
+                        else if constexpr (std::is_same_v<BoxType, LaserHitbox>){
+                            return CollisionSolution::check_circle_rect();
                         }
-                    },prefab.hitbox);
+                    }, prefab.hitbox);
 
                     if(is_hit){
                         pool->destroy_bullet(bullet);
-                        this->collision_events.push_back({target_col,nullptr});
+                        this->collision_events_.push_back({target_col, nullptr});
                     }
                     //这里编译器会把prefab.hitbox传给box(函数参数) visit会检查prefab.hitbox到底是哪种类型 并且传给auto& box(自动类型推导导致的)
                     //编译期进行推断和处理 为对应类型生成对应代码 然后调表去执行
@@ -1289,83 +1278,81 @@ struct CollisionEvent{
     Collider* collider_object2; 
 };
 
-class ColliderManager{
+class ColliderManager
+{
 public:
-
-
-    static ColliderManager* get_instance(){
+    static ColliderManager* get_instance()
+    {
         static ColliderManager instance;
         return &instance;
     }
 
-    // Collider& create_collider(){
-    //     auto new_collider = std::make_unique<Collider>();
-    //     auto& collider = *new_collider;
-    //     collider_list.push_back(std::move(new_collider));
-    //     return collider;
-    // }
-
-    Collider* create_collider(Shape* shape, int layer,IEntity* owner){
-        auto new_collider = std::make_unique<Collider>(shape,layer,owner);
+    Collider* create_collider(Shape* shape, int layer, IEntity* owner)
+    {
+        auto new_collider = std::make_unique<Collider>(shape, layer, owner);
         auto collider = new_collider.get();
-        collider_list.push_back(std::move(new_collider));
+        collider_list_.push_back(std::move(new_collider));
         return collider;
     }
 
-    void destory_collider(Collider* collider){
-        if(!collider) return;
+    void destroy_collider(Collider* collider)
+    {
+        if (!collider) return;
 
-        for(auto i = 0;i<collider_list.size();i++){
-            if(collider_list[i].get() == collider){
-                std::swap(collider_list[i],collider_list.back());
-                collider_list.pop_back();
+        for (size_t i = 0; i < collider_list_.size(); i++)
+        {
+            if (collider_list_[i].get() == collider)
+            {
+                std::swap(collider_list_[i], collider_list_.back());
+                collider_list_.pop_back();
                 return;
             }
         }
     }
 
-    void check_and_resolve_collisions(){
-        // 清除事件列表
-        // 循环判断是否碰撞 将每个碰撞体向下转型成type标志的类型 接着调用碰撞算法库里面的函数 将所有检测到的碰撞产生一个碰撞事件并且存入队列
-        for(size_t i = 0; i < this->collider_list.size(); ++i){
-            for(size_t j = i + 1; j < this->collider_list.size(); ++j){
-                Collider* c1 = this->collider_list[i].get();
-                Collider* c2 = this->collider_list[j].get();//这里裸指针不会删除资源
-                if(c1->get_layer() == c2->get_layer()) continue;
-                if(CollisionSolution::CheckCollision(c1,c2)){
-                    this->collision_events.push_back({c1,c2});
-
+    void check_and_resolve_collisions()
+    {
+        for (size_t i = 0; i < collider_list_.size(); ++i)
+        {
+            for (size_t j = i + 1; j < collider_list_.size(); ++j)
+            {
+                Collider* c1 = collider_list_[i].get();
+                Collider* c2 = collider_list_[j].get();
+                if (c1->get_layer() == c2->get_layer()) continue;
+                if (CollisionSolution::check_collision(c1, c2))
+                {
+                    collision_events_.push_back({c1, c2});
                 }
             }
         }
-        //对于队列里的每一个碰撞体 确认存在碰撞函数后执行碰撞回调函数
-        for(auto i : this->collision_events){
-            if(i.collider_object1){
-                i.collider_object1->run_on_collid(i.collider_object2);
+
+        for (auto& event : collision_events_)
+        {
+            if (event.collider_object1)
+            {
+                event.collider_object1->run_on_collide(event.collider_object2);
             }
-            if(i.collider_object2){
-                i.collider_object2->run_on_collid(i.collider_object1);
+            if (event.collider_object2)
+            {
+                event.collider_object2->run_on_collide(event.collider_object1);
             }
         }
-        this->collision_events.clear();       
+        collision_events_.clear();
     }
 
     void check_pool_collisions(DanmakuPool* pool, int target_layer);
 
-    ~ColliderManager(){
-        this->collider_list.clear();
-        this->collision_events.clear();
-    };
-
+    ~ColliderManager()
+    {
+        collider_list_.clear();
+        collision_events_.clear();
+    }
 
 private:
     ColliderManager() = default;
 
-    static ColliderManager* collider_manager;
-
-    std::vector<std::unique_ptr<Collider>> collider_list;
-    std::vector<CollisionEvent> collision_events;
-
+    std::vector<std::unique_ptr<Collider>> collider_list_;
+    std::vector<CollisionEvent> collision_events_;
 };
 
 ---
@@ -1375,32 +1362,32 @@ private:
 #include "Config.h"
 #include <cmath>
 
-std::vector<DanmakuPrefab> DanmakuPool::prefabs;
-std::vector<TrajectoryTemplate> DanmakuPool::trajectories;
+std::vector<DanmakuPrefab> DanmakuPool::prefabs_;
+std::vector<TrajectoryTemplate> DanmakuPool::trajectories_;
 
 DanmakuPool::DanmakuPool(size_t pool_size) {
     // 一次性分配连续物理内存，杜绝 new/delete
     this->count = 0;
-    pool.resize(pool_size);
-    for (auto& d : pool) {
+    pool_.resize(pool_size);
+    for (auto& d : pool_) {
         d.active = false;
     }
 }
 
 uint16_t DanmakuPool::register_prefab(const DanmakuPrefab& prefab) {
-    prefabs.push_back(prefab);
-    return static_cast<uint16_t>(prefabs.size() - 1);
+    prefabs_.push_back(prefab);
+    return static_cast<uint16_t>(prefabs_.size() - 1);
 }
 
 uint16_t DanmakuPool::register_trajectory(const TrajectoryTemplate& traj) {
-    trajectories.push_back(traj);
-    return static_cast<uint16_t>(trajectories.size() - 1);
+    trajectories_.push_back(traj);
+    return static_cast<uint16_t>(trajectories_.size() - 1);
 }
 
 void DanmakuPool::spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_speed, float initial_angle) {
-    if (prefab_id >= prefabs.size()) return;
+    if (prefab_id >= prefabs_.size()) return;
 
-    for (auto& d : pool) {
+    for (auto& d : pool_) {
         if (!d.active) {
 
             this->count++;
@@ -1411,7 +1398,7 @@ void DanmakuPool::spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_s
             d.current_angle = initial_angle;
             
             // 绑定轨迹模板并重置状态机
-            d.trajectory_id = prefabs[prefab_id].default_traj_id;
+            d.trajectory_id = prefabs_[prefab_id].default_traj_id;
             d.current_cmd_index = 0;
             d.cmd_timer = 0.0f;
             
@@ -1423,21 +1410,21 @@ void DanmakuPool::spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_s
     }
 }
 
-void DanmakuPool::update(float dt) {
+void DanmakuPool::update(float delta) {
     std::cout << this->count << "\n";
-    for (auto& d : pool) {
+    for (auto& d : pool_) {
         if (!d.active) continue;
 
         // 1. 指令流状态机解析
-        if (d.trajectory_id < trajectories.size()) {
-            const auto& traj = trajectories[d.trajectory_id];
+        if (d.trajectory_id < trajectories_.size()) {
+            const auto& traj = trajectories_[d.trajectory_id];
             
             if (d.current_cmd_index < traj.commands.size()) {
                 const auto& cmd = traj.commands[d.current_cmd_index];
                 
                 switch (cmd.type) {
                     case DanmakuCmdType::WAIT:
-                        d.cmd_timer += dt;
+                        d.cmd_timer += delta;
                         if (d.cmd_timer >= cmd.param1) {
                             d.current_cmd_index++; // 时间到，执行下一条
                             d.cmd_timer = 0.0f;
@@ -1452,8 +1439,8 @@ void DanmakuPool::update(float dt) {
                         d.current_cmd_index++;
                         break;
                     case DanmakuCmdType::ACCELERATE:
-                        d.current_speed += cmd.param1 * dt;
-                        d.cmd_timer += dt;
+                        d.current_speed += cmd.param1 * delta;
+                        d.cmd_timer += delta;
                         if (d.cmd_timer >= cmd.param2) { // param2 设为加速持续时间
                             d.current_cmd_index++;
                             d.cmd_timer = 0.0f;
@@ -1468,10 +1455,10 @@ void DanmakuPool::update(float dt) {
                         float angular_speed = (cmd.param1 * (3.14159265f / 180.0f)) / cmd.param2;
                         
                         // 推进角度
-                        d.current_angle += angular_speed * dt;
+                        d.current_angle += angular_speed * delta;
                         
                         // 累加时间
-                        d.cmd_timer += dt;
+                        d.cmd_timer += delta;
                         
                         // 检查这个动作是否做完了
                         if (d.cmd_timer >= cmd.param2) {
@@ -1490,7 +1477,7 @@ void DanmakuPool::update(float dt) {
         // 2. 物理运动推演
         d.vel.x = std::cos(d.current_angle) * d.current_speed;
         d.vel.y = std::sin(d.current_angle) * d.current_speed;
-        d.pos += d.vel * dt;
+        d.pos += d.vel * delta;
 
         if (d.pos.x < 0-100 || d.pos.x > MAIN_WINDOW_WIDTH+100 || d.pos.y < 0-100 || d.pos.y > MAIN_WINDOW_HEIGHT+100) {
             this->count--;
@@ -1500,12 +1487,12 @@ void DanmakuPool::update(float dt) {
 }
 
 void DanmakuPool::render(SDLRender& renderer) {
-    auto res_mgr = ResourcesManager::getInstance();
+    auto res_mgr = ResourcesManager::get_instance();
 
-    for (const auto& d : pool) {
+    for (const auto& d : pool_) {
         if (!d.active) continue;
 
-        const auto& prefab = prefabs[d.prefab_id];
+        const auto& prefab = prefabs_[d.prefab_id];
         Texture* tex = res_mgr->get_danmaku_texture(prefab.texture_id);
 
         // 如果需要子弹朝向运动方向，可以直接传入 d.current_angle (转换成角度)
@@ -1524,7 +1511,7 @@ void DanmakuPool::render(SDLRender& renderer) {
 
 void DanmakuPool::clear_pool()
 {
-    for(auto& a : this->pool){
+    for(auto& a : this->pool_){
         if(!a.active) continue;
         this->count--;
         a.active = false;
@@ -1533,19 +1520,18 @@ void DanmakuPool::clear_pool()
 
 std::vector<DanmakuData> &DanmakuPool::get_raw_pool()
 {
-    return pool;
+    return pool_;
 }
 
 DanmakuPrefab DanmakuPool::get_prefab(int id)
 {
-    return prefabs[id];
+    return prefabs_[id];
 }
 
 void DanmakuPool::destroy_bullet(DanmakuData &danmaku)
 {
     danmaku.active = false;
 }
-
 
 ---
 .\Managers\Danmaku.h
@@ -1611,7 +1597,7 @@ struct DanmakuPrefab{
     //float base_radius;       // 基础碰撞判定半径 // 考虑到兼顾内存安全,类型安全和可扩展性 不使用union 使用variant来记录不同形状的数据 至于性能 以后再说(union效率更高)
     uint16_t default_traj_id;// 默认绑定的轨迹模板 ID
 
-    std::variant<CircleHitbox,RectHitbox,LaserHitbox> hitbox;
+    std::variant<CircleHitbox, RectHitbox, LaserHitbox> hitbox;
 };
 
 // 考虑到内存对齐 将大数据放在前面(需要的内存越大的数据种类 越难放到内存对齐所需要的位置 导致小内存的数据需要空开许多内存才能对齐 导致浪费)
@@ -1676,9 +1662,9 @@ public:
     int count;
 
 private:
-    std::vector<DanmakuData> pool;
-    static std::vector<DanmakuPrefab> prefabs;
-    static std::vector<TrajectoryTemplate> trajectories;
+    std::vector<DanmakuData> pool_;
+    static std::vector<DanmakuPrefab> prefabs_;
+    static std::vector<TrajectoryTemplate> trajectories_;
 
 
 };
@@ -1708,245 +1694,248 @@ struct Event
 ---
 #include"EventManager.h"
 
-EventManager* EventManager::eventmanager = nullptr;
+EventManager* EventManager::event_manager_ = nullptr;
+
 
 ---
 .\Managers\EventManager.h
 ---
-# pragma once
+#pragma once
 
-#include<unordered_map>
-#include<functional>
-#include"Event.h"
-#include<vector>
+#include <unordered_map>
+#include <functional>
+#include "Event.h"
+#include <vector>
 
 using EventCallback = std::function<void(const Event&)>;
 
-class EventManager{
+class EventManager
+{
 public:
-    static EventManager* get_instance(){
-        if(!eventmanager){
-            eventmanager = new EventManager;
+    static EventManager* get_instance()
+    {
+        if (!event_manager_)
+        {
+            event_manager_ = new EventManager;
         }
-        return eventmanager;
+        return event_manager_;
     }
 
-    void subscribe(EventType type,EventCallback callback){
-        linsteners[type].push_back(std::move(callback));
+    void subscribe(EventType type, EventCallback callback)
+    {
+        listeners_[type].push_back(std::move(callback));
     }
-    
-    void publish(const Event& event){
-        auto it = linsteners.find(event.type);
-        if(it != linsteners.end()){
-            for(auto& callback : it->second){
+
+    void publish(const Event& event)
+    {
+        auto it = listeners_.find(event.type);
+        if (it != listeners_.end())
+        {
+            for (auto& callback : it->second)
+            {
                 callback(event);
             }
         }
     }
 
 private:
-    
     EventManager() = default;
 
-    static EventManager* eventmanager;
+    static EventManager* event_manager_;
 
-    std::unordered_map<EventType,std::vector<EventCallback>> linsteners;
-
+    std::unordered_map<EventType, std::vector<EventCallback>> listeners_;
 };
 
 ---
 .\Managers\GameContext.cpp
 ---
-#include"GameContext.h"
+#include "GameContext.h"
 
-Context* Context::context = nullptr;
-
+Context* Context::context_ = nullptr;
 
 ---
 .\Managers\GameContext.h
 ---
 #pragma once
-#include"includes.h"
-#include"Collider.h"
-//如果一个字段是全局的 那么字段包含的所有数据也应该是全局的
+#include "includes.h"
+#include "Collider.h"
 
 struct PlayerContext
 {
-    glm::vec2 position{0,0};
-	glm::vec2 velocity{0,0};
-	bool active = true;
-    bool is_alive;
-	int hp;
-    //Collider collider;
-	//Image player_image;
+    glm::vec2 position{0, 0};
+    glm::vec2 velocity{0, 0};
+    bool active = true;
+    bool is_alive = true;
+    int hp = 100;
 };
 
-class Context{
+class Context
+{
 public:
-    static Context* Instances(){
-        if(!context){
-            context = new Context();
+    static Context* instances()
+    {
+        if (!context_)
+        {
+            context_ = new Context();
         }
-        return context;
+        return context_;
     }
 
-    void init(){
-        this->game_frame = 0;
+    void init()
+    {
+        game_frame = 0;
     }
 
     void set_player_context(glm::vec2 position,
-	glm::vec2 velocity,
-	bool active,
-    bool is_alive,
-	int hp){
-        this->pc.position = position;
-        this->pc.active = active;
-        this->pc.hp = hp;
-        this->pc.is_alive = is_alive;
-        this->pc.velocity = velocity;
-        //this->pc.player_image = player_image;
+                            glm::vec2 velocity,
+                            bool active,
+                            bool is_alive,
+                            int hp)
+    {
+        player_context_.position = position;
+        player_context_.active = active;
+        player_context_.hp = hp;
+        player_context_.is_alive = is_alive;
+        player_context_.velocity = velocity;
     }
 
-    void set_player_context(PlayerContext pc){
-        this->pc = pc;
+    void set_player_context(PlayerContext pc)
+    {
+        player_context_ = pc;
     }
 
-    PlayerContext get_player_context(){
-        return pc;
+    PlayerContext get_player_context()
+    {
+        return player_context_;
     }
-    
+
     Context(const Context& context) = delete;
     Context& operator=(const Context& b) = delete;
 
-    int game_frame;
+    int game_frame = 0;
 
 private:
-    PlayerContext pc;
+    PlayerContext player_context_;
     Context() = default;
-    static Context* context; 
+    static Context* context_;
 };
-
-
-
-
 
 ---
 .\Managers\ResourcesManager.cpp
 ---
 #include "ResourcesManager.h"
 
-ResourcesManager* ResourcesManager::resources_manager = nullptr;
+ResourcesManager* ResourcesManager::resources_manager_ = nullptr;
 
-bool ResourcesManager::loadSceneTotal(std::string path, std::string file_type)
+bool ResourcesManager::load_scene_total(std::string path, std::string file_type)
 {
-	std::cout << "����ȫ���ļ�" << file_type << "��" << ",��·��" << path << std::endl;
-
-	return true;
+    std::cout << "Loading all files: " << file_type << ", path: " << path << std::endl;
+    return true;
 }
 
-bool ResourcesManager::loadScene(std::string path, std::string file_type)
+bool ResourcesManager::load_scene(std::string path, std::string file_type)
 {
-	//�����ļ�
-	std::cout << "�����ļ�" << file_type << "��" << ",��·��" << path << std::endl;
-	
-	//��������Դ����ϣ��
-
-	return true;
+    std::cout << "Loading file: " << file_type << ", path: " << path << std::endl;
+    return true;
 }
 
-bool ResourcesManager::loadScene(SceneType type){
-	uint64_t time = SDL_GetTicks64();
-	if(type == SceneType::MainMenu){
-		this->load_texture("resources\\2.png");
-		this->load_texture("resources\\4.png");
-		this->load_texture("resources\\3.png");
-		this->load_atlas("resources\\6.png",glm::vec2{11,5});
-		this->load_atlas("resources\\7.png",glm::vec2{11,5});
-	}
-
-	uint64_t end = SDL_GetTicks64();
-	std::cout<<"加载资源时间"<<end-time<<std::endl;
-
-	return true; 
-}
-
-void ResourcesManager::load_texture(const std::string& path){
-	//将裸指针实现改为智能指针
-	if(Scene_Texture.find(path) != Scene_Texture.end()){
-		return;
-	}
-	auto t = std::make_unique<Texture>();
-	t->load(path,this->renderer->get_renderer());
-	this->Scene_Texture[path] = std::move(t);
-}
-
-void ResourcesManager::load_texture(const std::string &path, std::string name)
+bool ResourcesManager::load_scene(SceneType type)
 {
-	auto t = std::make_unique<Texture>();
-	t->load(path,this->renderer->get_renderer());
-	this->Scene_Texture[name] = std::move(t);
+    uint64_t time = SDL_GetTicks64();
+    if (type == SceneType::MainMenu)
+    {
+        load_texture("resources\\2.png");
+        load_texture("resources\\4.png");
+        load_texture("resources\\3.png");
+        load_atlas("resources\\6.png", glm::vec2{11, 5});
+        load_atlas("resources\\7.png", glm::vec2{11, 5});
+    }
+
+    uint64_t end = SDL_GetTicks64();
+    std::cout << "Load resources time: " << end - time << std::endl;
+
+    return true;
 }
 
-Texture* ResourcesManager::get_texture(std::string name) {
-	if(Scene_Texture.find(name) != Scene_Texture.end()){
-		return this->Scene_Texture[name].get();
-	}
-	return nullptr;
+void ResourcesManager::load_texture(const std::string& path)
+{
+    if (scene_texture_.find(path) != scene_texture_.end())
+    {
+        return;
+    }
+    auto t = std::make_unique<Texture>();
+    t->load(path, renderer_->get_renderer());
+    scene_texture_[path] = std::move(t);
 }
 
-void ResourcesManager::clear_scene_resources(){
-	Scene_Texture.clear();
-	Scene_Atlas.clear();
-	Scene_Font.clear();
-	
+void ResourcesManager::load_texture(const std::string& path, std::string name)
+{
+    auto t = std::make_unique<Texture>();
+    t->load(path, renderer_->get_renderer());
+    scene_texture_[name] = std::move(t);
+}
+
+Texture* ResourcesManager::get_texture(std::string name)
+{
+    if (scene_texture_.find(name) != scene_texture_.end())
+    {
+        return scene_texture_[name].get();
+    }
+    return nullptr;
+}
+
+void ResourcesManager::clear_scene_resources()
+{
+    scene_texture_.clear();
+    scene_atlas_.clear();
+    scene_font_.clear();
 }
 
 void ResourcesManager::load_atlas(const std::string path)
 {
-	this->load_texture(path);
-	auto a = std::make_unique<Atlas>(this->get_texture(path));
-	this->Scene_Atlas[path] = std::move(a);
+    load_texture(path);
+    auto a = std::make_unique<Atlas>(get_texture(path));
+    scene_atlas_[path] = std::move(a);
 }
 
 void ResourcesManager::load_atlas(const std::string path, std::string name)
 {
-	this->load_texture(path,name);
-	auto a = std::make_unique<Atlas>(this->get_texture(name));
-	this->Scene_Atlas[name] = std::move(a);
-
+    load_texture(path, name);
+    auto a = std::make_unique<Atlas>(get_texture(name));
+    scene_atlas_[name] = std::move(a);
 }
 
-void ResourcesManager::load_atlas(const std::string path,glm::vec2 cell)
+void ResourcesManager::load_atlas(const std::string path, glm::vec2 cell)
 {
-	this->load_texture(path);
-	auto a = std::make_unique<Atlas>(this->get_texture(path),cell);
-	this->Scene_Atlas[path] = std::move(a);
+    load_texture(path);
+    auto a = std::make_unique<Atlas>(get_texture(path), cell);
+    scene_atlas_[path] = std::move(a);
 }
-Atlas *ResourcesManager::get_atlas(std::string name)
+
+Atlas* ResourcesManager::get_atlas(std::string name)
 {
-	if(!this->Scene_Atlas[name])
-    	return nullptr;
-	return Scene_Atlas[name].get();
+    if (!scene_atlas_[name])
+        return nullptr;
+    return scene_atlas_[name].get();
 }
 
-
-void ResourcesManager::set_renderer(SDLRender* renderer){
- 	this->renderer = renderer;
+void ResourcesManager::set_renderer(SDLRender* renderer)
+{
+    renderer_ = renderer;
 }
 
 uint16_t ResourcesManager::register_danmaku_texture(const std::string path)
-{	
-	std::unique_ptr<Texture> t = std::make_unique<Texture>();
-	t.get()->load(path,this->renderer->get_renderer());
-	this->danmaku_texture.push_back(std::move(t));
-    return static_cast<uint16_t>(danmaku_texture.size() - 1);
+{
+    std::unique_ptr<Texture> t = std::make_unique<Texture>();
+    t->load(path, renderer_->get_renderer());
+    danmaku_texture_.push_back(std::move(t));
+    return static_cast<uint16_t>(danmaku_texture_.size() - 1);
 }
 
 Texture* ResourcesManager::get_danmaku_texture(uint16_t id)
 {
-    return this->danmaku_texture[id].get();
+    return danmaku_texture_[id].get();
 }
-
 
 ---
 .\Managers\ResourcesManager.h
@@ -1965,38 +1954,35 @@ Texture* ResourcesManager::get_danmaku_texture(uint16_t id)
 class ResourcesManager
 {
 public:
-	
-	static ResourcesManager* getInstance() {
-		if (!resources_manager) {
-			resources_manager = new ResourcesManager;
-		}
+    static ResourcesManager* get_instance()
+    {
+        if (!resources_manager_)
+        {
+            resources_manager_ = new ResourcesManager;
+        }
+        return resources_manager_;
+    }
 
-		return resources_manager;
-	};
+    ~ResourcesManager() = default;
 
-	~ResourcesManager() = default;//????????????????
+    bool load_scene_total(std::string path, std::string file_type);
+    bool load_scene(std::string path, std::string file_type);
+    bool load_scene(SceneType type);
 
-	bool loadSceneTotal(std::string path, std::string file_type);
-	//???????????"json????xml???????"
-	bool loadScene(std::string path, std::string file_type);
-
-	bool loadScene(SceneType type);
-
-	//?????? ???delete??????????
-	void clear_scene_resources();//记得删除对应资源 而不只是将map置空
-	void clear_all_resources();
+    void clear_scene_resources();
+    void clear_all_resources();
 
 
 	ResourcesManager(const ResourcesManager& res) = delete;
 	ResourcesManager& operator=(const ResourcesManager& res) = delete;
 	
 	void load_texture(const std::string& path);
-	void load_texture(const std::string& path,std::string name);
+	void load_texture(const std::string& path, std::string name);
 	Texture* get_texture(std::string name);
 
 	void load_atlas(const std::string path);
-	void load_atlas(const std::string path,std::string name);
-	void load_atlas(const std::string path,glm::vec2 cell);
+	void load_atlas(const std::string path, std::string name);
+	void load_atlas(const std::string path, glm::vec2 cell);
 	Atlas* get_atlas(std::string name);
 
 	void set_renderer(SDLRender* renderer);
@@ -2005,83 +1991,81 @@ public:
 	Texture* get_danmaku_texture(uint16_t id);
 
 private:
-	ResourcesManager() = default;
-	std::unordered_map<std::string, std::unique_ptr<Texture>> global_Texture;
-	std::unordered_map<std::string, std::unique_ptr<Font>> global_Font;
-	std::unordered_map<std::string, std::unique_ptr<Atlas>> global_Atlas;
+    ResourcesManager() = default;
 
-	//????????????��??? ???????��??????????
-	std::unordered_map<std::string, std::unique_ptr<Texture>> Scene_Texture;
-	std::unordered_map<std::string, std::unique_ptr<Font>> Scene_Font;
-	std::unordered_map<std::string, std::unique_ptr<Atlas>> Scene_Atlas;
+    std::unordered_map<std::string, std::unique_ptr<Texture>> global_texture_;
+    std::unordered_map<std::string, std::unique_ptr<Font>> global_font_;
+    std::unordered_map<std::string, std::unique_ptr<Atlas>> global_atlas_;
 
-	std::vector<std::unique_ptr<Texture>> danmaku_texture;
+    std::unordered_map<std::string, std::unique_ptr<Texture>> scene_texture_;
+    std::unordered_map<std::string, std::unique_ptr<Font>> scene_font_;
+    std::unordered_map<std::string, std::unique_ptr<Atlas>> scene_atlas_;
 
-	static ResourcesManager* resources_manager;
+    std::vector<std::unique_ptr<Texture>> danmaku_texture_;
 
-	SDLRender* renderer = nullptr;
+    static ResourcesManager* resources_manager_;
+
+    SDLRender* renderer_ = nullptr;
 	
 };
-
-
 
 ---
 .\Managers\SceneManager.cpp
 ---
 #include "SceneManager.h"
 
-SceneManager* SceneManager::scene_manager = nullptr;
+SceneManager* SceneManager::scene_manager_ = nullptr;
 
-SceneManager* SceneManager::getInstance() {
-	if (scene_manager == nullptr) {
-		scene_manager = new SceneManager();
+SceneManager* SceneManager::get_instance() {
+	if (scene_manager_ == nullptr) {
+		scene_manager_ = new SceneManager();
 	}
-	return scene_manager;
+	return scene_manager_;
 }
 
-void SceneManager::loadScene(SceneType scenetype)
+void SceneManager::load_scene(SceneType scene_type)
 {
-	if (scenetype == SceneType::MainMenu)
+	if (scene_type == SceneType::MainMenu)
 	{
-		this->current_scene = this->main_scene.get();
-		current_scene->on_enter();
+		this->current_scene_ = this->main_scene_.get();
+		current_scene_->on_enter();
 	}
 }
 
-void SceneManager::unloadScene()
+void SceneManager::unload_scene()
 {
-	current_scene->on_exit();
-	this->current_scene = nullptr;
+	current_scene_->on_exit();
+	this->current_scene_ = nullptr;
 }
 
-void SceneManager::switchScene(SceneType scenetype)
+void SceneManager::switch_scene(SceneType scene_type)
 {
-	current_scene->on_exit();
-	if (scenetype == SceneType::MainMenu) {
-		this->current_scene = this->main_scene.get();
+	current_scene_->on_exit();
+	if (scene_type == SceneType::MainMenu) {
+		this->current_scene_ = this->main_scene_.get();
 	}
-	if (scenetype == SceneType::EndMenu) {
-		this->current_scene = this->end_scene.get();
+	if (scene_type == SceneType::EndMenu) {
+		this->current_scene_ = this->end_scene_.get();
 	}
-	this->current_scene->on_enter();
+	this->current_scene_->on_enter();
 }
 
-void SceneManager::on_update(float deltatime)
+void SceneManager::on_update(float delta_time)
 {
-	this->current_scene->on_update(deltatime);
+	this->current_scene_->on_update(delta_time);
 
 }
 
 void SceneManager::on_input() {
-	this->current_scene->on_input();
+	this->current_scene_->on_input();
 }
 
 void SceneManager::on_render(SDLRender& renderer) {
-	this->current_scene->on_render(renderer);
+	this->current_scene_->on_render(renderer);
 }
 
 bool SceneManager::current_scene_null(){
-	return !current_scene;
+	return !current_scene_;
 }
 
 ---
@@ -2099,32 +2083,27 @@ bool SceneManager::current_scene_null(){
 class SceneManager
 {
 public:
-	static SceneManager* getInstance();
-	void loadScene(SceneType scenetype);
-	void unloadScene();
-	void switchScene(SceneType scenetype);
-	void on_update(float deltatime);
-	void on_input();
-	void on_render(SDLRender& renderer);
-	bool current_scene_null();
-	SceneManager(SceneManager& scene_manager) = delete;
-	SceneManager& operator=(SceneManager& scene_manager) = delete;
+    static SceneManager* get_instance();
+    void load_scene(SceneType scene_type);
+    void unload_scene();
+    void switch_scene(SceneType scene_type);
+    void on_update(float delta_time);
+    void on_input();
+    void on_render(SDLRender& renderer);
+    bool current_scene_null();
+    SceneManager(SceneManager& scene_manager) = delete;
+    SceneManager& operator=(SceneManager& scene_manager) = delete;
 
 private:
+    SceneManager() = default;
+    ~SceneManager() = default;
+    IScene* current_scene_;
 
-	SceneManager() =  default;
-	~SceneManager() = default;
-	IScene* current_scene;
+    std::unique_ptr<MainScene> main_scene_ = std::make_unique<MainScene>();
+    std::unique_ptr<EndScene> end_scene_ = std::make_unique<EndScene>();
 
-	std::unique_ptr<MainScene> main_scene = std::make_unique<MainScene>();
-	std::unique_ptr<EndScene> end_scene = std::make_unique<EndScene>();
-
-
-	static SceneManager* scene_manager;
-
+    static SceneManager* scene_manager_;
 };
-
-
 
 ---
 .\Physical\AABB.h
@@ -2154,92 +2133,87 @@ struct AABB
 ---
 .\Physical\Collider.cpp
 ---
-#include"Collider.h"
+#include "Collider.h"
 
-
-Collider::Collider(Shape *shape, int layer, std::function<void(Collider* other)> func,IEntity* owner)
-{
-    assert(this->shape != nullptr && "Collider initialization failed: Shape cannot be null!");
-    this->shape = shape;
-    this->layer = layer;
-    this->on_collid = func;
-    this->owner = owner;
-
-}
-
-Collider::Collider(Shape *shape, int layer,IEntity* owner)
+Collider::Collider(Shape* shape, int layer, std::function<void(Collider* other)> func, IEntity* owner)
 {
     assert(shape != nullptr && "Collider initialization failed: Shape cannot be null!");
-    this->layer = layer;
-    this->owner = owner;
-    this->shape = shape;
+    shape_ = shape;
+    layer_ = layer;
+    on_collide_ = func;
+    owner_ = owner;
 }
 
-Collider::Collider(const Collider &other)
+Collider::Collider(Shape* shape, int layer, IEntity* owner)
 {
-    this->layer = other.layer;
-
-    this->shape = other.shape->clone();
-
+    assert(shape != nullptr && "Collider initialization failed: Shape cannot be null!");
+    layer_ = layer;
+    owner_ = owner;
+    shape_ = shape;
 }
 
-Collider& Collider::operator=(const Collider &other)
+Collider::Collider(const Collider& other)
 {
-    this->layer = other.layer;
-    delete this->shape;
-    this->shape = other.shape->clone();
+    layer_ = other.layer_;
+    shape_ = other.shape_->clone();
+}
+
+Collider& Collider::operator=(const Collider& other)
+{
+    layer_ = other.layer_;
+    delete shape_;
+    shape_ = other.shape_->clone();
     return *this;
 }
 
 void Collider::set_layer(int layer)
 {
-    this->layer = layer;
+    layer_ = layer;
 }
 
-void Collider::set_on_collid(std::function<void(Collider* other)> func)
+void Collider::set_on_collide(std::function<void(Collider* other)> func)
 {
-    this->on_collid = std::move(func);
+    on_collide_ = std::move(func);
 }
 
-void Collider::run_on_collid(Collider *collider)
+void Collider::run_on_collide(Collider* collider)
 {
-    if(!this->on_collid) return;
-    this->on_collid(collider);
+    if (!on_collide_) return;
+    on_collide_(collider);
 }
 
-void Collider::set_shape(Shape *shape)
+void Collider::set_shape(Shape* shape)
 {
-    if(!shape) return;
-    if(this->shape == shape) return;
-    delete this->shape;
-    this->shape = shape;
+    if (!shape) return;
+    if (shape_ == shape) return;
+    delete shape_;
+    shape_ = shape;
 }
 
-int Collider::get_layer()
+int Collider::get_layer() const
 {
-
-    return this->layer;
+    return layer_;
 }
 
-Shape *Collider::get_shape()
+Shape* Collider::get_shape() const
 {
-    return this->shape;
+    return shape_;
 }
 
-void Collider::set_owner(IEntity* entity){
-    this->owner = entity;
-}
-
-IEntity *Collider::get_owner()
+void Collider::set_owner(IEntity* entity)
 {
-    return this->owner;
+    owner_ = entity;
+}
+
+IEntity* Collider::get_owner() const
+{
+    return owner_;
 }
 
 Collider::~Collider()
 {
-    delete this->shape;
+    delete shape_;
 }
-
 
 ---
 .\Physical\Collider.h
@@ -2257,30 +2231,30 @@ enum class ShapeType{
 class Shape{
 public:
     Shape(){};
-    Shape(ShapeType shape_type):shape_type(shape_type){};
-    virtual void set_shape(ShapeType shapetype){this->shape_type = shape_type;}
-    virtual ShapeType get_shape(){return this->shape_type;}
+    Shape(ShapeType shape_type):shape_type_(shape_type){};
+    virtual void set_shape(ShapeType shape_type){this->shape_type_ = shape_type;}
+    virtual ShapeType get_shape(){return this->shape_type_;}
     virtual Shape* clone() = 0;
     ~Shape() = default;
 protected:
-    ShapeType shape_type;
+    ShapeType shape_type_;
 };
 
 class Circle : public Shape{
 public:
 
     Circle(){
-        this->shape_type = ShapeType::circle;
+        this->shape_type_ = ShapeType::circle;
     }
     Circle(float r){
-        this->r = r;
-        this->shape_type = ShapeType::circle;
+        this->r_ = r;
+        this->shape_type_ = ShapeType::circle;
     }
     float get_r(){
-        return this->r;
+        return this->r_;
     }
     void set_r(float r){
-        this->r = r;
+        this->r_ = r;
     }
 
     Shape* clone(){
@@ -2288,13 +2262,13 @@ public:
     }
 
 protected:
-    float r;
+    float r_;
 };
 
 class Rectangle : public Shape{
 public:
     Rectangle(){
-        this->shape_type = ShapeType::rect;
+        this->shape_type_ = ShapeType::rect;
     }
 
     Shape* clone(){
@@ -2302,80 +2276,77 @@ public:
     }
 };
 
-class Collider{
+class Collider
+{
 public:
     Collider() = delete;
-    Collider(Shape* shape,int layer,std::function<void(Collider* other)> func,IEntity* entity);
-    Collider(Shape* shape,int layer,IEntity* entity);
+    Collider(Shape* shape, int layer, std::function<void(Collider* other)> func, IEntity* entity);
+    Collider(Shape* shape, int layer, IEntity* entity);
     Collider(const Collider& other);
     Collider& operator=(const Collider& other);
     void set_layer(int layer);
-    void set_on_collid(std::function<void(Collider* other)> func);
-    void run_on_collid(Collider* collider);
+    void set_on_collide(std::function<void(Collider* other)> func);
+    void run_on_collide(Collider* collider);
     void set_shape(Shape* shape);
-    int get_layer();
-    Shape* get_shape();
+    int get_layer() const;
+    Shape* get_shape() const;
     void set_owner(IEntity* entity);
-    IEntity* get_owner();
+    IEntity* get_owner() const;
     ~Collider();
+
 private:
-    int layer;
-    std::function<void(Collider* other)> on_collid;
-    Shape* shape;
-
-    //考虑加上持有者的信息 void* 但是这么做依赖于每个entity都有记录的自己的type
-    IEntity* owner;
+    int layer_;
+    std::function<void(Collider* other)> on_collide_;
+    Shape* shape_;
+    IEntity* owner_;
 };
-
 
 ---
 .\Physical\CollisionSolver.h
 ---
 #pragma once
 
-#include"Collider.h"
+#include "Collider.h"
 
-class CollisionSolution{
+class CollisionSolution
+{
 public:
+    static bool check_collision(Collider* a, Collider* b)
+    {
+        ShapeType type_a = a->get_shape()->get_shape();
+        ShapeType type_b = b->get_shape()->get_shape();
 
-    static bool CheckCollision(Collider* a,Collider* b){
-        ShapeType typeA = a->get_shape()->get_shape();
-        ShapeType typeB = b->get_shape()->get_shape();
-
-        if(typeA == ShapeType::circle && typeB == ShapeType::circle){
+        if (type_a == ShapeType::circle && type_b == ShapeType::circle)
+        {
             Circle* c1 = static_cast<Circle*>(a->get_shape());
             Circle* c2 = static_cast<Circle*>(b->get_shape());
-            return CheckCircleCircle(
+            return check_circle_circle(
                 a->get_owner()->get_position(),
                 b->get_owner()->get_position(),
                 c1->get_r(),
-                c2->get_r()      
-        );
+                c2->get_r());
         }
 
         return false;
     }
 
-    static bool CheckCircleCircle(glm::vec2 pos1,glm::vec2 pos2,float r1,float r2){
+    static bool check_circle_circle(glm::vec2 pos1, glm::vec2 pos2, float r1, float r2)
+    {
         float x = pos1.x - pos2.x;
         float y = pos1.y - pos2.y;
-        return x*x + y*y <= (r1 + r2)*(r1 + r2);
+        return x * x + y * y <= (r1 + r2) * (r1 + r2);
     }
 
-    static bool CheckCircleRect(){
+    static bool check_circle_rect()
+    {
         return false;
     }
 
-    static bool CheckRectRect(){
+    static bool check_rect_rect()
+    {
         return false;
     }
-
-
-
-
 };
-
-
 
 ---
 .\Physical\Quadtree.h
@@ -2627,16 +2598,16 @@ protected:
 
 void SDLRender::init(SDL_Window* window){
     if(window == nullptr) return;
-    this->renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);//开启垂直同步来保持平滑
+    this->renderer_ = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);//开启垂直同步来保持平滑
 }
 
 void SDLRender::clear(){
-    SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, 255); // 设置黑色
-    SDL_RenderClear(this->renderer); // 清理
+    SDL_SetRenderDrawColor(this->renderer_, 0, 0, 0, 255); // 设置黑色
+    SDL_RenderClear(this->renderer_); // 清理
 }
 
 void SDLRender::present() {
-    SDL_RenderPresent(this->renderer); // 显示
+    SDL_RenderPresent(this->renderer_); // 显示
 }
 
 
@@ -2649,7 +2620,7 @@ void SDLRender::present() {
 void SDLRender::draw_texture(Texture* image, int x, int y){
     if (!image || !image->is_valid()) return;
     SDL_Texture* tex = image->native();
-    if (!tex || !this->renderer) return;
+    if (!tex || !this->renderer_) return;
 
     SDL_Rect dst;
     dst.x = x;
@@ -2657,7 +2628,7 @@ void SDLRender::draw_texture(Texture* image, int x, int y){
     dst.w = image->width();
     dst.h = image->height();
 
-    SDL_RenderCopy(this->renderer, tex, nullptr, &dst);
+    SDL_RenderCopy(this->renderer_, tex, nullptr, &dst);
 }
 
 void SDLRender::draw_texture(
@@ -2691,7 +2662,7 @@ void SDLRender::draw_texture(
     center.y = finalH/2.0f;
 
     SDL_RenderCopyExF(
-        this->renderer,
+        this->renderer_,
         texture->get_data(),
         NULL,
         &dst,
@@ -2727,7 +2698,7 @@ void SDLRender::draw_texture(Texture *texture, const glm::vec2 &pos, const glm::
     center.y = finalH/2.0f;
 
     SDL_RenderCopyExF(
-        this->renderer,
+        this->renderer_,
         texture->get_data(),
         &cell,
         &dst,
@@ -2737,15 +2708,15 @@ void SDLRender::draw_texture(Texture *texture, const glm::vec2 &pos, const glm::
     );
 }
 
-void SDLRender::draw_text(std::string text, int x, int y){
+void SDLRender::draw_text(const std::string& text, int x, int y){
     // Minimal placeholder: text rendering not implemented (requires SDL_ttf)
     (void)text; (void)x; (void)y;
     std::cerr << "[SDLRender] draw_text not implemented (requires SDL_ttf)" << std::endl;
 }
 
-void SDLRender::draw_circle_outline(const glm::vec2 pos, float radius, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
+void SDLRender::draw_circle_outline(const glm::vec2& pos, float radius, uint8_t r, uint8_t g, uint8_t b, uint8_t a)
 {
-    SDL_SetRenderDrawColor(this->renderer,r,g,b,a);
+    SDL_SetRenderDrawColor(this->renderer_, r, g, b, a);
 
     const int NUM_SEGMENTS = 32;
     SDL_FPoint points[NUM_SEGMENTS+1];
@@ -2757,7 +2728,7 @@ void SDLRender::draw_circle_outline(const glm::vec2 pos, float radius, uint8_t r
         points[i].y = pos.y + (sin(theta)*radius);
     }
 
-    SDL_RenderDrawLinesF(this->renderer,points,NUM_SEGMENTS+1);
+    SDL_RenderDrawLinesF(this->renderer_, points, NUM_SEGMENTS+1);
 
 }
 
@@ -2767,51 +2738,57 @@ void SDLRender::draw_circle_outline(const glm::vec2 pos, float radius, uint8_t r
 ---
 #pragma once
 
-#include"IRender.h"
-#include<SDL.h>
-#include"includes.h"
+#include "IRender.h"
+#include <SDL.h>
+#include "includes.h"
 
 class SDLRender
 {
 public:
-	SDLRender() = default;
+    SDLRender() = default;
 
-	virtual void init(SDL_Window* window = nullptr);
+    virtual void init(SDL_Window* window = nullptr);
 
-	virtual void clear();
+    virtual void clear();
 
-	//virtual Texture* load_texture(const std::string path);
-	virtual void  draw_texture(Texture* image, int x, int y);
-	//提供默认全部的图片渲染
-	virtual void draw_texture(
-        Texture* texture, 
-        const glm::vec2& pos, 
+    virtual void draw_texture(Texture* image, int x, int y);
+
+    virtual void draw_texture(
+        Texture* texture,
+        const glm::vec2& pos,
         const glm::vec2& scale,
-        const glm::vec2& wh,
-        double rotation, 
-        unsigned char alpha);
-	//手动的规定渲染图片的哪个部分 用于图集
-	virtual void draw_texture(
-        Texture* texture, 
-        const glm::vec2& pos, 
-        const glm::vec2& scale,
-        const glm::vec2& wh,
-		const SDL_Rect& cell,
-        double rotation, 
+        const glm::vec2& size,
+        double rotation,
         unsigned char alpha);
 
-	virtual void draw_text(std::string text, int x, int y);
+    virtual void draw_texture(
+        Texture* texture,
+        const glm::vec2& pos,
+        const glm::vec2& scale,
+        const glm::vec2& size,
+        const SDL_Rect& cell,
+        double rotation,
+        unsigned char alpha);
 
-	virtual void draw_circle_outline(const glm::vec2 pos,float radius,uint8_t r,uint8_t g,uint8_t b,uint8_t a = 255);
+    virtual void draw_text(const std::string& text, int x, int y);
 
-	SDL_Renderer* get_renderer(){
-		return this->renderer;
-	}
+    virtual void draw_circle_outline(
+        const glm::vec2& pos,
+        float radius,
+        uint8_t r,
+        uint8_t g,
+        uint8_t b,
+        uint8_t a = 255);
 
-	void present();
+    SDL_Renderer* get_renderer() const
+    {
+        return renderer_;
+    }
+
+    void present();
 
 private:
-	SDL_Renderer* renderer = nullptr;
+    SDL_Renderer* renderer_ = nullptr;
 };
 
 ---
@@ -2819,13 +2796,13 @@ private:
 ---
 #include"SDLWindow.h"
 
-bool SDLWindows::init(int w,int h){
+bool SDLWindows::init(int w, int h){
     if(SDL_Init(SDL_INIT_VIDEO)<0){
-		std::cout<<"cant init:"<<std::endl;
+		std::cout << "cant init:" << std::endl;
 		return false;
 	}
 
-	this->window = SDL_CreateWindow(
+	this->window_ = SDL_CreateWindow(
 		"TOUHOUGAME",
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
@@ -2834,8 +2811,8 @@ bool SDLWindows::init(int w,int h){
 		SDL_WINDOW_SHOWN
 	);
 
-	if(window == nullptr){
-		std::cerr<<"Window could not be created! SDL_Error"<<SDL_GetError();
+	if(window_ == nullptr){
+		std::cerr << "Window could not be created! SDL_Error" << SDL_GetError();
 		return false;
 	}
     return true;
@@ -2843,38 +2820,37 @@ bool SDLWindows::init(int w,int h){
 }
 
 SDL_Window* SDLWindows::get_sdl_window(){
-    return this->window;
+    return this->window_;
 }
-
 
 ---
 .\Render\SDLWindow.h
 ---
 #pragma once
 
-#include"IWindows.h"
-#include<SDL.h>
-#include<iostream>
-
+#include "IWindows.h"
+#include <SDL.h>
+#include <iostream>
 
 class SDLWindows
 {
 public:
     SDLWindows() = default;
-    ~SDLWindows(){
-
-        if(this->window != nullptr){
-            SDL_DestroyWindow(this->window);
-            this->window = nullptr;
+    ~SDLWindows()
+    {
+        if (window_ != nullptr)
+        {
+            SDL_DestroyWindow(window_);
+            window_ = nullptr;
         }
-    };
+    }
 
-    virtual bool init(int w,int h);
+    virtual bool init(int width, int height);
 
     SDL_Window* get_sdl_window();
 
 private:
-    SDL_Window* window;
+    SDL_Window* window_ = nullptr;
 };
 
 ---
@@ -3401,7 +3377,7 @@ public:
 #include "Animation.h"
 #include "GameContext.h"
 #include "ResourcesManager.h"
-#include "clock.h"
+#include "Clock.h"
 #include "Danmaku.h"
 #include <fstream> 
 #include "json.hpp"
@@ -3420,13 +3396,14 @@ MainScene::~MainScene() {
     std::cout << "MainScene Destructor" << std::endl; 
 }
 
-void MainScene::on_enter() {
-    ResourcesManager::getInstance()->loadScene(SceneType::MainMenu);
+void MainScene::on_enter()
+{
+    ResourcesManager::get_instance()->load_scene(SceneType::MainMenu);
     ColliderManager::get_instance();
-    
-    this->enemy_bullets = std::make_unique<DanmakuPool>(10000);
 
-    uint16_t tex_id = ResourcesManager::getInstance()->register_danmaku_texture("resources\\8.png");
+    enemy_bullets_ = std::make_unique<DanmakuPool>(10000);
+
+    uint16_t tex_id = ResourcesManager::get_instance()->register_danmaku_texture("resources\\8.png");
     
     TrajectoryTemplate traj;
     //以当前速度飞 0.5 秒
@@ -3442,60 +3419,61 @@ void MainScene::on_enter() {
     // 4. 组装预制体 (Prefab)
     DanmakuPrefab dp;
     dp.texture_id = tex_id; 
-    dp.base_size = {40.0f, 22.0f}; // 强制渲染大小为 16x16，你可以根据实际图片修改
-    dp.base_scale = {2.0f, 1.0f};
+    dp.base_size = {16,16}; // 强制渲染大小为 16x16，你可以根据实际图片修改
+    dp.base_scale = {1,1};
     //dp.shape_type = DanmakuShape::Circle;
     //dp.base_radius = 5.0f; // 碰撞判定半径
     dp.default_traj_id = traj_id;
     dp.hitbox = CircleHitbox{5.0f};
     // 注册预制体并保存 ID 到成员变量，方便按键时调用
-    this->test_prefab_id = DanmakuPool::register_prefab(dp);
+    this->test_prefab_id_ = DanmakuPool::register_prefab(dp);
     // ==========================================
-    Texture *v = ResourcesManager::getInstance()->get_texture("resources\\2.png");
-    glm::vec2 pos(500,500);
+    Texture* v = ResourcesManager::get_instance()->get_texture("resources\\2.png");
+    glm::vec2 pos(500, 500);
     glm::vec2 scale(1, 1);
 
     Image player_image = Image(v, pos, scale, 0, 255);
-    Atlas *player_atlas = ResourcesManager::getInstance()->get_atlas("resources\\6.png");
+    Atlas* player_atlas = ResourcesManager::get_instance()->get_atlas("resources\\6.png");
 
-    Context::Instances()->set_player_context(pos, {0, 0}, true, true, 100);
-    PlayerContext pc = Context::Instances()->get_player_context();
-    this->player = new Player(pos,{0,0},100);
+    Context::instances()->set_player_context(pos, {0, 0}, true, true, 100);
+    PlayerContext pc = Context::instances()->get_player_context();
+    player_ = new Player(pos, {0, 0}, 100);
 
-    player->setImage(player_image);
+    player_->set_image(player_image);
     Animation animation(player_atlas, 0.1);
 
-    Collider* player_collider = ColliderManager::get_instance()->create_collider(new Circle(10),0,player);
+    Collider* player_collider = ColliderManager::get_instance()->create_collider(new Circle(10), 0, player_);
 
-    this->renderables.push_back(player);
-    this->updateables.push_back(player);
-    this->player->set_animation(animation);
-    player->set_collider(player_collider);
-    player->get_collider()->set_on_collid([p = this->player](Collider* other){
+    renderables_.push_back(player_);
+    updateables_.push_back(player_);
+    player_->set_animation(animation);
+    player_->set_collider(player_collider);
+    player_->get_collider()->set_on_collide([p = player_](Collider* other)
+    {
         p->set_alive(false);
         Event e;
-        int* a = new int(0); 
+        int* a = new int(0);
         e.data = a;
         e.type = EventType::PlayerDead;
         EventManager::get_instance()->publish(e);
-        std::cout << "Player Dead!" << std::endl; 
+        std::cout << "Player Dead!" << std::endl;
     });
-    player->set_bullet_pool(std::make_unique<DanmakuPool>(10000));
-    this->player->add_emitter(std::make_unique<Emitter>(
-        EmitterSpace::Relative, this->player->get_position_ptr(), glm::vec2{-10, -5},
+    player_->set_bullet_pool(std::make_unique<DanmakuPool>(10000));
+    player_->add_emitter(std::make_unique<Emitter>(
+        EmitterSpace::Relative, player_->get_position_ptr(), glm::vec2{-10, -5},
         AimMode::Fixed, nullptr,
-        this->test_prefab_id,1200.0f, -3.14159f / 2.0f, 0.0f,
-        0.066f, -1 
+        test_prefab_id_, 1200.0f, -3.14159f / 2.0f, 0.0f,
+        0.1, -1
     ));
-    
-    this->player->add_emitter(std::make_unique<Emitter>(
-        EmitterSpace::Relative, this->player->get_position_ptr(), glm::vec2{10, -5},
+
+    player_->add_emitter(std::make_unique<Emitter>(
+        EmitterSpace::Relative, player_->get_position_ptr(), glm::vec2{10, -5},
         AimMode::Fixed, nullptr,
-        this->test_prefab_id, 1200.0f, -3.14159f / 2.0f, 0.0f,
-        0.066f, -1 
+        test_prefab_id_, 1200.0f, -3.14159f / 2.0f, 0.0f,
+        0.066f, -1
     ));
-    
-    this->entities.push_back(std::unique_ptr<IEntity>(this->player));
+
+    entities_.push_back(std::unique_ptr<IEntity>(player_));
 
     std::ifstream file("resources\\level1.json");
     if(!file.is_open()){
@@ -3528,39 +3506,39 @@ void MainScene::on_enter() {
                 int hp = enemy_data["hp"].get<int>();
 
                 e->set_position({x, y});
-                e->setHp(hp);
-                e->set_bullet_pool(this->enemy_bullets.get());
+                e->set_hp(hp);
+                e->set_bullet_pool(enemy_bullets_.get());
 
                 float spread_angle = 15.0f * (3.14159f / 180.0f);
 
                 // 枪管 A：正中心 (绝对锁定玩家，逼迫玩家走位)
                 e->add_emitter(std::make_unique<Emitter>(
                     EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
-                    AimMode::TargetAlways, this->player->get_position_ptr(),
-                    this->test_prefab_id, 300.0f, 0.0f, 0.0f,
+                    AimMode::TargetAlways, player_->get_position_ptr(),
+                    test_prefab_id_, 300.0f, 0.0f, 0.0f,
                     1.5f, -1
                 ));
 
                 // 枪管 B：左侧封位 (在锁定角度的基础上，向左偏 15 度)
                 e->add_emitter(std::make_unique<Emitter>(
                     EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
-                    AimMode::TargetAlways, this->player->get_position_ptr(),
-                    this->test_prefab_id, 300.0f, -spread_angle, 0.0f,
+                    AimMode::TargetAlways, player_->get_position_ptr(),
+                    test_prefab_id_, 300.0f, -spread_angle, 0.0f,
                     1.5f, -1
                 ));
 
                 // 枪管 C：右侧封位 (在锁定角度的基础上，向右偏 15 度)
                 e->add_emitter(std::make_unique<Emitter>(
                     EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
-                    AimMode::TargetAlways, this->player->get_position_ptr(),
-                    this->test_prefab_id, 300.0f, spread_angle, 0.0f,
+                    AimMode::TargetAlways, player_->get_position_ptr(),
+                    test_prefab_id_, 300.0f, spread_angle, 0.0f,
                     1.5f, -1
                 ));
 
                 // 挂载到场景中
-                this->entities.push_back(std::unique_ptr<IEntity>(e));//不能够使用make_unique来创建 因为IEntity是虚基类 无法实例化 可以先创建裸指针 然后再用unique_ptr接管
-                this->renderables.push_back(e);
-                this->updateables.push_back(e);
+                entities_.push_back(std::unique_ptr<IEntity>(e));
+                renderables_.push_back(e);
+                updateables_.push_back(e);
             }
         }
     }
@@ -3576,103 +3554,122 @@ void MainScene::on_enter() {
         }
     });
 
-    this->clock.set_callback([this]() {
+    this->clock_.set_callback([this]() {
         std::cout << "Timer tick. this:" << this << std::endl; 
     });
 
 
 }
 
-void MainScene::on_exit() { 
+void MainScene::on_exit()
+{
     std::cout << "Exiting MainScene" << std::endl;
-    Context::Instances()->set_player_context(
-        player->get_position(), player->get_velocity(), player->isActive(),
-        player->is_alive(), player->get_hp());
+    Context::instances()->set_player_context(
+        player_->get_position(), player_->get_velocity(), player_->is_active(),
+        player_->is_alive(), player_->get_hp());
 }
 
-void MainScene::on_update(float deltatime) {
-    for (IUpdateable *a : this->updateables) {
-        a->update(deltatime);
+void MainScene::on_update(float delta_time)
+{
+    for (IUpdateable* a : updateables_)
+    {
+        a->update(delta_time);
     }
-    this->clock.update(deltatime);
+    clock_.update(delta_time);
     ImGui::Begin("Engine Control Panel");
-    
-    if (ImGui::CollapsingHeader("Danmaku Stats", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Text("Active Enemy Bullets: %d / 10000", this->enemy_bullets->count);
-        // 进度条直观显示弹幕池压力
-        ImGui::ProgressBar((float)this->enemy_bullets->count / 10000.0f);
+
+    if (ImGui::CollapsingHeader("Danmaku Stats", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Text("Active Enemy Bullets: %d / 10000", enemy_bullets_->count);
+        ImGui::ProgressBar((float)enemy_bullets_->count / 10000.0f);
     }
 
-    if (ImGui::CollapsingHeader("Debug Tools", ImGuiTreeNodeFlags_DefaultOpen)) {
-        ImGui::Checkbox("Show Hitboxes (Debug Draw)", &show_debug_hitbox);
-        if (ImGui::Button("Clear All Bullets")) {
-            this->enemy_bullets.get()->clear_pool();
+    if (ImGui::CollapsingHeader("Debug Tools", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::Checkbox("Show Hitboxes (Debug Draw)", &show_debug_hitbox_);
+        if (ImGui::Button("Clear All Bullets"))
+        {
+            enemy_bullets_->clear_pool();
         }
     }
 
-    if (ImGui::CollapsingHeader("Emitter Tweaker (Press Z)", ImGuiTreeNodeFlags_DefaultOpen)) {
-        // 实时拖动滑块，改变按 Z 发射的子弹数量和速度！
-        ImGui::SliderInt("Emit Count", &debug_emit_count, 1, 100);
-        ImGui::SliderFloat("Emit Speed", &debug_emit_speed, 10.0f, 500.0f);
+    if (ImGui::CollapsingHeader("Emitter Tweaker (Press Z)", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        ImGui::SliderInt("Emit Count", &debug_emit_count_, 1, 100);
+        ImGui::SliderFloat("Emit Speed", &debug_emit_speed_, 10.0f, 500.0f);
     }
-    
-    ImGui::End();
-    //IInput::update();
-    if (this->enemy_bullets) {
-        this->enemy_bullets->update(deltatime);
-    }
-    // 检测碰撞
 
-    ColliderManager::get_instance()->check_pool_collisions(this->enemy_bullets.get(),this->player->get_collider()->get_layer());
-    if(this->player && this->player->get_danmaku_pool()){
-        ColliderManager::get_instance()->check_pool_collisions(this->player->get_danmaku_pool(),1);
+    ImGui::End();
+
+    if (enemy_bullets_)
+    {
+        enemy_bullets_->update(delta_time);
+    }
+
+    ColliderManager::get_instance()->check_pool_collisions(enemy_bullets_.get(), player_->get_collider()->get_layer());
+    if (player_ && player_->get_danmaku_pool())
+    {
+        ColliderManager::get_instance()->check_pool_collisions(player_->get_danmaku_pool(), 1);
     }
     ColliderManager::get_instance()->check_and_resolve_collisions();
-
-
 }
 
-void MainScene::on_render(SDLRender &renderer) {
-    for (IRenderable *a : this->renderables) {
+void MainScene::on_render(SDLRender& renderer)
+{
+    for (IRenderable* a : renderables_)
+    {
         a->render(renderer);
     }
-    
-    if (this->enemy_bullets) {
-        this->enemy_bullets->render(renderer);
+
+    if (enemy_bullets_)
+    {
+        enemy_bullets_->render(renderer);
     }
-    // 👇 2. 如果开启了调试模式，绘制所有的碰撞盒！
-    if (this->show_debug_hitbox) {
-        // 画玩家的核心判定点 (绿圈)
-        if (this->player && this->player->is_alive()) {
-            renderer.draw_circle_outline(this->player->get_position(), 10.0f, 0, 255, 0); // 半径2
+
+    if (show_debug_hitbox_)
+    {
+        if (player_ && player_->is_alive())
+        {
+            renderer.draw_circle_outline(player_->get_position(), 10.0f, 0, 255, 0);
         }
 
-        for (auto& entity : this->entities) {
+        for (auto& entity : entities_)
+        {
             Enemy* e = dynamic_cast<Enemy*>(entity.get());
-            if (e && e->isAlive()) {
-                renderer.draw_circle_outline(e->get_position(), 30.0f, 0, 0, 255); 
+            if (e && e->is_alive())
+            {
+                renderer.draw_circle_outline(e->get_position(), 30.0f, 0, 0, 255);
             }
         }
 
-        for (auto& d : this->enemy_bullets->get_raw_pool()) {
+        for (auto& d : enemy_bullets_->get_raw_pool())
+        {
             if (!d.active) continue;
-            if(const auto& pre = std::get_if<CircleHitbox>(&enemy_bullets.get()->get_prefab(d.prefab_id).hitbox)){
-                renderer.draw_circle_outline(d.pos,pre->radius, 254, 0, 0); 
+            if (const auto& pre = std::get_if<CircleHitbox>(&enemy_bullets_->get_prefab(d.prefab_id).hitbox))
+            {
+                renderer.draw_circle_outline(d.pos, pre->radius, 254, 0, 0);
             }
-            
         }
-
-
+        for(auto& d : player_->get_danmaku_pool()->get_raw_pool()){
+            if (!d.active) continue;
+            if (const auto& pre = std::get_if<CircleHitbox>(&enemy_bullets_->get_prefab(d.prefab_id).hitbox))
+            {
+                renderer.draw_circle_outline(d.pos, pre->radius, 254, 0, 0);
+            }
+        }
     }
 }
 
 static int cooldown = 0;
-void MainScene::on_input() {
+
+void MainScene::on_input()
+{
     if (IInput::get_key(KeyType::ENTER)->get_keydown())
-        SceneManager::getInstance()->switchScene(SceneType::EndMenu);
-    
-    if (this->player && this->player->isActive()) {
-        this->player->handle_input();
+        SceneManager::get_instance()->switch_scene(SceneType::EndMenu);
+
+    if (player_ && player_->is_active())
+    {
+        player_->handle_input();
     }
 
 
@@ -3698,37 +3695,39 @@ void MainScene::on_input() {
 #include "IInput.h"
 #include "IScene.h"
 #include "Player.h"
-// #include"EasyxRender.h"
 #include "Clock.h"
 #include "ColliderManager.h"
 #include "Danmaku.h"
 #include "EventManager.h"
 #include <sol/sol.hpp>
-class MainScene : public IScene {
-public:
-  MainScene();
-  ~MainScene();
 
-  virtual void on_enter();
-  virtual void on_exit();
-  virtual void on_update(float deltatime);
-  virtual void on_render(SDLRender &renderer);
-  virtual void on_input();
+class MainScene : public IScene
+{
+public:
+    MainScene();
+    ~MainScene();
+
+    virtual void on_enter();
+    virtual void on_exit();
+    virtual void on_update(float delta_time);
+    virtual void on_render(SDLRender& renderer);
+    virtual void on_input();
 
 private:
-  Clock clock;
+    Clock clock_;
+    Player* player_ = nullptr;
+    std::vector<std::unique_ptr<IEntity>> entities_;
+    std::vector<IRenderable*> renderables_;
+    std::vector<IUpdateable*> updateables_;
 
-  Player *player = nullptr;
+    std::unique_ptr<DanmakuPool> enemy_bullets_;
+    uint16_t test_prefab_id_;
 
-  std::unique_ptr<DanmakuPool> enemy_bullets; 
-  uint16_t test_prefab_id; // 存一下我们要发射的预制体 ID
-
-  // ImGui 调试用的变量
-  bool show_debug_hitbox = false;    // 碰撞盒开关
-  int debug_emit_count = 12;         // 一圈发射多少颗子弹
-  float debug_emit_speed = 150.0f;   // 子弹初速度
+    // ImGui 调试用的变量
+    bool show_debug_hitbox_ = false;
+    int debug_emit_count_ = 12;
+    float debug_emit_speed_ = 150.0f;
 };
-
 
 ---
 .\Scenes\SceneType.h
