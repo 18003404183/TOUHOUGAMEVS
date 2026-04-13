@@ -45,7 +45,7 @@ void DanmakuPool::spawn(uint16_t prefab_id, glm::vec2 start_pos, float initial_s
             // 初始化向量
             d.vel.x = std::cos(d.current_angle) * d.current_speed;
             d.vel.y = std::sin(d.current_angle) * d.current_speed;
-            return; // 激活成功，撤退
+            return; 
         }
     }
 }
