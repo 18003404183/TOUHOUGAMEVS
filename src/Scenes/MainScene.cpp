@@ -10,6 +10,8 @@
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
+#include "BossScript.h"
+
 
 using json = nlohmann::json; 
 
@@ -27,10 +29,14 @@ void MainScene::on_enter()
     ResourcesManager::get_instance()->load_scene(SceneType::MainMenu);
     ColliderManager::get_instance();
 
+    //测试Lua脚本
+    this->boss_script_ = std::make_unique<BossScript>();
+    this->boss_script_->init();
+
     enemy_bullets_ = std::make_unique<DanmakuPool>(10000);
 
     uint16_t tex_id = ResourcesManager::get_instance()->register_danmaku_texture("resources\\8.png");
-    
+
     TrajectoryTemplate traj;
     //以当前速度飞 0.5 秒
     traj.commands.push_back({DanmakuCmdType::WAIT, 0.5f, 0.0f});
@@ -238,6 +244,8 @@ void MainScene::on_update(float delta_time)
         ColliderManager::get_instance()->check_pool_collisions(player_->get_danmaku_pool(), 1);
     }
     ColliderManager::get_instance()->check_and_resolve_collisions();
+
+    boss_script_.get()->update(delta_time);    
 }
 
 void MainScene::on_render(SDLRender& renderer)
@@ -310,3 +318,8 @@ void MainScene::on_input()
 // 4.继续完善一些底层的功能 比如敌人死后生成p点 玩家随着p点越多 火力等级越高(weapon) 分数统计 玩家释放符卡等 - 3.25
 
 // 准备重构弹幕碰撞 然后实现四×树来进行优化
+
+
+//4.17
+// 敌人会有很多种 至少得可以自定义 所以我感觉可以使用建造者+原型模式来管理敌人 而且最好我使用json就能定制敌人出来 所以我应该专门写一个enemy_Creater出来 然后读取json来创建敌人的原型 最后就能根据敌人原型的名字生成敌人
+// 考虑到如果存储enemy对象 当涉及拷贝时会有许多的麻烦 所以考虑面向数据 敌人原型只存储敌人的属性(enemy_config) 然后在builder中构造敌人

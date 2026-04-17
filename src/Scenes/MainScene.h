@@ -11,6 +11,8 @@
 #include "EventManager.h"
 #include <sol/sol.hpp>
 
+class BossScript;
+
 class MainScene : public IScene
 {
 public:
@@ -32,6 +34,8 @@ private:
 
     std::unique_ptr<DanmakuPool> enemy_bullets_;
     uint16_t test_prefab_id_;
+
+    std::unique_ptr<BossScript> boss_script_;
 
     // ImGui 调试用的变量
     bool show_debug_hitbox_ = false;

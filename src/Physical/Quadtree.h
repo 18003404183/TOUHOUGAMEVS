@@ -28,7 +28,7 @@ public:
         items.reserve(MAX_ITEMS);
         this->is_leaf = true;
     }
-
+    // 插入一个新的元素
     void insert(const T& data,const AABB& box){
         if(!bounds.intersects(box)) return;
 
@@ -57,7 +57,7 @@ public:
             this->items.push_back(Item{box,data});
         }
     }
-
+    // 将所有可能碰撞的元素的结果返回 存入result
     void query(std::vector<T>& result,const AABB& box){
         if(!this->bounds.intersects(box)) return;
         for(const auto& item : items){
