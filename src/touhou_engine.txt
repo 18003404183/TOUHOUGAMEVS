@@ -998,6 +998,35 @@ private:
 };
 
 ---
+.\Factories\EnemyFactory.h
+---
+#pragma once
+#include<unordered_map>
+
+struct EnemyConfig
+{
+    float hp_;
+    std::string image_name_;
+    std::string enemy_animation_;
+    
+};
+
+
+
+class EnemyFactory{
+private:
+    std::unordered_map<std::string,EnemyConfig> prototypes_;
+
+public:
+
+    //注册原型(提供通过json注册原型的接口 也可以通过手动输入参数来注册原型)
+
+    //根具原型生成一个对象 并且返回对象的指针 参数接收原型名称
+
+
+};
+
+---
 .\Input\IInput.cpp
 ---
 #include "IInput.h"
@@ -2396,7 +2425,7 @@ public:
         items.reserve(MAX_ITEMS);
         this->is_leaf = true;
     }
-
+    // 插入一个新的元素
     void insert(const T& data,const AABB& box){
         if(!bounds.intersects(box)) return;
 
@@ -2425,7 +2454,7 @@ public:
             this->items.push_back(Item{box,data});
         }
     }
-
+    // 将所有可能碰撞的元素的结果返回 存入result
     void query(std::vector<T>& result,const AABB& box){
         if(!this->bounds.intersects(box)) return;
         for(const auto& item : items){
@@ -3400,6 +3429,8 @@ public:
 #include "imgui.h"
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
+#include "BossScript.h"
+
 
 using json = nlohmann::json; 
 
@@ -3417,10 +3448,14 @@ void MainScene::on_enter()
     ResourcesManager::get_instance()->load_scene(SceneType::MainMenu);
     ColliderManager::get_instance();
 
+    //测试Lua脚本
+    this->boss_script_ = std::make_unique<BossScript>();
+    this->boss_script_->init();
+
     enemy_bullets_ = std::make_unique<DanmakuPool>(10000);
 
     uint16_t tex_id = ResourcesManager::get_instance()->register_danmaku_texture("resources\\8.png");
-    
+
     TrajectoryTemplate traj;
     //以当前速度飞 0.5 秒
     traj.commands.push_back({DanmakuCmdType::WAIT, 0.5f, 0.0f});
@@ -3628,6 +3663,8 @@ void MainScene::on_update(float delta_time)
         ColliderManager::get_instance()->check_pool_collisions(player_->get_danmaku_pool(), 1);
     }
     ColliderManager::get_instance()->check_and_resolve_collisions();
+
+    boss_script_.get()->update(delta_time);    
 }
 
 void MainScene::on_render(SDLRender& renderer)
@@ -3701,6 +3738,12 @@ void MainScene::on_input()
 
 // 准备重构弹幕碰撞 然后实现四×树来进行优化
 
+
+//4.17
+// 敌人会有很多种 至少得可以自定义 所以我感觉可以使用建造者+原型模式来管理敌人 而且最好我使用json就能定制敌人出来 所以我应该专门写一个enemy_Creater出来 然后读取json来创建敌人的原型 最后就能根据敌人原型的名字生成敌人
+// 考虑到如果存储enemy对象 当涉及拷贝时会有许多的麻烦 所以考虑面向数据 敌人原型只存储敌人的属性(enemy_config) 然后在builder中构造敌人
+
+
 ---
 .\Scenes\MainScene.h
 ---
@@ -3716,6 +3759,8 @@ void MainScene::on_input()
 #include "Danmaku.h"
 #include "EventManager.h"
 #include <sol/sol.hpp>
+
+class BossScript;
 
 class MainScene : public IScene
 {
@@ -3739,6 +3784,8 @@ private:
     std::unique_ptr<DanmakuPool> enemy_bullets_;
     uint16_t test_prefab_id_;
 
+    std::unique_ptr<BossScript> boss_script_;
+
     // ImGui 调试用的变量
     bool show_debug_hitbox_ = false;
     int debug_emit_count_ = 12;
@@ -3755,6 +3802,72 @@ enum class SceneType
 	MainMenu,
 	Scene1,
 	EndMenu
+};
+
+---
+.\Scripting\BossScript.h
+---
+#pragma once
+
+#include<sol/sol.hpp>
+#include<string>
+
+class BossScript{
+private:
+    sol::state lua;
+    sol::thread lua_thread;
+    sol::coroutine boss_co;
+    bool is_running = false;
+
+public:
+    void init(){
+
+        lua.open_libraries(sol::lib::base,sol::lib::math,sol::lib::coroutine);
+
+        lua.set_function("print_debug",[](const std::string& msg){
+            std::cout << "[Lua_Boss]" << msg << std::endl;
+        });
+
+        try
+        {
+            lua.script_file("resources/scripts/boss_test.lua");
+        }
+        catch(const sol::error& e)
+        { 
+            std::cerr << "脚本加载失败因为" << e.what() << '\n';
+        }
+
+        lua_thread = sol::thread::create(lua.lua_state());
+        sol::function logic_func = lua["boss_logic"];
+        boss_co = sol::coroutine(lua_thread.state(),logic_func);
+        if (!boss_co.valid()) {
+            std::cout << "[C++ 诊断] 惨了，协程绑定失败！" << std::endl;
+        } else {
+            std::cout << "[C++ 诊断] 协程绑定成功！油门已备好！" << std::endl;
+        }
+        is_running = true;
+
+    }
+
+    void update(float delta_time){
+
+        if(!is_running) return;
+
+        if(boss_co.valid()){
+            auto result = boss_co(delta_time);
+            if(!result.valid()){
+                sol::error err = result;
+                std::cerr << "剧本运行时报错" << err.what() << std::endl;
+                this->is_running = false;
+            }
+        }
+        else{
+            std::cout << "[Lua] Boss剧本执行完毕" << std::endl;
+            is_running = false;
+        }
+    }
+
+
 };
 
 ---

@@ -58,7 +58,6 @@ private:
     // Clock 触发时的核心回调逻辑
     void fire_callback() {
         if (!current_pool || is_finished_flag) return;
-
         glm::vec2 spawn_pos = get_real_position();
         float final_angle = base_angle;
 

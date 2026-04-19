@@ -1,12 +1,8 @@
 #pragma once
 #include<unordered_map>
-
-struct EnemyConfig
-{
-
-};
-
-
+#include<glm.hpp>
+#include<string>
+#include"EntityConfig.h"
 
 class EnemyFactory{
 private:
