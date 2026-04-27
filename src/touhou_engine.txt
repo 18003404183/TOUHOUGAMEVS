@@ -254,7 +254,6 @@ private:
     // Clock 触发时的核心回调逻辑
     void fire_callback() {
         if (!current_pool || is_finished_flag) return;
-
         glm::vec2 spawn_pos = get_real_position();
         float final_angle = base_angle;
 
@@ -565,7 +564,7 @@ public:
     void set_bullet_pool(DanmakuPool* pool);
 
     void set_animation(const Animation& animation)
-    {
+    {   
         enemy_animation_ = animation;
     }
 
@@ -998,33 +997,142 @@ private:
 };
 
 ---
+.\Factories\EnemyFactory.cpp
+---
+#include"EnemyFactory.h"
+#include<fstream>
+#include"Enemy.h"
+
+void EnemyFactory::load_json(const std::string& filepath){
+
+    std::ifstream file(filepath);
+    if(!file.is_open()){
+        std::cerr << "找不到文件" << filepath << std::endl;
+    }
+
+    json j;
+    
+    try{
+        file >> j;
+    }
+    catch(const json::parse_error& e){
+        std::cerr << "json语法错误" << e.what() << std::endl;
+        return;
+    }
+
+    // 看一个json数据是否包含 类型识别属性 如果没有 或者 类型不同直接退出
+    if(j.contains("_file_type")){
+        if(j["_file_type"] != "enemy_database"){
+            std::cerr << "错误 传入错误的json配置 敌人工厂拒绝解析"<<std::endl;
+            return;
+        }
+    }
+    else{
+        std::cerr << "未知的josn文件 不包含解析类型" << std::endl;
+    }
+
+    // 遍历每一个敌人类型 注册进工厂
+
+}
+
+//更具配置名称拿到一个对象 位置数据需要自己填写
+std::unique_ptr<Enemy> EnemyFactory::build_enemy(const std::string& enemy_name,float x,float y){
+
+}
+
+
+
+---
 .\Factories\EnemyFactory.h
 ---
 #pragma once
 #include<unordered_map>
+#include<glm.hpp>
+#include<string>
+#include"EntityConfig.h"
+#include"json.hpp"
+#include<iostream>
 
-struct EnemyConfig
-{
-    float hp_;
-    std::string image_name_;
-    std::string enemy_animation_;
-    
-};
+using json = nlohmann::json;
 
-
-
+class Enemy;
 class EnemyFactory{
 private:
     std::unordered_map<std::string,EnemyConfig> prototypes_;
 
 public:
-
+    //跨场景考虑移动语义
+    EnemyFactory() = default;
+    EnemyFactory(const EnemyFactory& other) = delete;
+    EnemyFactory& operator=(const EnemyFactory& other) = delete;
     //注册原型(提供通过json注册原型的接口 也可以通过手动输入参数来注册原型)
+    EnemyFactory(EnemyFactory&& other) noexcept : prototypes_(std::move(other.prototypes_)){
+        std::cout << "进行移动构造" << "\n";
+    }
+
+    EnemyFactory& operator=(EnemyFactory&& other) noexcept{
+        if(this != &other){
+            this->prototypes_ = std::move(other.prototypes_);
+            other.prototypes_.clear();
+
+            std::cout << "发生了移动赋值" << "\n";
+        }
+
+        return *this;
+    }
+    
+    void load_json(const std::string& filepath);
 
     //根具原型生成一个对象 并且返回对象的指针 参数接收原型名称
+    std::unique_ptr<Enemy> build_enemy(const std::string& enemy_name,float x,float y);
 
+    ~EnemyFactory() = default;
+};
+
+---
+.\Factories\EntityConfig.h
+---
+#pragma once
+
+#include"glm.hpp"
+#include"unordered_map"
+#include<string>
+
+struct EmmiterConfig
+{
+    // 射击模式
+    std::string aim_mode_;
+    glm::vec2 offset_;
+    // 配置弹幕
+    uint16_t prefab_id_; // 种类
+    float speed_;// 子弹初速度
+    float base_angle_; // 初始角度 
+    float angle_step_; // 角度变化量
+
+    float interval_; // 发射间隔时间 也就是射速
+    int count_; // 发射数量 -1表示无限发射
 
 };
+
+struct AnimationConfig
+{
+    std::string atlas_name_;
+    float frame_speed_;
+};
+
+
+struct EnemyConfig
+{
+    std::unordered_map<std::string,EmmiterConfig> emitters_;
+    AnimationConfig animation_;
+    std::string image_name_;
+    std::string enemy_animation_;
+    float hp_;
+    glm::vec2 velocity_;
+    // 这里考虑到目前的碰撞逻辑比较统一 于是不提供接口扩展碰撞逻辑 而是统一写死为同一条逻辑    
+    std::string script_path_;
+};
+
 
 ---
 .\Input\IInput.cpp

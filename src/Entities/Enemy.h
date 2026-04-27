@@ -57,7 +57,7 @@ public:
     void set_bullet_pool(DanmakuPool* pool);
 
     void set_animation(const Animation& animation)
-    {
+    {   
         enemy_animation_ = animation;
     }
 

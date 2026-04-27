@@ -1,6 +1,7 @@
 #pragma once
 #include "Enemy.h"
 #include "EnemyBuilder.h"
+#include "EnemyFactory.h"
 #include "EnemyType.h"
 #include "IInput.h"
 #include "IScene.h"
@@ -41,4 +42,5 @@ private:
     bool show_debug_hitbox_ = false;
     int debug_emit_count_ = 12;
     float debug_emit_speed_ = 150.0f;
+    EnemyFactory enemy_factory;
 };

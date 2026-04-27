@@ -171,4 +171,5 @@ DanmakuPrefab DanmakuPool::get_prefab(int id)
 void DanmakuPool::destroy_bullet(DanmakuData &danmaku)
 {
     danmaku.active = false;
+    this->count--;
 }

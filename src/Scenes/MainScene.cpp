@@ -11,6 +11,7 @@
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 #include "BossScript.h"
+#include "EnemyFactory.h"
 
 
 using json = nlohmann::json; 
@@ -176,7 +177,7 @@ void MainScene::on_enter()
     }
 
 
-
+    
 
     EventManager::get_instance()->subscribe(EventType::PlayerDead,[](const Event& event){
         
@@ -189,6 +190,9 @@ void MainScene::on_enter()
     this->clock_.set_callback([this]() {
         std::cout << "Timer tick. this:" << this << std::endl; 
     });
+
+    this->enemy_factory.load_json("resources\\json\\enemy_database.json");
+    this->entities_.push_back(std::move(this->enemy_factory.build_enemy("test_fairy",100,400)));
 
 
 }

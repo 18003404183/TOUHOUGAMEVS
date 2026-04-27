@@ -82,6 +82,7 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
 
                     if(is_hit){
                         pool->destroy_bullet(bullet);
+                        //pool->count--;
                         this->collision_events_.push_back({target_col, nullptr});
                     }
                     //这里编译器会把prefab.hitbox传给box(函数参数) visit会检查prefab.hitbox到底是哪种类型 并且传给auto& box(自动类型推导导致的)
