@@ -172,6 +172,7 @@ void MainScene::on_enter()
                 entities_.push_back(std::unique_ptr<IEntity>(e));
                 renderables_.push_back(e);
                 updateables_.push_back(e);
+
             }
         }
     }
@@ -192,7 +193,11 @@ void MainScene::on_enter()
     });
 
     this->enemy_factory.load_json("resources\\json\\enemy_database.json");
-    this->entities_.push_back(std::move(this->enemy_factory.build_enemy("test_fairy",100,400)));
+    auto e = this->enemy_factory.build_enemy("test_fairy",100,400);
+    e.get()->set_bullet_pool(this->enemy_bullets_.get());
+    this->renderables_.push_back(e.get());
+    this->updateables_.push_back(e.get());
+    this->entities_.push_back(std::move(e));
 
 
 }
