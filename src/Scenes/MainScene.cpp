@@ -31,7 +31,7 @@ void MainScene::on_enter()
 {
     ResourcesManager::get_instance()->load_scene(SceneType::MainMenu);
     ColliderManager::get_instance();
-
+    enemy_factory.load_json("resources\\json\\enemy_database.json");
     //测试Lua脚本
     this->boss_script_ = std::make_unique<BossScript>();
     this->boss_script_->init();
@@ -127,53 +127,15 @@ void MainScene::on_enter()
                 
                 // 读取 JSON 中的字符串类型，并转换为枚举
                 std::string type_str = enemy_data["type"].get<std::string>();
-                EnemyType type = EnemyType::common; // 默认给个 common
-                
-                if (type_str == "small") type = EnemyType::small;
-                else if (type_str == "common") type = EnemyType::common;
-                else if (type_str == "large") type = EnemyType::large;
-
-                enemybuilder.create_enemy(type);
-                Enemy* e = enemybuilder.create();
 
                 float x = enemy_data["x"].get<float>();
                 float y = enemy_data["y"].get<float>();
-                int hp = enemy_data["hp"].get<int>();
-
-                e->set_position({x, y});
-                e->set_hp(hp);
-                e->set_bullet_pool(enemy_bullets_.get());
-
-                float spread_angle = 15.0f * (3.14159f / 180.0f);
-
-                // 枪管 A：正中心 (绝对锁定玩家，逼迫玩家走位)
-                e->add_emitter(std::make_unique<Emitter>(
-                    EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
-                    AimMode::TargetAlways, player_->get_position_ptr(),
-                    test_prefab_id_, 300.0f, 0.0f, 0.0f,
-                    1.5f, -1
-                ));
-
-                // 枪管 B：左侧封位 (在锁定角度的基础上，向左偏 15 度)
-                e->add_emitter(std::make_unique<Emitter>(
-                    EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
-                    AimMode::TargetAlways, player_->get_position_ptr(),
-                    test_prefab_id_, 300.0f, -spread_angle, 0.0f,
-                    1.5f, -1
-                ));
-
-                // 枪管 C：右侧封位 (在锁定角度的基础上，向右偏 15 度)
-                e->add_emitter(std::make_unique<Emitter>(
-                    EmitterSpace::Relative, e->get_position_ptr(), glm::vec2{0, 0},
-                    AimMode::TargetAlways, player_->get_position_ptr(),
-                    test_prefab_id_, 300.0f, spread_angle, 0.0f,
-                    1.5f, -1
-                ));
+                auto e = enemy_factory.build_enemy(type_str,x,y);
 
                 // 挂载到场景中
-                entities_.push_back(std::unique_ptr<IEntity>(e));
-                renderables_.push_back(e);
-                updateables_.push_back(e);
+                renderables_.push_back(e.get());
+                updateables_.push_back(e.get());
+                entities_.push_back(std::move(e));
 
             }
         }
