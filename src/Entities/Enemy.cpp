@@ -6,7 +6,7 @@ void Enemy::update(float delta_time)
 	if(!this->is_active() || !this->is_alive_){
 		return;
 	}
-	this->position_ += this->velocity_;
+	this->position_ += this->velocity_ * delta_time;
 	this->enemy_animation_.update(delta_time);
 	std::cout << "Enemy::update called with delta_time: " << delta_time << std::endl;
 	if(this->enemy_danmaku_pool_){
