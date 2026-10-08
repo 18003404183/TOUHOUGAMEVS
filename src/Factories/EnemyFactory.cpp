@@ -60,7 +60,7 @@ void EnemyFactory::load_json(const std::string& filepath){
 }
 
 //更具配置名称拿到一个对象 位置数据需要自己填写
-std::unique_ptr<Enemy> EnemyFactory::build_enemy(const std::string& enemy_name, float x, float y) {
+std::unique_ptr<Enemy> EnemyFactory::build_enemy(const std::string& enemy_name, float x, float y,glm::vec2* target) {
     // 1. 在原型库中查找对应的配置
     auto it = prototypes_.find(enemy_name);
     if (it == prototypes_.end()) {
@@ -124,7 +124,6 @@ std::unique_ptr<Enemy> EnemyFactory::build_enemy(const std::string& enemy_name, 
 
         // 【注意】这里传入的 Target 指针暂时给 nullptr
         // 因为工厂不知道玩家在哪里。你需要在外部 (比如 Scene 或通过全局 Context) 绑定玩家位置。
-        const glm::vec2* target_ptr = nullptr; 
 
         // 角度转换：JSON 中通常填角度 (如 15 度)，C++ 计算需要弧度
         float rad_base = e_config.base_angle_ * (3.14159265f / 180.0f);
@@ -135,7 +134,7 @@ std::unique_ptr<Enemy> EnemyFactory::build_enemy(const std::string& enemy_name, 
             enemy->get_position_ptr(), // 绑定到敌人当前位置
             e_config.offset_,          // 枪管偏移
             mode, 
-            target_ptr,                // 索敌目标 (待绑定)
+            target,                // 索敌目标 (待绑定)
             e_config.prefab_id_, 
             e_config.speed_, 
             rad_base, 
