@@ -131,7 +131,8 @@ void MainScene::on_enter()
                 float x = enemy_data["x"].get<float>();
                 float y = enemy_data["y"].get<float>();
                 auto e = enemy_factory.build_enemy(type_str,x,y);
-
+                e.get()->set_bullet_pool(this->enemy_bullets_.get());
+                
                 // 挂载到场景中
                 renderables_.push_back(e.get());
                 updateables_.push_back(e.get());
