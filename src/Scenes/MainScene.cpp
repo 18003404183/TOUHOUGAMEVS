@@ -25,6 +25,8 @@ MainScene::~MainScene() {
     std::cout << "MainScene Destructor" << std::endl; 
 }
 
+
+
 void MainScene::on_enter()
 {
     ResourcesManager::get_instance()->load_scene(SceneType::MainMenu);

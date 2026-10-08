@@ -97,7 +97,7 @@ std::unique_ptr<Enemy> EnemyFactory::build_enemy(const std::string& enemy_name, 
         }
     }
 
-    // 5. 装配碰撞体 (按照你注释的要求，目前统一写死逻辑)
+    // 5. 装配碰撞体 
     Collider* collider = ColliderManager::get_instance()->create_collider(new Circle(30), 1, enemy.get());
     enemy->collider_ = collider;
     

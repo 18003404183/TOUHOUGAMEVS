@@ -38,6 +38,9 @@ private:
 
     std::unique_ptr<BossScript> boss_script_;
 
+    //记录当前场景运行了多长时间 用于协调场景内的各个逻辑
+    double tun_time = 0.0;
+
     // ImGui 调试用的变量
     bool show_debug_hitbox_ = false;
     int debug_emit_count_ = 12;
