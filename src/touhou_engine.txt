@@ -1002,6 +1002,8 @@ private:
 #include"EnemyFactory.h"
 #include<fstream>
 #include"Enemy.h"
+#include"EventManager.h"
+#include"Image.h"
 
 void EnemyFactory::load_json(const std::string& filepath){
 
@@ -1032,12 +1034,128 @@ void EnemyFactory::load_json(const std::string& filepath){
     }
 
     // 遍历每一个敌人类型 注册进工厂
+    for(auto& [enemy_name,enemy_data] : j["enemies"].items()){
+        EnemyConfig config;
+        config.hp_           = enemy_data.value("hp",10.0f);
+        config.image_name_   = enemy_data.value("image_name","");
+        config.script_path_ = enemy_data.value("script_path","");
+        if(enemy_data.contains("velocity")){
+            config.velocity_ =  parse_vec2(enemy_data["velocity"]);
+        }
+        else{
+            config.velocity_ = {0.0f,0.0f};
+        }
+        if(enemy_data.contains("animation")){
+            config.animation_ = parse_animation_config(enemy_data["animation"]);   
+        }
+        if(enemy_data.contains("emitters")){
+            for(auto& [emitter_name,emitter_data] : enemy_data["emitters"].items()){
+                config.emitters_[emitter_name] = parse_Emitter_config(emitter_data);
+            }
+        }
+
+        prototypes_[enemy_name] = config;
+        std::cout << "[enemy_factory] add enemy prototypes:" << enemy_name << std::endl;  
+    }   
 
 }
 
 //更具配置名称拿到一个对象 位置数据需要自己填写
-std::unique_ptr<Enemy> EnemyFactory::build_enemy(const std::string& enemy_name,float x,float y){
+std::unique_ptr<Enemy> EnemyFactory::build_enemy(const std::string& enemy_name, float x, float y) {
+    // 1. 在原型库中查找对应的配置
+    auto it = prototypes_.find(enemy_name);
+    if (it == prototypes_.end()) {
+        std::cerr << "[EnemyFactory] 错误：找不到指定的敌人原型 -> " << enemy_name << std::endl;
+        return nullptr; 
+    }
+    const EnemyConfig& config = it->second;
 
+    // 2. 创建基础实体
+    auto enemy = std::make_unique<Enemy>();
+    
+    // 3. 注入基础数值
+    enemy->set_position({x, y});
+    enemy->set_velocity(config.velocity_);
+    enemy->set_hp(config.hp_);
+    enemy->set_active(true);
+    enemy->set_alive(true);
+
+    // 4. 装配视觉资源 (Texture & Animation)
+    auto res_mgr = ResourcesManager::get_instance();
+    
+    if (!config.image_name_.empty()) {
+        Texture* tex = res_mgr->get_texture(config.image_name_);
+        if (tex) {
+            enemy->set_image(Image(tex, {x, y}, {1, 1}, 0, 255));
+        }
+    }
+
+    if (!config.animation_.atlas_name_.empty()) {
+        Atlas* atlas = res_mgr->get_atlas(config.animation_.atlas_name_);
+        if (atlas) {
+            Animation anim(atlas, config.animation_.frame_speed_);
+            enemy->set_animation(anim);
+        }
+    }
+
+    // 5. 装配碰撞体 (按照你注释的要求，目前统一写死逻辑)
+    Collider* collider = ColliderManager::get_instance()->create_collider(new Circle(30), 1, enemy.get());
+    enemy->collider_ = collider;
+    
+    // 绑定受击与死亡逻辑
+    enemy->collider_->set_on_collide([e = enemy.get()](Collider* other) {
+        e->take_damage(10); // 暂时写死受击伤害为10
+        if(e->get_hp() <= 0 && e->is_alive()){
+            e->set_alive(false);
+            
+            Event ev;
+            ev.type = EventType::EnemyDsetroyed;
+            ev.data = e;
+            EventManager::get_instance()->publish(ev);
+        }		
+    });
+
+    // 6. 挂载弹幕发射器 (Emitters)
+    for (const auto& [emitter_name, e_config] : config.emitters_) {
+        
+        // 字符串转枚举
+        AimMode mode = AimMode::Fixed;
+        if (e_config.aim_mode_ == "TargetInitial") mode = AimMode::TargetInitial;
+        else if (e_config.aim_mode_ == "TargetAlways") mode = AimMode::TargetAlways;
+
+        // 【注意】这里传入的 Target 指针暂时给 nullptr
+        // 因为工厂不知道玩家在哪里。你需要在外部 (比如 Scene 或通过全局 Context) 绑定玩家位置。
+        const glm::vec2* target_ptr = nullptr; 
+
+        // 角度转换：JSON 中通常填角度 (如 15 度)，C++ 计算需要弧度
+        float rad_base = e_config.base_angle_ * (3.14159265f / 180.0f);
+        float rad_step = e_config.angle_step_ * (3.14159265f / 180.0f);
+
+        auto emitter = std::make_unique<Emitter>(
+            EmitterSpace::Relative, 
+            enemy->get_position_ptr(), // 绑定到敌人当前位置
+            e_config.offset_,          // 枪管偏移
+            mode, 
+            target_ptr,                // 索敌目标 (待绑定)
+            e_config.prefab_id_, 
+            e_config.speed_, 
+            rad_base, 
+            rad_step, 
+            e_config.interval_, 
+            e_config.count_
+        );
+        
+        enemy->add_emitter(std::move(emitter));
+    }
+
+    // 7. 脚本绑定 (如果有的话)
+    if (!config.script_path_.empty()) {
+        // TODO: 你的 Enemy 类目前还没有挂载 Lua 脚本的成员变量
+        // 未来可以在这里调用 enemy->set_script(config.script_path_)
+        std::cout << "[EnemyFactory] 提示：实体 " << enemy_name << " 需要挂载脚本 " << config.script_path_ << "\n";
+    }
+
+    return enemy;
 }
 
 
@@ -1050,10 +1168,8 @@ std::unique_ptr<Enemy> EnemyFactory::build_enemy(const std::string& enemy_name,f
 #include<glm.hpp>
 #include<string>
 #include"EntityConfig.h"
-#include"json.hpp"
 #include<iostream>
 
-using json = nlohmann::json;
 
 class Enemy;
 class EnemyFactory{
@@ -1084,10 +1200,13 @@ public:
     void load_json(const std::string& filepath);
 
     //根具原型生成一个对象 并且返回对象的指针 参数接收原型名称
+    //如果有让敌人发射的子弹瞄准的需求 请自己手动设置敌人指向目标的glm::vec2 pos
     std::unique_ptr<Enemy> build_enemy(const std::string& enemy_name,float x,float y);
 
     ~EnemyFactory() = default;
 };
+
+
 
 ---
 .\Factories\EntityConfig.h
@@ -1097,8 +1216,11 @@ public:
 #include"glm.hpp"
 #include"unordered_map"
 #include<string>
+#include"json.hpp"
 
-struct EmmiterConfig
+using json = nlohmann::json;
+
+struct EmitterConfig
 {
     // 射击模式
     std::string aim_mode_;
@@ -1123,15 +1245,53 @@ struct AnimationConfig
 
 struct EnemyConfig
 {
-    std::unordered_map<std::string,EmmiterConfig> emitters_;
+    std::unordered_map<std::string,EmitterConfig> emitters_;
     AnimationConfig animation_;
     std::string image_name_;
-    std::string enemy_animation_;
     float hp_;
     glm::vec2 velocity_;
     // 这里考虑到目前的碰撞逻辑比较统一 于是不提供接口扩展碰撞逻辑 而是统一写死为同一条逻辑    
     std::string script_path_;
 };
+
+inline glm::vec2 parse_vec2(const json& js,float default_x = 0.0f,float default_y = 0.0f){
+    if(js.is_null()) return {default_x,default_y};
+    return {
+        js.value("x",default_x),
+        js.value("y",default_y)
+    };
+}
+
+inline AnimationConfig parse_animation_config(const json& js){
+    AnimationConfig config;
+    if(js.is_null()) return config;
+    config.atlas_name_ = js.value("atlas_name","");
+    config.frame_speed_ = js.value("frame_speed",0.1f);
+
+    return config;
+}
+
+
+inline EmitterConfig parse_Emitter_config(const json& js){
+    EmitterConfig config;
+    if(js.is_null()) return config;
+    config.aim_mode_      = js.value("aim_mode","Fixed");
+    if(js.contains("offset")){
+        config.offset_    = parse_vec2(js["offset"]);
+    }
+    else{
+        config.offset_    = {0.0,0.0};
+    }
+    config.prefab_id_     = js.value("prefab_id",0);
+    config.speed_         = js.value("speed",0.0f);
+    config.base_angle_    = js.value("base_angle",0.0f);
+    config.angle_step_    = js.value("angle_step",0.0f);
+    config.interval_      = js.value("interval",0.0f);
+    config.count_         = js.value("count",-1);
+
+    return config;
+}   
+
 
 
 ---
@@ -1400,6 +1560,7 @@ void ColliderManager::check_pool_collisions(DanmakuPool* pool, int target_layer)
 
                     if(is_hit){
                         pool->destroy_bullet(bullet);
+                        //pool->count--;
                         this->collision_events_.push_back({target_col, nullptr});
                     }
                     //这里编译器会把prefab.hitbox传给box(函数参数) visit会检查prefab.hitbox到底是哪种类型 并且传给auto& box(自动类型推导导致的)
@@ -1683,6 +1844,7 @@ DanmakuPrefab DanmakuPool::get_prefab(int id)
 void DanmakuPool::destroy_bullet(DanmakuData &danmaku)
 {
     danmaku.active = false;
+    this->count--;
 }
 
 ---
@@ -3538,6 +3700,7 @@ public:
 #include "imgui_impl_sdl2.h"
 #include "imgui_impl_sdlrenderer2.h"
 #include "BossScript.h"
+#include "EnemyFactory.h"
 
 
 using json = nlohmann::json; 
@@ -3698,12 +3861,13 @@ void MainScene::on_enter()
                 entities_.push_back(std::unique_ptr<IEntity>(e));
                 renderables_.push_back(e);
                 updateables_.push_back(e);
+
             }
         }
     }
 
 
-
+    
 
     EventManager::get_instance()->subscribe(EventType::PlayerDead,[](const Event& event){
         
@@ -3716,6 +3880,13 @@ void MainScene::on_enter()
     this->clock_.set_callback([this]() {
         std::cout << "Timer tick. this:" << this << std::endl; 
     });
+
+    this->enemy_factory.load_json("resources\\json\\enemy_database.json");
+    auto e = this->enemy_factory.build_enemy("test_fairy",100,400);
+    e.get()->set_bullet_pool(this->enemy_bullets_.get());
+    this->renderables_.push_back(e.get());
+    this->updateables_.push_back(e.get());
+    this->entities_.push_back(std::move(e));
 
 
 }
@@ -3858,6 +4029,7 @@ void MainScene::on_input()
 #pragma once
 #include "Enemy.h"
 #include "EnemyBuilder.h"
+#include "EnemyFactory.h"
 #include "EnemyType.h"
 #include "IInput.h"
 #include "IScene.h"
@@ -3898,6 +4070,7 @@ private:
     bool show_debug_hitbox_ = false;
     int debug_emit_count_ = 12;
     float debug_emit_speed_ = 150.0f;
+    EnemyFactory enemy_factory;
 };
 
 ---
