@@ -8,7 +8,7 @@ using json = nlohmann::json;
 
 void WaveController::update(float delta_time){
     this->current_time_ += delta_time;
-    if(current_time_ < this->wave_infos_.size() && current_time_ >= this->wave_infos_[this->current_wave].spawn_time){
+    if(current_wave < this->wave_infos_.size() && current_time_ >= this->wave_infos_[this->current_wave].spawn_time){
         this->has_data_need_create = true;     
     }
 }
@@ -17,6 +17,8 @@ bool WaveController::load_json(std::string path){
 
     this->wave_infos_.clear();
     this->current_wave = 0;
+    this->has_data_need_create = false;
+    this->current_time_ = 0;
 
     std::ifstream file;
     file.open(path);
@@ -59,7 +61,7 @@ std::vector<EnemyCreateData> WaveController::get_create_data(){
         return create_list;
     }
 
-    while(this->wave_infos_[this->current_wave].spawn_time <= current_time_ && this->current_wave < this->wave_infos_.size()){
+    while(this->current_wave < this->wave_infos_.size() && this->wave_infos_[this->current_wave].spawn_time <= current_time_){
         for(auto create_data : wave_infos_[this->current_wave].spawn_datas){
             create_list.push_back(create_data);
         }
