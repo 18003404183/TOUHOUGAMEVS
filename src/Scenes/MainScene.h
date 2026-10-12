@@ -11,6 +11,7 @@
 #include "Danmaku.h"
 #include "EventManager.h"
 #include <sol/sol.hpp>
+#include "WaveController.h"
 
 class BossScript;
 
@@ -46,4 +47,7 @@ private:
     int debug_emit_count_ = 12;
     float debug_emit_speed_ = 150.0f;
     EnemyFactory enemy_factory;
+
+    WaveController wavecontroller;
+
 };

@@ -25,13 +25,12 @@ MainScene::~MainScene() {
     std::cout << "MainScene Destructor" << std::endl; 
 }
 
-
-
 void MainScene::on_enter()
 {
     ResourcesManager::get_instance()->load_scene(SceneType::MainMenu);
     ColliderManager::get_instance();
     enemy_factory.load_json("resources\\json\\enemy_database.json");
+    this->wavecontroller.load_json("resources\\level1.json");
     //测试Lua脚本
     this->boss_script_ = std::make_unique<BossScript>();
     this->boss_script_->init();
@@ -180,6 +179,15 @@ void MainScene::on_exit()
 
 void MainScene::on_update(float delta_time)
 {
+    wavecontroller.update(delta_time);
+
+    if(wavecontroller.has_need_create()){
+        std::vector<EnemyCreateData> create_datas = wavecontroller.get_create_data();
+        for(const auto& create_data : create_datas){
+            this->entities_.push_back(std::move(this->enemy_factory.build_enemy(create_data.name,create_data.pos.x,create_data.pos.y)));
+        }
+    }
+
     for (IUpdateable* a : updateables_)
     {
         a->update(delta_time);
