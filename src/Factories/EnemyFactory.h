@@ -36,7 +36,7 @@ public:
 
     //根具原型生成一个对象 并且返回对象的指针 参数接收原型名称
     //如果有让敌人发射的子弹瞄准的需求 请自己手动设置敌人指向目标的glm::vec2 pos
-    std::unique_ptr<Enemy> build_enemy(const std::string& enemy_name,float x,float y,glm::vec2* target = nullptr);
+    std::unique_ptr<Enemy> build_enemy(const std::string& enemy_name,float x,float y,const glm::vec2* target = nullptr);
 
     ~EnemyFactory() = default;
 };
