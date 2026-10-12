@@ -109,44 +109,6 @@ void MainScene::on_enter()
 
     entities_.push_back(std::unique_ptr<IEntity>(player_));
 
-    std::ifstream file("resources\\level1.json");
-    if(!file.is_open()){
-        std::cerr << "未打开文件"<<std::endl;
-    }
-    else{
-        json level_data;
-        file >> level_data;
-
-        std::cout << "成功加载关卡" << level_data["level_name"].get<std::string>() << std::endl;
-        
-        EnemyBuilder enemybuilder;
-
-        for(const auto& wave : level_data["waves"]){
-            for (const auto& enemy_data : wave["enemies"]) {
-                
-                // 读取 JSON 中的字符串类型，并转换为枚举
-                std::string type_str = enemy_data["type"].get<std::string>();
-
-                float x = enemy_data["x"].get<float>();
-                float y = enemy_data["y"].get<float>();
-                auto e = enemy_factory.build_enemy(type_str,x,y,player_->get_position_ptr());
-                if(!e){
-                    std::cout<<"创建敌人时错误\n";
-                    return;
-                }
-                e.get()->set_bullet_pool(this->enemy_bullets_.get());
-                // 挂载到场景中
-                renderables_.push_back(e.get());
-                updateables_.push_back(e.get());
-                entities_.push_back(std::move(e));
-
-            }
-        }
-    }
-
-
-    
-
     EventManager::get_instance()->subscribe(EventType::PlayerDead,[](const Event& event){
         
         if(event.data){
@@ -184,7 +146,10 @@ void MainScene::on_update(float delta_time)
     if(wavecontroller.has_need_create()){
         std::vector<EnemyCreateData> create_datas = wavecontroller.get_create_data();
         for(const auto& create_data : create_datas){
-            this->entities_.push_back(std::move(this->enemy_factory.build_enemy(create_data.name,create_data.pos.x,create_data.pos.y)));
+            std::unique_ptr<Enemy> enemy = this->enemy_factory.build_enemy(create_data.name,create_data.pos.x,create_data.pos.y);
+            this->renderables_.push_back(enemy.get());
+            this->updateables_.push_back(enemy.get());
+            this->entities_.push_back(std::move(enemy));
         }
     }
 
