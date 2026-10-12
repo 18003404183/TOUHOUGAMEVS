@@ -8,7 +8,7 @@ using json = nlohmann::json;
 
 void WaveController::update(float delta_time){
     this->current_time_ += delta_time;
-    if(current_time_ >= this->wave_infos_[this->current_wave].spawn_time){
+    if(current_time_ < this->wave_infos_.size() && current_time_ >= this->wave_infos_[this->current_wave].spawn_time){
         this->has_data_need_create = true;     
     }
 }
