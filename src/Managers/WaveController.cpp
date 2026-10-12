@@ -63,10 +63,51 @@ std::vector<EnemyCreateData> WaveController::get_create_data(){
         for(auto create_data : wave_infos_[this->current_wave].spawn_datas){
             create_list.push_back(create_data);
         }
-        this->current_wave ++;
+        this->next_wave();
     }
 
     this->has_data_need_create = false;
 
     return create_list;
+}
+
+void WaveController::set_current_wave(size_t index)
+{
+    if(index < this->wave_infos_.size()){
+        this->current_wave = index;
+    }
+    else{
+        std::cout << "设置值非法\n";
+    }
+}
+
+size_t WaveController::get_current_wave()
+{
+    return this->current_wave;
+}
+
+void WaveController::next_wave()
+{
+    if(current_wave < this->wave_infos_.size()){
+        current_wave++;
+    }
+}
+
+void WaveController::set_current_time(float time)
+{
+    if(time < 0){
+        std::cout << "非法的零值\n";
+        return;
+    }
+    this->current_time_ = time;
+}
+
+float WaveController::get_current_time()
+{
+    return this->current_time_;
+}
+
+bool WaveController::has_need_create()
+{
+    return this->has_data_need_create;
 }
