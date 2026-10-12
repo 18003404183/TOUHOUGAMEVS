@@ -15,6 +15,9 @@ void WaveController::update(float delta_time){
 
 bool WaveController::load_json(std::string path){
 
+    this->wave_infos_.clear();
+    this->current_wave = 0;
+
     std::ifstream file;
     file.open(path);
 
@@ -39,15 +42,15 @@ bool WaveController::load_json(std::string path){
             for(const auto& enemy : wave["enemies"]){
                 EnemyCreateData temp_data;
                 temp_data.name = enemy.value("type",""); 
-                temp_data.pos.x = enemy.value("x",0);
-                temp_data.pos.y = enemy.value("y",0);
+                temp_data.pos.x = enemy.value("x",0.0f);
+                temp_data.pos.y = enemy.value("y",0.0f);
                 temp_info.spawn_datas.push_back(temp_data);
             }
 
             this->wave_infos_.push_back(temp_info);
        } 
     }
-
+    return true;
 }  
 
 std::vector<EnemyCreateData> WaveController::get_create_data(){
@@ -56,7 +59,7 @@ std::vector<EnemyCreateData> WaveController::get_create_data(){
         return create_list;
     }
 
-    while(this->wave_infos_[this->current_wave].spawn_time > current_time_){
+    while(this->wave_infos_[this->current_wave].spawn_time <= current_time_ && this->current_wave < this->wave_infos_.size()){
         for(auto create_data : wave_infos_[this->current_wave].spawn_datas){
             create_list.push_back(create_data);
         }

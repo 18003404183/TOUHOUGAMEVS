@@ -18,7 +18,7 @@ class WaveController{
 private:
     float current_time_ = 0;
     int current_wave = 0;
-    //这里默认json里的波次按照出现顺序排列 即默认生成时间从大到小 如果json并非按照时间顺序编写会导致波次混乱
+    //这里默认json里的波次按照出现顺序排列 即默认生成时间从小到大 如果json并非按照时间顺序编写会导致波次混乱
     std::vector<WaveInfo> wave_infos_;
     bool has_data_need_create = false;
 public:
