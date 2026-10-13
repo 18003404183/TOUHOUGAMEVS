@@ -7,4 +7,10 @@ latex/
 /.vs
 /CMakePresets.json
 /CMakeUserPresets.json
-/resources
+
+/resources/*
+!/resources/level1.json
+
+!/resources/json/
+/resources/json/*
+!/resources/json/enemy_database.json

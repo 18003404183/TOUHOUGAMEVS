@@ -1,0 +1,29 @@
+{
+  "level_name": "Stage 1: 幻境的边缘",
+  "waves": [
+    {
+      "wave_id": 1,
+      "spawn_time": 1.0, 
+      "enemies": [
+        { "type": "test_fairy", "x": 100, "y": 0},
+        { "type": "test_fairy", "x": 200, "y": 0},
+        { "type": "test_fairy", "x": 300, "y": 0},
+        { "type": "test_fairy", "x": 400, "y": 0},
+        { "type": "test_fairy", "x": 500, "y": 0},
+        { "type": "test_fairy", "x": 600, "y": 0}
+      ]
+    },
+    {
+      "wave_id": 2,
+      "spawn_time": 10.0, 
+      "enemies": [
+        { "type": "test_fairy", "x": 100, "y": 100},
+        { "type": "test_fairy", "x": 200, "y": 100},
+        { "type": "test_fairy", "x": 300, "y": 100},
+        { "type": "test_fairy", "x": 400, "y": 100},
+        { "type": "test_fairy", "x": 500, "y": 100},
+        { "type": "test_fairy", "x": 600, "y": 100}
+      ]
+    }
+  ]
+}

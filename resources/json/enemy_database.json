@@ -1,0 +1,41 @@
+{
+    "_file_type": "enemy_database",
+    "enemies": {
+        "test_fairy": {
+            "hp": 50.0,
+            "velocity": { "x": 0.0, "y" : 0.0},
+            "image_name": "resources\\2.png",
+            "script_path": "scripts/fairy_logic.lua",
+            "animation": {
+                "atlas_name": "resources\\7.png",
+                "frame_speed": 0.15
+            },
+            "emitters": {
+                "main_gun": {
+                    "aim_mode": "TargetAlways",
+                    "offset": { "x": 0.0, "y": 15.0 },
+                    "prefab_id": 0,
+                    "speed": 350.0,
+                    "base_angle": 0.0,
+                    "angle_step": 0.0,
+                    "interval": 0.2,
+                    "count": -1
+                },
+                "spread_gun": {
+                    "aim_mode": "Fixed",
+                    "offset": { "x": -10.0, "y": 0.0 },
+                    "prefab_id": 0,
+                    "speed": 200.0,
+                    "base_angle": 180.0,
+                    "angle_step": 15.0,
+                    "interval": 1.5,
+                    "count": 5
+                }
+            }
+        },
+        "simple_mob": {
+            "hp": 10.0,
+            "image_name": "resources/mob.png"
+        }
+    }
+}

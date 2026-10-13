@@ -146,7 +146,12 @@ void MainScene::on_update(float delta_time)
     if(wavecontroller.has_need_create()){
         std::vector<EnemyCreateData> create_datas = wavecontroller.get_create_data();
         for(const auto& create_data : create_datas){
-            std::unique_ptr<Enemy> enemy = this->enemy_factory.build_enemy(create_data.name,create_data.pos.x,create_data.pos.y);
+            std::unique_ptr<Enemy> enemy = this->enemy_factory.build_enemy(create_data.name,create_data.pos.x,create_data.pos.y,player_->get_position_ptr());
+            if(!enemy){
+                std::cout << "工厂未能正确生成敌人呢";
+                continue;
+            }
+            enemy.get()->set_bullet_pool(this->enemy_bullets_.get());
             this->renderables_.push_back(enemy.get());
             this->updateables_.push_back(enemy.get());
             this->entities_.push_back(std::move(enemy));
