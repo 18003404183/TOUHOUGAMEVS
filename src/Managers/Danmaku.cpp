@@ -1,6 +1,7 @@
 #include "Danmaku.h"
 #include "Config.h"
 #include <cmath>
+#include "math.h"
 
 std::vector<DanmakuPrefab> DanmakuPool::prefabs_;
 std::vector<TrajectoryTemplate> DanmakuPool::trajectories_;
@@ -95,7 +96,10 @@ void DanmakuPool::update(float delta) {
                         float angular_speed = (cmd.param1 * (3.14159265f / 180.0f)) / cmd.param2;
                         
                         // 推进角度
-                        d.current_angle += angular_speed * delta;
+                        //2026.10.13为了解决有一些角度偏差的问题引入 因为浮点误差 最后转的角度会略大于360度\
+                        // 最后一次的deltatime多于360度所需的time(param2)所以最后一次的时间应该取cmd.param2 - d.cmd_timer
+                        float turn_delta = min(delta, cmd.param2 - d.cmd_timer);
+                        d.current_angle += angular_speed * turn_delta;
                         
                         // 累加时间
                         d.cmd_timer += delta;
